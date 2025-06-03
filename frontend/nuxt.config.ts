@@ -25,14 +25,16 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             apiBase: process.env.API_URL || 'http://localhost:8000',
+            appUrl: process.env.APP_URL || 'http://localhost:3000'
         }
     },
 
+    ssr: false,
+
     nitro: {
-        devProxy: {
-            '/api': {
-                target: 'http://backend:8000/api',
-                changeOrigin: true,
+        storage: {
+            redis: {
+                driver: 'memory'
             }
         }
     },
