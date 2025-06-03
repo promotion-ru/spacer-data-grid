@@ -12,6 +12,7 @@ backend/auth.json
 backend/storage/*.key
 backend/storage/logs/
 backend/bootstrap/cache/
+backend/_ide_helper.php
 
 # Nuxt
 frontend/.nuxt
