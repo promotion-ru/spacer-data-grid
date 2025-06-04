@@ -126,13 +126,6 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import Card from 'primevue/card'
-import Button from 'primevue/button'
-import Badge from 'primevue/badge'
-import ProgressSpinner from 'primevue/progressspinner'
-import Divider from 'primevue/divider'
-
 const { getTokens, revokeToken, logoutOtherDevices, refreshToken } = useAuth()
 
 const tokens = ref([])

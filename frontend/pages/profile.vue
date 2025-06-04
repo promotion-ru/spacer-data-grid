@@ -250,8 +250,6 @@ const form = reactive({
   email: '',
   password: '',
   password_confirmation: '',
-  email_notifications: true,
-  public_profile: false
 })
 
 const formErrors = ref<Record<string, string[]>>({})
@@ -268,8 +266,6 @@ const initializeForm = (): void => {
     form.email = profile.value.email
     form.password = ''
     form.password_confirmation = ''
-    form.email_notifications = profile.value.email_notifications || true
-    form.public_profile = profile.value.public_profile || false
   }
 }
 
@@ -374,8 +370,6 @@ const handleSubmit = async (): Promise<void> => {
       name: form.name.trim(),
       surname: form.surname.trim(),
       email: form.email.trim(),
-      email_notifications: form.email_notifications,
-      public_profile: form.public_profile
     }
     
     // Добавляем пароль только если он заполнен

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DataGridController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -34,5 +35,14 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show']);
         Route::patch('/', [ProfileController::class, 'update']);
+    });
+
+    // Data grid management
+    Route::prefix('data-grid')->name('data-grid.')->group(function () {
+        Route::get('/', [DataGridController::class, 'index'])->name('index');
+        Route::post('/', [DataGridController::class, 'store'])->name('store');
+        Route::get('/{dataGrid}', [DataGridController::class, 'show'])->name('show');
+        Route::patch('/{dataGrid}', [DataGridController::class, 'update'])->name('update.patch');
+        Route::delete('/{dataGrid}', [DataGridController::class, 'destroy'])->name('destroy');
     });
 });

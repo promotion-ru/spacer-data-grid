@@ -25,7 +25,6 @@ class ProfileController extends Controller
                     'surname'          => $user->surname,
                     'email'            => $user->email,
                     'avatar_url'       => $user->getFirstMediaUrl('avatars'),
-                    'avatar_thumb_url' => $user->getFirstMediaUrl('avatars', 'thumb'),
                     'created_at'       => $user->created_at,
                     'updated_at'       => $user->updated_at
                 ]
