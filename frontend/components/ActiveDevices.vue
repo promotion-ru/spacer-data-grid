@@ -259,14 +259,14 @@ const formatDate = (dateString) => {
   const date = new Date(dateString)
   const now = new Date()
   const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+  const diffDays = Math.abs(Math.floor(diffMs / (1000 * 60 * 60 * 24)))
   
   if (diffDays === 0) {
     return `Сегодня в ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`
   } else if (diffDays === 1) {
     return `Вчера в ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`
-  } else if (diffDays < 7) {
-    return `${diffDays} дн. назад`
+  } else if (diffDays > 7) {
+    return `${diffDays} дн.`
   } else {
     return date.toLocaleString('ru-RU', {
       day: '2-digit',

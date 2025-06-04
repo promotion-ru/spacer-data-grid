@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -13,7 +14,7 @@ class AuthController extends Controller
     /**
      * Login user and create token
      */
-    public function login(Request $request)
+    public function login(Request $request): JsonResponse
     {
         $request->validate([
             'email'       => 'required|email',
@@ -21,7 +22,7 @@ class AuthController extends Controller
             'device_name' => 'string|max:255',
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::query()->where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
@@ -31,7 +32,7 @@ class AuthController extends Controller
 
         // Создаем токен
         $deviceName = $request->device_name ?: $this->getDeviceName($request);
-        $token = $user->createToken($deviceName, ['*'], now()->addDays(7));
+        $token = $user->createToken($deviceName, ['*'], now()->addDays(30));
 
         // Логируем вход
         $this->logAuthActivity($request, $user, 'login', [
@@ -144,9 +145,15 @@ class AuthController extends Controller
     /**
      * Get authenticated user
      */
-    public function user(Request $request)
+    public function user(Request $request): JsonResponse
     {
-        return response()->json($request->user());
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+        $user->load('roles.permissions');
+
+        return response()->json($user);
     }
 
     /**
