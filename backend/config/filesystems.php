@@ -60,6 +60,19 @@ return [
             'report' => false,
         ],
 
+        'yandex_uploads' => [
+            'driver' => 's3',
+            'key' => env('YANDEX_CLOUD_ID'),
+            'secret' => env('YANDEX_CLOUD_KEY'),
+            'region' => 'ru-central1',
+            'bucket' => env('YANDEX_CLOUD_BUCKET_UPLOAD'),
+            'url' => env('YANDEX_CLOUD_URI') . env('YANDEX_CLOUD_BUCKET_UPLOAD'),
+            'endpoint' => env('YANDEX_CLOUD_URI'),
+            'use_path_style_endpoint' => true,
+            'throw' => false,
+            'visibility' => 'public',
+        ],
+
     ],
 
     /*

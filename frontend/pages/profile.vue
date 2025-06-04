@@ -20,7 +20,4 @@ definePageMeta({
 
 const {user, logout, loading} = useAuth()
 
-const handleLogout = async () => {
-  await logout()
-}
 </script>

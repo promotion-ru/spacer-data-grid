@@ -1,3 +1,5 @@
+import { useAuthStore } from '~/stores/auth'
+
 interface User {
     id: number
     name: string
@@ -16,41 +18,22 @@ interface TokenInfo {
     is_expired: boolean
 }
 
-interface AuthState {
-    user: User | null
-    token: string | null
-    loggedIn: boolean
-    loading: boolean
-}
-
 export const useAuth = () => {
     const config = useRuntimeConfig()
     const router = useRouter()
+    const authStore = useAuthStore()
 
-    const authState = useState<AuthState>('auth.state', () => ({
-        user: null,
-        token: null,
-        loggedIn: false,
-        loading: false
-    }))
-
-    // Используем localStorage для токена (можно также cookie)
+    // Получаем токен из store или localStorage
     const getToken = () => {
         if (process.client) {
-            return localStorage.getItem('auth_token') || authState.value.token
+            return localStorage.getItem('auth_token') || authStore.token
         }
-        return authState.value.token
+        return authStore.token
     }
 
+    // Устанавливаем токен в store
     const setToken = (token: string | null) => {
-        authState.value.token = token
-        if (process.client) {
-            if (token) {
-                localStorage.setItem('auth_token', token)
-            } else {
-                localStorage.removeItem('auth_token')
-            }
-        }
+        authStore.setToken(token)
     }
 
     // Создание заголовков с авторизацией
@@ -69,7 +52,7 @@ export const useAuth = () => {
         password: string
         device_name?: string
     }) => {
-        authState.value.loading = true
+        authStore.setLoading(true)
 
         try {
             const response = await $fetch<{
@@ -78,7 +61,7 @@ export const useAuth = () => {
                 message: string
                 expires_at: string
             }>('/api/auth/login', {
-                baseURL: config.public.apiBase, // http://localhost
+                baseURL: config.public.apiBase,
                 method: 'POST',
                 body: {
                     ...credentials,
@@ -90,26 +73,23 @@ export const useAuth = () => {
                 }
             })
 
-            // Сохраняем токен и пользователя
+            // Сохраняем токен и пользователя в store
             setToken(response.token)
-            authState.value.user = response.user
-            authState.value.loggedIn = true
+            authStore.setUser(response.user)
 
             return { success: true, user: response.user }
         } catch (error: any) {
             console.error('Login error:', error)
 
             // Очищаем состояние при ошибке
-            setToken(null)
-            authState.value.user = null
-            authState.value.loggedIn = false
+            authStore.clearAuth()
 
             return {
                 success: false,
                 error: error.data?.message || 'Ошибка авторизации'
             }
         } finally {
-            authState.value.loading = false
+            authStore.setLoading(false)
         }
     }
 
@@ -121,7 +101,7 @@ export const useAuth = () => {
         password_confirmation: string
         device_name?: string
     }) => {
-        authState.value.loading = true
+        authStore.setLoading(true)
 
         try {
             const response = await $fetch<{
@@ -142,10 +122,9 @@ export const useAuth = () => {
                 }
             })
 
-            // Сохраняем токен и пользователя
+            // Сохраняем токен и пользователя в store
             setToken(response.token)
-            authState.value.user = response.user
-            authState.value.loggedIn = true
+            authStore.setUser(response.user)
 
             return { success: true, user: response.user }
         } catch (error: any) {
@@ -155,7 +134,7 @@ export const useAuth = () => {
                 error: error.data?.message || 'Ошибка регистрации'
             }
         } finally {
-            authState.value.loading = false
+            authStore.setLoading(false)
         }
     }
 
@@ -175,11 +154,8 @@ export const useAuth = () => {
             }
         }
 
-        // Очищаем состояние
-        setToken(null)
-        authState.value.user = null
-        authState.value.loggedIn = false
-
+        // Очищаем состояние в store
+        authStore.clearAuth()
         await router.push('/login')
     }
 
@@ -204,8 +180,7 @@ export const useAuth = () => {
         const token = getToken()
 
         if (!token) {
-            authState.value.user = null
-            authState.value.loggedIn = false
+            authStore.clearAuth()
             return null
         }
 
@@ -216,18 +191,13 @@ export const useAuth = () => {
                 headers: getAuthHeaders()
             })
 
-            authState.value.user = user
-            authState.value.loggedIn = true
-
+            authStore.setUser(user)
             return user
         } catch (error) {
             console.error('Fetch user error:', error)
 
             // При ошибке очищаем токен (возможно, истек)
-            setToken(null)
-            authState.value.user = null
-            authState.value.loggedIn = false
-
+            authStore.clearAuth()
             return null
         }
     }
@@ -241,6 +211,7 @@ export const useAuth = () => {
                 headers: getAuthHeaders()
             })
 
+            authStore.setTokens(tokens)
             return tokens
         } catch (error) {
             console.error('Get tokens error:', error)
@@ -256,6 +227,9 @@ export const useAuth = () => {
                 method: 'DELETE',
                 headers: getAuthHeaders()
             })
+
+            // Обновляем список токенов после отзыва
+            await getTokens()
 
             return { success: true }
         } catch (error: any) {
@@ -299,8 +273,7 @@ export const useAuth = () => {
             })
 
             if (response.valid) {
-                authState.value.user = response.user
-                authState.value.loggedIn = true
+                authStore.setUser(response.user)
             }
 
             return response
@@ -313,21 +286,27 @@ export const useAuth = () => {
     // Инициализация авторизации
     const initAuth = async () => {
         if (process.client) {
+            authStore.initTokenFromStorage()
             const token = getToken()
 
             if (token) {
-                authState.value.token = token
                 await fetchUser()
             }
         }
     }
 
     return {
-        // State
-        user: readonly(computed(() => authState.value.user)),
-        token: readonly(computed(() => authState.value.token)),
-        loggedIn: readonly(computed(() => authState.value.loggedIn)),
-        loading: readonly(computed(() => authState.value.loading)),
+        // Store state (реактивные геттеры)
+        user: computed(() => authStore.user),
+        token: computed(() => authStore.token),
+        loggedIn: computed(() => authStore.loggedIn),
+        loading: computed(() => authStore.loading),
+        tokens: computed(() => authStore.tokens),
+
+        // Store getters
+        isAuthenticated: computed(() => authStore.isAuthenticated),
+        userName: computed(() => authStore.userName),
+        userEmail: computed(() => authStore.userEmail),
 
         // Methods
         login,

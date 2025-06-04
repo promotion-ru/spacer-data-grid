@@ -1,0 +1,94 @@
+<template>
+  <div class="sticky top-0 z-50 bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
+    <Toolbar
+      class="border-0 rounded-none px-6 py-3"
+      style="background: transparent"
+    >
+      <template #start>
+        <div class="flex items-center gap-4">
+          <!-- Кнопка меню (гамбургер) -->
+          <Button
+            icon="pi pi-bars"
+            @click="$emit('toggle-sidebar')"
+            text
+            rounded
+            size="large"
+            class="mr-2 lg:hidden"
+            aria-label="Toggle sidebar"
+          />
+          
+          <!-- Логотип и навигация -->
+          <div class="flex items-center gap-4">
+            <NuxtLink to="/" class="flex items-center gap-3 no-underline">
+              <span class="font-bold text-xl text-surface-900 dark:text-surface-0 hidden sm:block">
+                Data grid
+              </span>
+            </NuxtLink>
+          </div>
+        </div>
+      </template>
+      
+      <template #end>
+        <div class="flex items-center gap-3">
+          <!-- Профиль пользователя -->
+          <div class="relative">
+            <Button
+              @click="toggleUserMenu"
+              text
+              rounded
+              class="p-1"
+              aria-label="User menu"
+            >
+              <Avatar
+                image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+                size="normal"
+                shape="circle"
+                class="w-8 h-8"
+              />
+            </Button>
+            
+            <!-- Выпадающее меню пользователя -->
+            <Menu
+              ref="userMenu"
+              :model="userMenuItems"
+              :popup="true"
+              class="mt-2"
+            />
+          </div>
+        </div>
+      </template>
+    </Toolbar>
+  </div>
+</template>
+
+<script setup>
+const { user, logout, loading } = useAuth()
+const emit = defineEmits(['toggle-sidebar'])
+const userMenu = ref()
+
+// Пункты меню пользователя
+const userMenuItems = ref([
+  {
+    label: 'Профиль',
+    icon: 'pi pi-user',
+    command: () => navigateTo('/profile')
+  },
+  {
+    separator: true
+  },
+  {
+    label: 'Выйти',
+    icon: 'pi pi-sign-out',
+    command: () => handleLogout()
+  }
+])
+
+const toggleUserMenu = (event) => {
+  userMenu.value.toggle(event)
+}
+
+const handleLogout = async () => {
+  await logout()
+}
+
+</script>
