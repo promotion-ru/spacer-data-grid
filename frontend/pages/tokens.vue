@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen">
     <!-- Основной контент -->
     <div class="container mx-auto px-4 py-8">
       <div class="max-w-4xl mx-auto">
@@ -7,10 +7,10 @@
         <div class="mb-8">
           <div class="flex items-center justify-between">
             <div>
-              <h1 class="text-3xl font-bold text-gray-900 mb-2">
+              <h1 class="text-3xl font-bold mb-2">
                 Управление устройствами
               </h1>
-              <p class="text-gray-600">
+              <p>
                 Просматривайте и управляйте активными сессиями ваших устройств
               </p>
             </div>
@@ -33,10 +33,10 @@
                 <div class="bg-blue-100 rounded-full p-3 mb-3">
                   <i class="pi pi-mobile text-2xl text-blue-600"></i>
                 </div>
-                <div class="text-2xl font-bold text-gray-900 mb-1">
+                <div class="text-2xl font-bold mb-1">
                   {{ deviceStats.total }}
                 </div>
-                <div class="text-sm text-gray-500">
+                <div class="text-sm">
                   Всего устройств
                 </div>
               </div>
@@ -49,10 +49,10 @@
                 <div class="bg-green-100 rounded-full p-3 mb-3">
                   <i class="pi pi-check-circle text-2xl text-green-600"></i>
                 </div>
-                <div class="text-2xl font-bold text-gray-900 mb-1">
+                <div class="text-2xl font-bold mb-1">
                   {{ deviceStats.active }}
                 </div>
-                <div class="text-sm text-gray-500">
+                <div class="text-sm">
                   Активных сейчас
                 </div>
               </div>
@@ -65,10 +65,10 @@
                 <div class="bg-orange-100 rounded-full p-3 mb-3">
                   <i class="pi pi-clock text-2xl text-orange-600"></i>
                 </div>
-                <div class="text-2xl font-bold text-gray-900 mb-1">
+                <div class="text-2xl font-bold mb-1">
                   {{ deviceStats.expired }}
                 </div>
-                <div class="text-sm text-gray-500">
+                <div class="text-sm">
                   Истекших токенов
                 </div>
               </div>
@@ -89,11 +89,11 @@
           </template>
           
           <template #content>
-            <div class="space-y-4 text-sm text-gray-600">
+            <div class="space-y-4 text-sm">
               <div class="flex items-start gap-3">
                 <i class="pi pi-shield text-blue-500 mt-0.5"></i>
                 <div>
-                  <p class="font-medium text-gray-900 mb-1">Автоматический выход</p>
+                  <p class="font-medium mb-1">Автоматический выход</p>
                   <p>Неактивные сессии автоматически завершаются через 30 дней бездействия.</p>
                 </div>
               </div>
@@ -101,7 +101,7 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-eye text-green-500 mt-0.5"></i>
                 <div>
-                  <p class="font-medium text-gray-900 mb-1">Мониторинг активности</p>
+                  <p class="font-medium mb-1">Мониторинг активности</p>
                   <p>Мы отслеживаем последнюю активность каждого устройства для вашей безопасности.</p>
                 </div>
               </div>
@@ -109,7 +109,7 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-triangle text-orange-500 mt-0.5"></i>
                 <div>
-                  <p class="font-medium text-gray-900 mb-1">Подозрительная активность</p>
+                  <p class="font-medium mb-1">Подозрительная активность</p>
                   <p>Если вы видите неизвестные устройства, немедленно отзовите их токены и смените пароль.</p>
                 </div>
               </div>

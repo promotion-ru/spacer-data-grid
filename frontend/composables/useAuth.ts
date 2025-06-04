@@ -1,22 +1,6 @@
+// composables/useAuth.ts
 import { useAuthStore } from '~/stores/auth'
-
-interface User {
-    id: number
-    name: string
-    email: string
-    email_verified_at: string | null
-}
-
-interface TokenInfo {
-    id: number
-    name: string
-    abilities: string[]
-    last_used_at: string | null
-    expires_at: string | null
-    created_at: string
-    is_current: boolean
-    is_expired: boolean
-}
+import type { User, TokenInfo } from '~/types/auth'
 
 export const useAuth = () => {
     const config = useRuntimeConfig()
@@ -73,17 +57,13 @@ export const useAuth = () => {
                 }
             })
 
-            // Сохраняем токен и пользователя в store
             setToken(response.token)
             authStore.setUser(response.user)
 
             return { success: true, user: response.user }
         } catch (error: any) {
             console.error('Login error:', error)
-
-            // Очищаем состояние при ошибке
             authStore.clearAuth()
-
             return {
                 success: false,
                 error: error.data?.message || 'Ошибка авторизации'
@@ -122,7 +102,6 @@ export const useAuth = () => {
                 }
             })
 
-            // Сохраняем токен и пользователя в store
             setToken(response.token)
             authStore.setUser(response.user)
 
@@ -154,7 +133,6 @@ export const useAuth = () => {
             }
         }
 
-        // Очищаем состояние в store
         authStore.clearAuth()
         await router.push('/login')
     }
@@ -195,8 +173,6 @@ export const useAuth = () => {
             return user
         } catch (error) {
             console.error('Fetch user error:', error)
-
-            // При ошибке очищаем токен (возможно, истек)
             authStore.clearAuth()
             return null
         }
@@ -228,9 +204,7 @@ export const useAuth = () => {
                 headers: getAuthHeaders()
             })
 
-            // Обновляем список токенов после отзыва
             await getTokens()
-
             return { success: true }
         } catch (error: any) {
             console.error('Revoke token error:', error)
@@ -251,7 +225,6 @@ export const useAuth = () => {
             })
 
             setToken(response.token)
-
             return { success: true, token: response.token }
         } catch (error: any) {
             console.error('Refresh token error:', error)
@@ -308,7 +281,7 @@ export const useAuth = () => {
         userName: computed(() => authStore.userName),
         userEmail: computed(() => authStore.userEmail),
 
-        // Methods
+        // Auth methods only
         login,
         register,
         logout,

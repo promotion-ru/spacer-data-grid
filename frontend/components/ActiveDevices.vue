@@ -37,7 +37,7 @@
                 <div class="flex items-center gap-3 mb-3">
                   <div class="flex items-center gap-2">
                     <i :class="getDeviceIcon(token.name)" class="text-lg text-primary"></i>
-                    <span class="font-semibold text-surface-900 text-lg">
+                    <span class="font-semibold text-lg">
                       {{ token.name }}
                     </span>
                   </div>
