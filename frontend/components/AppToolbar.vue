@@ -39,12 +39,22 @@
               class="p-1"
               aria-label="User menu"
             >
-              <Avatar
-                image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-                size="normal"
-                shape="circle"
-                class="w-8 h-8"
-              />
+              <template v-if="user?.avatar_url">
+                <Avatar
+                  :image="user.avatar_url"
+                  size="normal"
+                  shape="circle"
+                  class="w-8 h-8"
+                />
+              </template>
+              <template v-else>
+                <Avatar
+                  image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+                  size="normal"
+                  shape="circle"
+                  class="w-8 h-8"
+                />
+              </template>
             </Button>
             
             <!-- Выпадающее меню пользователя -->
@@ -62,7 +72,8 @@
 </template>
 
 <script setup>
-const { user, logout, loading } = useAuth()
+const { user, logout } = useAuth()
+
 const emit = defineEmits(['toggle-sidebar'])
 const userMenu = ref()
 

@@ -1,8 +1,11 @@
+// plugins/api.client.ts
+
 export default defineNuxtPlugin(() => {
     const { getAuthHeaders, logout } = useAuth()
 
-    // Перехватчик для автоматического добавления токена
-    $fetch.create({
+    const api = $fetch.create({
+        baseURL: useRuntimeConfig().public.apiBase + '/api',
+
         onRequest({ request, options }) {
             // Добавляем заголовки авторизации автоматически
             const headers = getAuthHeaders()
@@ -19,4 +22,10 @@ export default defineNuxtPlugin(() => {
             }
         }
     })
+
+    return {
+        provide: {
+            api
+        }
+    }
 })
