@@ -35,9 +35,7 @@
         placeholder="Введите email"
         type="email"
       />
-      <small v-if="formErrorsComputed.email" :id="`email-error-message`" class="p-error">{{
-          formErrorsComputed.email
-        }}</small>
+      <small v-if="formErrorsComputed.email" :id="`email-error-message`" class="p-error">{{formErrorsComputed.email }}</small>
     </div>
     
     <div class="field">
@@ -81,17 +79,16 @@
     </div>
     
     <div class="field">
-      <label class="font-medium">Аватар</label>
-      <div v-if="currentAvatarUrl || avatarPreview" class="mb-3">
+      <div v-if="currentAvatarUrl && !formData.avatar && !formData.delete_avatar" class="mb-3">
         <div class="flex items-center gap-3">
           <Avatar
-            :image="avatarPreview || currentAvatarUrl"
-            :label="!avatarPreview && !currentAvatarUrl && formData.name ? formData.name.charAt(0).toUpperCase() : undefined"
+            :image="currentAvatarUrl"
+            :label="!currentAvatarUrl && formData.name ? formData.name.charAt(0).toUpperCase() : undefined"
             class="bg-primary-100 text-primary-700"
             shape="circle"
             size="xlarge"
           />
-          <div v-if="isEditing && (currentAvatarUrl || avatarPreview) && !formData.delete_avatar">
+          <div v-if="isEditing && currentAvatarUrl && !formData.delete_avatar">
             <Button
               class="p-button-danger p-button-text p-button-sm"
               icon="pi pi-trash"
@@ -100,28 +97,33 @@
               @click="requestAvatarDeletion"
             />
           </div>
-          <div v-if="formData.delete_avatar" class="text-orange-500 text-sm">
-            Текущий аватар будет удален при сохранении.
-          </div>
         </div>
       </div>
       
-      <FileUpload
-        :auto="false"
-        :chooseLabel="avatarChooseLabel"
-        :class="{'p-invalid': formErrorsComputed.avatar}"
-        :maxFileSize="2097152"
-        accept="image/*"
-        aria-describedby="avatar-error-message"
-        customUpload
-        mode="basic"
-        name="avatar_upload"
-        @clear="onFileClear"
-        @select="onFileSelect"
+      <div v-if="formData.delete_avatar && !formData.avatar" class="mb-3">
+        <div class="text-orange-500 text-sm flex items-center gap-2">
+          <i class="pi pi-exclamation-triangle"></i>
+          Текущий аватар будет удален при сохранении.
+          <Button
+            class="p-button-text p-button-sm"
+            icon="pi pi-undo"
+            label="Отменить"
+            type="button"
+            @click="cancelAvatarDeletion"
+          />
+        </div>
+      </div>
+      
+      <ImageUploader
+        ref="imageUploader"
+        v-model="formData.avatar"
+        label="Аватар"
+        :error="formErrorsComputed.avatar"
+        @file-selected="onImageSelected"
+        @file-removed="onImageRemoved"
+        @error="onImageError"
       />
-      <small class="text-gray-600 block mt-1">Максимальный размер файла: 2MB.</small>
-      <small v-if="formErrorsComputed.avatar" :id="`avatar-error-message`"
-             class="p-error block">{{ formErrorsComputed.avatar }}</small>
+    
     </div>
     <button class="hidden" type="submit"></button>
   </form>
@@ -146,18 +148,19 @@ const props = defineProps({
 
 const emit = defineEmits(['submit']);
 
+const imageUploader = ref(null);
+
 const getDefaultFormData = () => ({
   name: '',
   surname: '',
   email: '',
   password: '',
   password_confirmation: '',
-  avatar: null,       // File object for new avatar
+  avatar: null,       // base64 строка для нового аватара
   delete_avatar: false // Flag to delete existing avatar
 });
 
 const formData = reactive(getDefaultFormData());
-const avatarPreview = ref(null);
 const currentAvatarUrl = ref(null);
 
 const isEditing = computed(() => props.mode === 'edit');
@@ -174,17 +177,15 @@ const formErrorsComputed = computed(() => {
   return errorsToShow;
 });
 
-const avatarChooseLabel = computed(() => {
-  if (formData.avatar || avatarPreview.value) return 'Заменить изображение';
-  if (isEditing.value && currentAvatarUrl.value) return 'Заменить аватар';
-  return 'Выбрать изображение';
-});
-
-
 const resetFormInternal = () => {
   Object.assign(formData, getDefaultFormData());
-  avatarPreview.value = null;
   currentAvatarUrl.value = null;
+  
+  // Сбрасываем компонент загрузки изображений
+  if (imageUploader.value) {
+    imageUploader.value.reset();
+  }
+  
   if (isEditing.value && props.initialData && Object.keys(props.initialData).length) {
     fillForm(props.initialData);
   }
@@ -199,32 +200,33 @@ const fillForm = (data) => {
   formData.avatar = null;
   formData.delete_avatar = false;
   currentAvatarUrl.value = data.avatar_url || null;
-  avatarPreview.value = null;
 };
 
-const onFileSelect = (event) => {
-  const file = event.files[0];
-  if (file) {
-    formData.avatar = file;
-    formData.delete_avatar = false; // If new avatar is selected, don't delete old one by flag
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      avatarPreview.value = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  }
+// Методы для работы с ImageUploader
+const onImageSelected = (imageData) => {
+  formData.delete_avatar = false; // Если выбран новый аватар, отменяем удаление старого
 };
 
-const onFileClear = () => {
+const onImageRemoved = () => {
   formData.avatar = null;
-  avatarPreview.value = null;
+};
+
+const onImageError = (errorMessage) => {
+  // Обработка ошибок от ImageUploader
+  console.error('Image upload error:', errorMessage);
 };
 
 const requestAvatarDeletion = () => {
   formData.delete_avatar = true;
   formData.avatar = null;
-  avatarPreview.value = null;
-  // currentAvatarUrl will be handled by backend based on delete_avatar flag
+  // Сбрасываем ImageUploader
+  if (imageUploader.value) {
+    imageUploader.value.reset();
+  }
+};
+
+const cancelAvatarDeletion = () => {
+  formData.delete_avatar = false;
 };
 
 const onFormSubmitInternal = () => {
@@ -239,7 +241,6 @@ watch(() => props.initialData, (newData) => {
   }
 }, {immediate: true, deep: true});
 
-
 watch(() => props.errors, (newErrors) => {
   // Если ошибки приходят от родителя, они будут отображены через formErrorsComputed
 }, {deep: true});
@@ -252,7 +253,7 @@ defineExpose({
 
 <style scoped>
 .field {
-  margin-bottom: 1.25rem; /* Увеличил немного отступ */
+  margin-bottom: 1.25rem;
 }
 
 .field label {
@@ -260,12 +261,7 @@ defineExpose({
   margin-bottom: 0.5rem;
 }
 
-/* PrimeVue FileUpload basic mode width fix */
-:deep(.p-fileupload-basic .p-button) {
-  width: 100%;
-}
-
-:deep(.p-password-panel) { /* Ensure password panel does not overflow */
-  min-width: calc(100% - 2px); /* Adjust based on borders if necessary */
+:deep(.p-password-panel) {
+  min-width: calc(100% - 2px);
 }
 </style>

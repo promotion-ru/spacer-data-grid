@@ -87,27 +87,18 @@ const handleFormSubmit = async (formData) => {
     surname: formData.surname || '',
     email: formData.email,
     password: formData.password,
-    password_confirmation: formData.password_confirmation
+    password_confirmation: formData.password_confirmation,
+    avatar: formData.avatar,
+    delete_avatar: formData.delete_avatar,
   };
-  
-  // Для отправки файла аватара formData.avatar (это File объект)
-  // вам нужно использовать FormData, а не чистый JSON, ИЛИ
-  // ваш API должен принимать base64 строку (UserForm нужно будет доработать для конвертации).
-  // Текущая реализация отправляет только JSON.
-  // Если formData.avatar есть, и вы хотите его отправить, то:
-  // const payload = new FormData();
-  // Object.keys(userData).forEach(key => payload.append(key, userData[key]));
-  // if (formData.avatar) {
-  //   payload.append('avatar', formData.avatar);
-  // }
-  // const requestBody = payload; // И $api должен быть способен отправлять FormData
-  
-  const requestBody = userData; // Отправляем JSON
   
   try {
     const response = await $api('/users', {
       method: 'POST',
-      body: requestBody
+      body: JSON.stringify(userData),
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
     
     // Предполагаем, что успешный ответ имеет response.data с данными пользователя

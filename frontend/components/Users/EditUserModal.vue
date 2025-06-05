@@ -101,8 +101,8 @@ const handleFormSubmit = async (formData) => {
     name: formData.name,
     surname: formData.surname || '',
     email: formData.email,
+    avatar: formData.avatar,
     delete_avatar: formData.delete_avatar,
-    // _method: 'PUT' // Если ваш API ожидает это для POST запросов
   };
   
   if (formData.password) {
@@ -110,26 +110,14 @@ const handleFormSubmit = async (formData) => {
     userData.password_confirmation = formData.password_confirmation;
   }
   
-  // Для отправки файла нового аватара formData.avatar (File объект)
-  // как и в CreateUserModal, требуется FormData или Base64.
-  // Текущая реализация отправляет только JSON с флагом delete_avatar.
-  // Если formData.avatar есть (новый файл), вам нужно будет решить как его отправить.
-  // const payload = new FormData();
-  // Object.keys(userData).forEach(key => payload.append(key, userData[key]));
-  // if (formData.avatar) {
-  //   payload.append('avatar', formData.avatar); // Имя поля 'avatar' или как ожидает бэкэнд
-  // }
-  // payload.append('_method', 'PUT'); // Laravel часто требует это для FormData с PUT
-  // const requestBody = payload;
-  // const methodForApi = 'POST'; // При использовании FormData и _method: 'PUT'
-  
-  const requestBody = userData; // Отправляем JSON
-  const methodForApi = 'PUT';
-  
   try {
+    
     const response = await $api(`/users/${props.user.id}`, {
-      method: methodForApi,
-      body: requestBody
+      method: 'PATCH',
+      body: JSON.stringify(userData),
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
     
     emit('user-updated', response.data || response);
@@ -149,8 +137,7 @@ const handleFormSubmit = async (formData) => {
 
 watch(() => props.visible, (newValue) => {
   if (newValue) {
-    resetLocalState(); // Сброс при открытии
-    // UserForm сам обновится через :initial-data
+    resetLocalState();
   }
 });
 </script>
