@@ -2,14 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Facades\TelegramDump;
+use App\Http\Requests\UpdateProfileRequest;
+use App\Http\Resources\ProfileResource;
 use App\Services\FileUploadService;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rules\Password;
 use Log;
 
 class ProfileController extends Controller
@@ -28,15 +26,7 @@ class ProfileController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data'    => [
-                    'id'         => $user->id,
-                    'name'       => $user->name,
-                    'surname'    => $user->surname,
-                    'email'      => $user->email,
-                    'avatar_url' => $user->getFirstMediaUrl('avatars'),
-                    'created_at' => $user->created_at,
-                    'updated_at' => $user->updated_at
-                ]
+                'data'    => new ProfileResource($user),
             ]);
         } catch (Exception $e) {
             Log::error('Profile fetch error: ' . $e->getMessage());
@@ -48,42 +38,20 @@ class ProfileController extends Controller
         }
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateProfileRequest $request): JsonResponse
     {
         try {
             $user = Auth::user();
 
-            $validator = Validator::make($request->all(), [
-                'name'          => 'required|string|max:255',
-                'surname'       => 'nullable|string|max:255',
-                'email'         => 'required|email|unique:users,email,' . $user->id,
-                'password'      => ['nullable', 'confirmed', Password::min(8)],
-                'avatar'        => 'nullable|array',
-                'avatar.data'   => 'required_with:avatar|string',
-                'avatar.name'   => 'required_with:avatar|string',
-                'avatar.type'   => 'required_with:avatar|string|in:image/jpeg,image/png,image/gif,image/webp',
-                'delete_avatar' => 'nullable|boolean'
-            ]);
+            $validatedData = $request->validated();
+            $user->name = $validatedData['name'];
+            $user->surname = $validatedData['surname'] ?? null;
+            $user->email = $validatedData['email'];
 
-            if ($validator->fails()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ошибка валидации',
-                    'errors'  => $validator->errors()
-                ], 422);
-            }
-
-            // Обновляем основные данные
-            $user->name = $request->name;
-            $user->surname = $request->surname;
-            $user->email = $request->email;
-
-            // Обновляем пароль, если указан
             if ($request->filled('password')) {
-                $user->password = bcrypt($request->password);
+                $user->password = bcrypt($validatedData['password']);
             }
 
-            // Обрабатываем аватар
             if ($request->boolean('delete_avatar')) {
                 // Удаляем существующий аватар
                 $user->clearMediaCollection('avatars');
@@ -92,7 +60,7 @@ class ProfileController extends Controller
                 $avatar = $this->fileUploadService
                     ->onlyImages()
                     ->setMaxFileSize(2 * 1024 * 1024) // 2MB
-                    ->uploadFile($user, $request->avatar, 'avatars', [
+                    ->uploadFile($user, $validatedData['avatar'], 'avatars', [
                         'filename_prefix' => $user->id . '_avatar_'
                     ]);
                 $user->avatar_id = $avatar->id;
@@ -103,17 +71,9 @@ class ProfileController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Профиль успешно обновлен',
-                'data'    => [
-                    'id'               => $user->id,
-                    'name'             => $user->name,
-                    'surname'          => $user->surname,
-                    'email'            => $user->email,
-                    'avatar_url'       => $user->getFirstMediaUrl('avatars'),
-                    'avatar_thumb_url' => $user->getFirstMediaUrl('avatars', 'thumb'),
-                    'created_at'       => $user->created_at,
-                    'updated_at'       => $user->updated_at
-                ]
+                'data'    => new ProfileResource($user),
             ]);
+
         } catch (Exception $e) {
             Log::error('Profile update error: ' . $e->getMessage());
 

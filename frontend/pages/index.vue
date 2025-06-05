@@ -99,7 +99,12 @@
 
 <script setup>
 definePageMeta({
-  middleware: 'auth'
+  middleware: 'auth',
+  title: 'Дашборд',
+})
+
+useSeoMeta({
+  title: 'Дашборд'
 })
 
 const { $api } = useNuxtApp()

@@ -123,7 +123,12 @@
 <script lang="ts" setup>
 definePageMeta({
   layout: false,
-  middleware: 'guest'
+  middleware: 'guest',
+  title: 'Вход в систему',
+})
+
+useSeoMeta({
+  title: 'Вход в систему',
 })
 
 const {login, loading} = useAuth()

@@ -1,13 +1,8 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="container mx-auto px-4 py-8">
-      <!-- Загрузка -->
-      <div v-if="pending" class="flex justify-center py-12">
-        <ProgressSpinner/>
-      </div>
-      
       <!-- Основной контент -->
-      <div v-else-if="grid">
+      <div v-if="grid">
         <!-- Заголовок -->
         <div class="flex items-center justify-between mb-8">
           <div class="flex items-center space-x-4">
@@ -34,17 +29,17 @@
           <template #content>
             <DataTable
               :globalFilterFields="['name', 'description', 'creator.name']"
-              :loading="recordPending || recordsLoading"
+              :loading="pending || recordsLoading"
               :paginator="true"
               :rows="20"
-              :value="record"
+              :value="grid.records"
               class="p-datatable-sm"
               dataKey="id"
               :globalFilter="globalFilter"
             >
               <template #header>
                 <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-semibold">Записи ({{ record?.length || 0 }})</h3>
+                  <h3 class="text-lg font-semibold">Записи ({{ grid?.records?.length || 0 }})</h3>
                   <span class="p-input-icon-left">
                     <i class="pi pi-search"/>
                     <InputText
@@ -170,7 +165,12 @@
 
 <script setup>
 definePageMeta({
-  middleware: 'auth'
+  middleware: 'auth',
+  title: 'Таблица данных'
+})
+
+useSeoMeta({
+  title: 'Таблица данных'
 })
 
 const route = useRoute()
@@ -188,12 +188,6 @@ const globalFilter = ref('')
 // Загрузка данных
 const {data: grid, pending, refresh} = await useLazyAsyncData(`dataGrid-${route.params.id}`, () =>
   $api(`/data-grid/${route.params.id}`, {
-    method: 'GET'
-  }).then(res => res.data)
-)
-
-const {data: record, pending: recordPending, refresh: recordRefresh} = await useLazyAsyncData(`dataGrid-${route.params.id}-records`, () =>
-  $api(`/data-grid/${route.params.id}/records`, {
     method: 'GET'
   }).then(res => res.data)
 )
@@ -222,7 +216,7 @@ const onRecordCreated = async (newRecord) => {
     showCreateRecordModal.value = false
     
     // Обновляем список записей после создания
-    await recordRefresh()
+    await refresh()
     
     toast.add({
       severity: 'success',
@@ -252,7 +246,7 @@ const onRecordUpdated = async (updatedRecord) => {
     selectedRecord.value = null
     
     // Обновляем список записей после редактирования
-    await recordRefresh()
+    await refresh()
     
     toast.add({
       severity: 'success',
@@ -301,7 +295,7 @@ const deleteRecord = async (record) => {
     })
     
     // Обновляем список записей после удаления
-    await recordRefresh()
+    await refresh()
     
     toast.add({
       severity: 'success',
@@ -326,7 +320,7 @@ const deleteRecord = async (record) => {
 const forceRefreshRecords = async () => {
   try {
     recordsLoading.value = true
-    await recordRefresh()
+    await refresh()
     toast.add({
       severity: 'info',
       summary: 'Обновлено',

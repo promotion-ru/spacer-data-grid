@@ -223,12 +223,12 @@ definePageMeta({
   title: 'Мой профиль',
 })
 
-// SEO
 useSeoMeta({
   title: 'Мой профиль',
   description: 'Управление личным профилем пользователя'
 })
 
+const { fetchUser } = useAuth()
 const toast = useToast()
 const {
   profile,
@@ -388,6 +388,8 @@ const handleSubmit = async (): Promise<void> => {
     }
     
     await updateProfile(updateData)
+    
+    await fetchUser()
     
     toast.add({
       severity: 'success',

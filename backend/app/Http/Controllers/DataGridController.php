@@ -81,7 +81,7 @@ class DataGridController extends Controller
             abort(403, 'Доступ запрещен');
         }
 
-        $dataGrid->load(['records.media', 'records.creator', 'media']);
+        $dataGrid->load(['records.attachments', 'records.creator', 'media']);
 
         return response()->json([
             'success' => true,

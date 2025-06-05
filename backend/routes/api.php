@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DataGridController;
 use App\Http\Controllers\DataGridRecordController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 // Public routes
@@ -53,5 +54,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::patch('/{record}', [DataGridRecordController::class, 'update'])->name('update');
             Route::delete('/{record}', [DataGridRecordController::class, 'destroy'])->name('destroy');
         });
+    });
+
+    Route::prefix('users')->name('users.')->group(function () {
+
+        // Публичные маршруты (если нужны)
+        Route::get('/', [UserController::class, 'index'])->name('index');
+        Route::get('/{user}', [UserController::class, 'show'])->name('show');
+
+        // Защищенные маршруты (требуют авторизации)
+            Route::post('/', [UserController::class, 'store'])->name('store');
+            Route::put('/{user}', [UserController::class, 'update'])->name('update');
+            Route::patch('/{user}', [UserController::class, 'update'])->name('patch');
+            Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });
 });

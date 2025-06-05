@@ -17,6 +17,7 @@
       :showCancelButton="false"
       :showUploadButton="false"
       :url="uploadUrl"
+      :chooseLabel="chooseLabel"
       @clear="handleClear"
       @remove="handleRemove"
       @select="handleSelect"
@@ -129,6 +130,10 @@ const props = defineProps({
   disabled: {
     type: Boolean,
     default: false
+  },
+  chooseLabel: {
+    type: String,
+    default: 'Выбрать файлы'
   },
   
   // Настройки файлов

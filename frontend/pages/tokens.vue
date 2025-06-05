@@ -131,6 +131,10 @@ definePageMeta({
   middleware: 'auth'
 })
 
+useSeoMeta({
+  title: 'Активные устройства',
+})
+
 // Состояние
 const refreshing = ref(false)
 const deviceStats = ref({

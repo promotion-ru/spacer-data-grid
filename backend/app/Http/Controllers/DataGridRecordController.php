@@ -106,7 +106,7 @@ class DataGridRecordController extends Controller
     public function update(DataGridRecordRequest $request, DataGrid $dataGrid, DataGridRecord $record): JsonResponse
     {
         if (!Gate::allows('table.update', $dataGrid)) {
-//            abort(403, 'Доступ запрещен');
+            abort(403, 'Доступ запрещен');
         }
 
         $record->update($request->validated());

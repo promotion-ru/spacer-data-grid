@@ -122,6 +122,11 @@ const favoritesMenu = ref([
     icon: 'pi pi-sync',
     route: '/tokens',
   },
+  {
+    label: 'Пользователи',
+    icon: 'pi pi-users',
+    route: '/users',
+  },
 ])
 
 // Функции навигации

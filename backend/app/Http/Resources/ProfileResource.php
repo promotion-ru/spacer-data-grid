@@ -6,7 +6,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class ProfileResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -19,8 +19,8 @@ class UserResource extends JsonResource
             'surname'    => $this->surname,
             'email'      => $this->email,
             'avatar_url' => $this->getFirstMediaUrl('avatars'),
-            'created_at' => $this->created_at->format('d.m.Y H:i'),
-            'updated_at' => $this->updated_at->format('d.m.Y H:i'),
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at
         ];
     }
 }
