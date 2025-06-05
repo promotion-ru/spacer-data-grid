@@ -36,9 +36,9 @@
                 :alt="grid.name"
                 class="w-full h-full object-cover"
               />
-<!--              <div class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">-->
-<!--                <i class="pi pi-table text-4xl text-white" v-if="!grid.image_url"></i>-->
-<!--              </div>-->
+              <div v-else class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
+                <i class="pi pi-table text-4xl text-white"></i>
+              </div>
             </div>
           </template>
           
@@ -92,6 +92,8 @@
     
     <!-- Контекстное меню -->
     <ContextMenu ref="gridMenu" :model="gridMenuItems" />
+    <!-- Toast для уведомлений -->
+    <Toast />
   </div>
 </template>
 
@@ -102,6 +104,7 @@ definePageMeta({
 
 const { $api } = useNuxtApp()
 const router = useRouter()
+const toast = useToast()
 
 // Реактивные данные
 const showCreateModal = ref(false)
@@ -139,19 +142,24 @@ const editGrid = () => {
 }
 
 const deleteGrid = async () => {
-  if (!selectedGrid.value) return
+  console.log(selectedGrid.value)
+  if (!selectedGrid.value) {
+    return
+  }
   
   try {
-    await $api.delete(`/data-grid/${selectedGrid.value.id}`)
+    await $api(`/data-grid/${selectedGrid.value.id}`, {
+      method: 'DELETE'
+    })
     await refresh()
-    useToast().add({
+    toast.add({
       severity: 'success',
       summary: 'Успешно',
       detail: 'Таблица удалена',
       life: 3000
     })
   } catch (error) {
-    useToast().add({
+    toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: 'Не удалось удалить таблицу',

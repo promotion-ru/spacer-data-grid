@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\TelegramDump;
+use App\Services\FileUploadService;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,6 +14,13 @@ use Log;
 
 class ProfileController extends Controller
 {
+    protected FileUploadService $fileUploadService;
+
+    public function __construct(FileUploadService $fileUploadService)
+    {
+        $this->fileUploadService = $fileUploadService;
+    }
+
     public function show(): JsonResponse
     {
         try {
@@ -20,13 +29,13 @@ class ProfileController extends Controller
             return response()->json([
                 'success' => true,
                 'data'    => [
-                    'id'               => $user->id,
-                    'name'             => $user->name,
-                    'surname'          => $user->surname,
-                    'email'            => $user->email,
-                    'avatar_url'       => $user->getFirstMediaUrl('avatars'),
-                    'created_at'       => $user->created_at,
-                    'updated_at'       => $user->updated_at
+                    'id'         => $user->id,
+                    'name'       => $user->name,
+                    'surname'    => $user->surname,
+                    'email'      => $user->email,
+                    'avatar_url' => $user->getFirstMediaUrl('avatars'),
+                    'created_at' => $user->created_at,
+                    'updated_at' => $user->updated_at
                 ]
             ]);
         } catch (Exception $e) {
@@ -77,10 +86,16 @@ class ProfileController extends Controller
             // Обрабатываем аватар
             if ($request->boolean('delete_avatar')) {
                 // Удаляем существующий аватар
-                $this->deleteUserAvatar($user);
+                $user->clearMediaCollection('avatars');
             } elseif ($request->has('avatar')) {
-                // Загружаем новый аватар из base64
-                $this->uploadUserAvatarFromBase64($user, $request->avatar);
+                $user->clearMediaCollection('avatars');
+                $avatar = $this->fileUploadService
+                    ->onlyImages()
+                    ->setMaxFileSize(2 * 1024 * 1024) // 2MB
+                    ->uploadFile($user, $request->avatar, 'avatars', [
+                        'filename_prefix' => $user->id . '_avatar_'
+                    ]);
+                $user->avatar_id = $avatar->id;
             }
 
             $user->save();
@@ -106,58 +121,6 @@ class ProfileController extends Controller
                 'success' => false,
                 'message' => 'Ошибка при обновлении профиля'
             ], 500);
-        }
-    }
-
-    /**
-     * Удаляет аватар пользователя
-     */
-    private function deleteUserAvatar($user): void
-    {
-        $user->clearMediaCollection('avatars');
-    }
-
-    /**
-     * Загружает аватар пользователя из base64
-     */
-    private function uploadUserAvatarFromBase64($user, $avatarData): void
-    {
-        // Удаляем старый аватар
-        $this->deleteUserAvatar($user);
-
-        // Декодируем base64
-        $imageData = base64_decode($avatarData['data']);
-
-        // Проверяем размер файла (2MB)
-        if (strlen($imageData) > 2 * 1024 * 1024) {
-            throw new Exception('Размер файла не должен превышать 2MB');
-        }
-
-        // Определяем расширение файла по MIME типу
-        $extension = match ($avatarData['type']) {
-            'image/jpeg' => 'jpg',
-            'image/png' => 'png',
-            'image/gif' => 'gif',
-            'image/webp' => 'webp',
-            default => 'jpg'
-        };
-
-        // Создаем временный файл
-        $tempPath = sys_get_temp_dir() . '/' . uniqid() . '.' . $extension;
-        file_put_contents($tempPath, $imageData);
-
-        try {
-            // Добавляем медиа файл в коллекцию
-            $mediaFile = $user->addMedia($tempPath)
-                ->usingName($avatarData['name'])
-                ->usingFileName($user->id . '_' . time() . '.' . $extension)
-                ->toMediaCollection('avatars');
-            $user->avatar_id = $mediaFile->id;
-        } finally {
-            // Удаляем временный файл
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
         }
     }
 }

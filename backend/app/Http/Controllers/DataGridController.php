@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Facades\TelegramDump;
 use App\Http\Requests\DataGridRequest;
 use App\Http\Resources\DataGridResource;
 use App\Models\DataGrid;
-use Exception;
+use App\Services\FileUploadService;
 use Gate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +13,13 @@ use Illuminate\Support\Facades\Auth;
 
 class DataGridController extends Controller
 {
+    protected FileUploadService $fileUploadService;
+
+    public function __construct(FileUploadService $fileUploadService)
+    {
+        $this->fileUploadService = $fileUploadService;
+    }
+
     public function index(Request $request): JsonResponse
     {
         if (!Gate::allows('table.view')) {
@@ -47,7 +53,15 @@ class DataGridController extends Controller
         $dataGrid->save();
 
         if ($request->has('image')) {
-            $mediaFile = $this->uploadImageFromBase64($dataGrid, $request->image);
+            // Удаляем старое изображение
+            $this->fileUploadService->deleteFilesByCollection($dataGrid, 'data_grid_image');
+            // Загружаем новое изображение
+            $mediaFile = $this->fileUploadService
+                ->onlyImages()                    // Только изображения
+                ->setMaxFileSize(2 * 1024 * 1024) // 2MB как у вас
+                ->uploadFile($dataGrid, $request->image, 'data_grid_image', [
+                    'filename_prefix' => $dataGrid->id . '_'
+                ]);
             $dataGrid->image_id = $mediaFile->id;
             $dataGrid->save();
         }
@@ -59,66 +73,6 @@ class DataGridController extends Controller
             'message' => 'Таблица данных успешно создана',
             'data'    => new DataGridResource($dataGrid),
         ], 201);
-    }
-
-    private function uploadImageFromBase64($dataGrid, $imageData)
-    {
-        $this->deleteImage($dataGrid);
-
-        // Извлекаем чистую base64 строку из data URI
-        $dataUri = $imageData['data'];
-
-        // Проверяем, что это data URI
-        if (!preg_match('/^data:image\/(\w+);base64,(.+)$/', $dataUri, $matches)) {
-            throw new Exception('Неверный формат data URI');
-        }
-
-        $mimeType = $matches[1]; // jpeg, png, gif, webp
-        $base64Data = $matches[2]; // чистая base64 строка
-
-        // Декодируем base64
-        $decodedImageData = base64_decode($base64Data);
-
-        if ($decodedImageData === false) {
-            throw new Exception('Ошибка декодирования base64');
-        }
-
-        // Проверяем размер файла (2MB)
-        if (strlen($decodedImageData) > 2 * 1024 * 1024) {
-            throw new Exception('Размер файла не должен превышать 2MB');
-        }
-
-        // Определяем расширение файла по извлеченному MIME типу
-        $extension = match ($mimeType) {
-            'jpeg' => 'jpg',
-            'png' => 'png',
-            'gif' => 'gif',
-            'webp' => 'webp',
-            default => 'jpg'
-        };
-
-        // Создаем временный файл
-        $tempPath = sys_get_temp_dir() . '/' . uniqid() . '.' . $extension;
-        file_put_contents($tempPath, $decodedImageData);
-
-        try {
-            // Добавляем медиа файл в коллекцию
-            $mediaFile = $dataGrid->addMedia($tempPath)
-                ->usingName($imageData['name'])
-                ->usingFileName($dataGrid->id . '_' . time() . '.' . $extension)
-                ->toMediaCollection('data_grid_image');
-            return $mediaFile;
-        } finally {
-            // Удаляем временный файл
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
-        }
-    }
-
-    private function deleteImage($user): void
-    {
-        $user->clearMediaCollection('data_grid_image');
     }
 
     public function show(DataGrid $dataGrid): JsonResponse
@@ -157,9 +111,16 @@ class DataGridController extends Controller
 
         $dataGrid->fill($request->validated());
 
-        if ($request->hasFile('image')) {
-            $dataGrid->clearMediaCollection('data_grid_image');
-            $mediaFile = $dataGrid->addMediaFromRequest('image')->toMediaCollection('data_grid_image');
+        if ($request->has('image')) {
+            // Удаляем старое изображение
+            $this->fileUploadService->deleteFilesByCollection($dataGrid, 'data_grid_image');
+            // Загружаем новое изображение
+            $mediaFile = $this->fileUploadService
+                ->onlyImages()                    // Только изображения
+                ->setMaxFileSize(2 * 1024 * 1024) // 2MB как у вас
+                ->uploadFile($dataGrid, $request->image, 'data_grid_image', [
+                    'filename_prefix' => $dataGrid->id . '_'
+                ]);
             $dataGrid->image_id = $mediaFile->id;
         }
         $dataGrid->save();

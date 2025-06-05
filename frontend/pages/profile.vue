@@ -212,9 +212,6 @@
       </div>
     </div>
     
-    <!-- Диалог подтверждения удаления аватара -->
-    <ConfirmDialog />
-    
     <!-- Toast для уведомлений -->
     <Toast />
   </div>
@@ -233,7 +230,6 @@ useSeoMeta({
 })
 
 const toast = useToast()
-const confirm = useConfirm()
 const {
   profile,
   loading,
