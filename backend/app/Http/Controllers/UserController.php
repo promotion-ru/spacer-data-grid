@@ -25,6 +25,8 @@ class UserController extends Controller
 
     public function index(Request $request): JsonResponse
     {
+        $this->authorize('viewAny', User::class);
+
         try {
             $perPage = $request->get('per_page', 10);
             $search = $request->get('search');
@@ -62,6 +64,7 @@ class UserController extends Controller
 
     public function store(StoreUserRequest $request): JsonResponse
     {
+        $this->authorize('store', User::class);
         try {
             $validatedData = $request->validated();
 
@@ -102,6 +105,7 @@ class UserController extends Controller
 
     public function show(User $user): JsonResponse
     {
+        $this->authorize('show', $user);
         try {
             return response()->json([
                 'success' => true,
@@ -118,6 +122,7 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user): JsonResponse
     {
+        $this->authorize('update', $user);
         try {
             $validatedData = $request->validated();
 
@@ -161,6 +166,8 @@ class UserController extends Controller
 
     public function destroy(User $user): JsonResponse
     {
+        $this->authorize('delete', $user);
+
         try {
             $user->clearMediaCollection('avatars');
             $user->delete();

@@ -88,8 +88,13 @@ class DataGridController extends Controller
     public function destroy(DataGrid $dataGrid): JsonResponse
     {
         $this->authorize('delete', $dataGrid);
+        $dataGrid->load(['records.attachments']);
 
-        $dataGrid->update(['is_active' => false]);
+        foreach ($dataGrid->records as $record) {
+            $this->fileUploadService->deleteFilesByCollection($record, 'attachments');
+        }
+
+        $dataGrid->delete();
 
         return response()->json([
             'success' => true,

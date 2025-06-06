@@ -99,6 +99,10 @@
     
     <!-- Контекстное меню -->
     <ContextMenu ref="gridMenu" :model="gridMenuItems" />
+    
+    <!-- Попап подтверждения удаления -->
+    <ConfirmPopup />
+    
     <!-- Toast для уведомлений -->
     <Toast />
   </div>
@@ -117,6 +121,7 @@ useSeoMeta({
 const { $api } = useNuxtApp()
 const router = useRouter()
 const toast = useToast()
+const confirm = useConfirm()
 
 // Реактивные данные
 const showCreateModal = ref(false)
@@ -168,8 +173,29 @@ const editGrid = () => {
   }
 }
 
+const confirmDeleteGrid = (event) => {
+  if (!selectedGrid.value) {
+    return
+  }
+  
+  confirm.require({
+    target: event.currentTarget,
+    message: `Вы действительно хотите удалить таблицу "${selectedGrid.value.name}"? Это действие нельзя отменить.`,
+    header: 'Подтверждение удаления',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Удалить',
+    rejectLabel: 'Отмена',
+    accept: () => {
+      deleteGrid()
+    },
+    reject: () => {
+      selectedGrid.value = null
+    }
+  })
+}
+
 const deleteGrid = async () => {
-  console.log(selectedGrid.value)
   if (!selectedGrid.value) {
     return
   }
@@ -179,14 +205,17 @@ const deleteGrid = async () => {
       method: 'DELETE'
     })
     await refresh()
-    selectedGrid.value = null
+    
     toast.add({
       severity: 'success',
       summary: 'Успешно',
-      detail: 'Таблица удалена',
+      detail: `Таблица "${selectedGrid.value.name}" удалена`,
       life: 3000
     })
+    
+    selectedGrid.value = null
   } catch (error) {
+    console.error('Ошибка при удалении таблицы:', error)
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
@@ -206,7 +235,7 @@ const gridMenuItems = [
   {
     label: 'Удалить',
     icon: 'pi pi-trash',
-    command: deleteGrid
+    command: confirmDeleteGrid
   }
 ]
 </script>

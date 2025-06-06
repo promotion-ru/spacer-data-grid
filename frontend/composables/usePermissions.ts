@@ -57,11 +57,6 @@ export const usePermissions = () => {
         return user.value?.is_admin || false
     })
 
-    // Проверка, является ли пользователь менеджером
-    const isManager = computed(() => {
-        return user.value?.is_manager || false
-    })
-
     // Проверка доступа к админ-панели
     const canAccessAdmin = computed(() => {
         return isAdmin.value
@@ -125,9 +120,7 @@ export const usePermissions = () => {
         can,
 
         // Быстрые проверки ролей
-        isSuperAdmin,
         isAdmin,
-        isManager,
         canAccessAdmin,
 
         // Часто используемые проверки

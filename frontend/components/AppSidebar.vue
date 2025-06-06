@@ -31,7 +31,7 @@
           <!-- Секция FAVORITES -->
           <div class="p-4">
             <ul class="list-none p-0 m-0 overflow-hidden">
-              <li v-for="item in favoritesMenu" :key="item.label">
+              <li v-for="item in filteredFavoritesMenu" :key="item.label">
                 <a
                   v-ripple
                   class="flex items-center cursor-pointer p-3 rounded-lg text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors p-ripple relative"
@@ -76,7 +76,7 @@
             </template>
             <div class="flex flex-col">
               <span class="font-bold text-sm">{{ user.name }} {{ user.surname }}</span>
-              <span class="text-xs text-surface-500 dark:text-surface-400">Administrator</span>
+              <span class="text-xs text-surface-500 dark:text-surface-400">{{ showUserRoles }}</span>
             </div>
           </a>
         </div>
@@ -86,7 +86,9 @@
 </template>
 
 <script setup>
+
 const {user, logout} = useAuth()
+const { isAdmin } = usePermissions()
 
 const props = defineProps({
   visible: {
@@ -126,8 +128,27 @@ const favoritesMenu = ref([
     label: 'Пользователи',
     icon: 'pi pi-users',
     route: '/users',
+    access: () => {
+      return isAdmin.value
+    }
   },
 ])
+
+const filteredFavoritesMenu = computed(() => {
+  return favoritesMenu.value.filter(item => {
+    // Проверяем что элемент существует
+    if (!item) {
+      return false
+    }
+    
+    if (item.hasOwnProperty('access')) {
+      return item.access()
+    }
+    
+    // Проверяем доступ
+    return true
+  })
+})
 
 // Функции навигации
 const navigateToRoute = (route) => {
@@ -138,6 +159,17 @@ const navigateToRoute = (route) => {
     }
   }
 }
+
+const showUserRoles = computed(() => {
+  const roles = []
+  if (user.value.roles) {
+    user.value.roles.forEach((role) => {
+      roles.push(role.name)
+    })
+  }
+  
+  return roles.join(', ')
+})
 
 const navigateToProfile = () => {
   navigateToRoute('/profile')

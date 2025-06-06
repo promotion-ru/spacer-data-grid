@@ -125,7 +125,7 @@
 <script setup>
 definePageMeta({
   title: 'Управление пользователями',
-  middleware: 'auth' // Если есть
+  middleware: 'admin'
 });
 
 const { $api } = useNuxtApp();

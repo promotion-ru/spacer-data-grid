@@ -19,6 +19,7 @@ class ProfileResource extends JsonResource
             'surname'    => $this->surname,
             'email'      => $this->email,
             'avatar_url' => $this->getFirstMediaUrl('avatars'),
+            'is_admin'   => $this->hasRole('administrator'),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at
         ];

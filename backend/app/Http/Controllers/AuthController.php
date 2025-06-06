@@ -152,6 +152,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Unauthorized'], 401);
         }
         $user->load('roles.permissions');
+        $user->is_admin = $user->hasRole('administrator');
 
         return response()->json($user);
     }
