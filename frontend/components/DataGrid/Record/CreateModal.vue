@@ -54,11 +54,8 @@
         hint-text="Поддерживаемые форматы: изображения, документы, архивы (до 10MB каждый)"
         label="Вложения"
         @files-selected="onFilesSelected"
-        @files-converted="onFilesConverted"
-        @files-removed="onFilesRemoved"
         @validation-error="onValidationError"
       >
-        <!-- Кастомное пустое состояние -->
         <template #empty>
           <div class="flex flex-col items-center justify-center space-y-2 p-6">
             <i class="pi pi-cloud-upload text-4xl text-blue-400"></i>
@@ -69,8 +66,6 @@
             </p>
           </div>
         </template>
-        
-        <!-- Кастомное отображение файлов -->
         <template #content="{ files, removeFile, formatFileSize, getFileIcon }">
           <div v-if="files.length > 0">
             <h5 class="text-sm font-medium text-gray-700 mb-3">Выбранные файлы ({{ files.length }})</h5>
@@ -133,20 +128,6 @@
                   type="button"
                   @click="removeFile(index)"
                 />
-              </div>
-            </div>
-            
-            <!-- Сводная информация -->
-            <div class="mt-3 p-3 bg-blue-50 rounded text-sm">
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <span class="text-blue-700 font-medium">Всего файлов:</span>
-                  <span class="ml-2">{{ files.length }}</span>
-                </div>
-                <div>
-                  <span class="text-green-700 font-medium">Готово:</span>
-                  <span class="ml-2">{{ getReadyFilesCount() }}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -218,42 +199,9 @@ const getImagePreview = (fileObj) => {
   return null
 }
 
-const getReadyFilesCount = () => {
-  return attachmentFiles.value.filter(file => file.data).length
-}
-
-// Отслеживание изменений в v-model
-watch(attachmentFiles, (newFiles) => {
-  console.log('v-model обновлен:', {
-    totalFiles: newFiles.length,
-    readyFiles: newFiles.filter(f => f.data).length,
-    files: newFiles.map(f => ({
-      name: f.name,
-      hasBase64: !!f.data
-    }))
-  })
-}, {deep: true})
-
 // Обработчики событий файлового компонента
 const onFilesSelected = (files) => {
-  console.log('Файлы выбраны:', files.length)
-  // Очищаем ошибки валидации
   delete errors.value.new_attachments
-}
-
-const onFilesConverted = (convertedFiles) => {
-  console.log('Файлы сконвертированы:', convertedFiles.length)
-  
-  toast.add({
-    severity: 'success',
-    summary: 'Готово',
-    detail: `Обработано файлов: ${convertedFiles.length}`,
-    life: 3000
-  })
-}
-
-const onFilesRemoved = (removedFile) => {
-  console.log('Файл удален:', removedFile?.name)
 }
 
 const onValidationError = (validationErrors) => {

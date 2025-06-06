@@ -107,6 +107,11 @@ class DataGrid extends Model implements HasMedia
         return $this->hasMany(DataGridMember::class);
     }
 
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(DataGridType::class, 'type_id');
+    }
+
     public function canUserPerform(User $user, string $action): bool
     {
         $permissions = $this->getUserPermissions($user);

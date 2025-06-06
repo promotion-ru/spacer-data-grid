@@ -173,65 +173,78 @@
           @files-removed="onNewFilesRemoved"
           @validation-error="onValidationError"
         >
-          <!-- Кастомное отображение новых файлов -->
+          <template #empty>
+            <div class="flex flex-col items-center justify-center space-y-2 p-6">
+              <i class="pi pi-cloud-upload text-4xl text-blue-400"></i>
+              <span class="text-gray-600 font-medium">Добавьте файлы к записи</span>
+              <p class="text-xs text-gray-500 text-center">
+                Перетащите файлы сюда или нажмите для выбора<br>
+                Максимум 10 файлов по 10MB каждый
+              </p>
+            </div>
+          </template>
           <template #content="{ files, removeFile, formatFileSize, getFileIcon }">
             <div v-if="files.length > 0">
-              <h5 class="text-sm font-medium text-gray-700 mb-3">
-                Новые файлы ({{ files.length }})
-              </h5>
-              
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <h5 class="text-sm font-medium text-gray-700 mb-3">Выбранные файлы ({{ files.length }})</h5>
+              <div class="max-h-64 overflow-y-auto space-y-3">
                 <div
                   v-for="(fileObj, index) of files"
                   :key="fileObj.id"
-                  class="bg-blue-50 border border-blue-200 rounded-lg p-4"
+                  :class="{
+                  'bg-green-50 border-green-200': fileObj.data,
+                  'bg-orange-50 border-orange-200': !fileObj.data
+                }"
+                  class="flex items-center justify-between p-3 rounded border"
                 >
-                  <!-- Превью для изображений -->
-                  <div v-if="fileObj.type.startsWith('image/') && fileObj.data" class="mb-3">
-                    <img
-                      :src="getImagePreview(fileObj)"
-                      :alt="fileObj.name"
-                      class="w-full h-32 object-cover rounded border cursor-pointer"
-                      @click="previewNewImage(fileObj)"
-                    />
-                  </div>
-                  
-                  <!-- Иконка для других файлов -->
-                  <div v-else class="mb-3 flex justify-center">
-                    <i
-                      :class="getFileIcon(fileObj.type)"
-                      class="text-4xl"
-                    ></i>
-                  </div>
-                  
-                  <!-- Информация о файле -->
-                  <div class="space-y-2">
-                    <h4 class="text-sm font-medium text-gray-900 truncate text-wrap" :title="fileObj.name">
-                      {{ fileObj.name }}
-                    </h4>
-                    <div class="flex justify-between items-center text-xs">
-                      <span class="text-gray-500">{{ formatFileSize(fileObj.size) }}</span>
-                      <span
-                        class="px-2 py-1 rounded text-xs font-medium"
-                        :class="{
-                          'bg-green-100 text-green-700': fileObj.data,
-                          'bg-orange-100 text-orange-700': !fileObj.data
+                  <div class="flex items-center space-x-3">
+                    <!-- Превью для изображений -->
+                    <div v-if="fileObj.type.startsWith('image/') && fileObj.data" class="flex-shrink-0">
+                      <img
+                        :alt="fileObj.name"
+                        :src="getImagePreview(fileObj)"
+                        class="w-12 h-12 object-cover rounded border"
+                      />
+                    </div>
+                    <!-- Иконка для других файлов -->
+                    <div v-else class="flex-shrink-0">
+                      <i
+                        :class="getFileIcon(fileObj.type)"
+                        class="text-2xl"
+                      ></i>
+                    </div>
+                    
+                    <div class="min-w-0 flex-1">
+                      <p class="text-sm font-medium text-gray-900 truncate text-wrap">{{ fileObj.name }}</p>
+                      <p class="text-xs text-gray-500">{{ formatFileSize(fileObj.size) }}</p>
+                      
+                      <!-- Статус файла -->
+                      <div class="flex items-center mt-1">
+                        <i
+                          :class="{
+                          'pi pi-check text-green-500': fileObj.data,
+                          'pi pi-clock text-orange-500': !fileObj.data
                         }"
-                      >
-                        {{ fileObj.data ? 'Готов' : 'Обработка...' }}
+                          class="mr-1 text-xs"
+                        ></i>
+                        <span
+                          :class="{
+                          'text-green-600': fileObj.data,
+                          'text-orange-600': !fileObj.data
+                        }"
+                          class="text-xs"
+                        >
+                        {{ fileObj.data ? 'Готов к отправке' : 'Обрабатывается...' }}
                       </span>
+                      </div>
                     </div>
                   </div>
                   
-                  <!-- Кнопка удаления -->
-                  <div class="mt-3 flex justify-end">
-                    <Button
-                      icon="pi pi-times"
-                      class="p-button-rounded p-button-sm p-button-text p-button-danger"
-                      @click="removeFile(index)"
-                      type="button"
-                    />
-                  </div>
+                  <Button
+                    class="p-button-rounded p-button-sm p-button-text p-button-danger"
+                    icon="pi pi-times"
+                    type="button"
+                    @click="removeFile(index)"
+                  />
                 </div>
               </div>
             </div>

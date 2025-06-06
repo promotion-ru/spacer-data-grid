@@ -5,6 +5,7 @@ use App\Http\Controllers\DataGridController;
 use App\Http\Controllers\DataGridInvitationController;
 use App\Http\Controllers\DataGridMemberController;
 use App\Http\Controllers\DataGridRecordController;
+use App\Http\Controllers\DataGridTypeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -67,6 +68,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/{record}', [DataGridRecordController::class, 'show'])->name('show');
             Route::patch('/{record}', [DataGridRecordController::class, 'update'])->name('update');
             Route::delete('/{record}', [DataGridRecordController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('types')->name('types.')->group(function () {
+            Route::get('/search', [DataGridTypeController::class, 'search'])->name('search');
+            Route::post('/', [DataGridTypeController::class, 'store'])->name('store');
+            Route::get('/{dataGridType}', [DataGridTypeController::class, 'show'])->name('show');
+            Route::delete('/{dataGridType}', [DataGridTypeController::class, 'destroy'])->name('destroy');
         });
     });
 

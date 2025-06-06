@@ -7,6 +7,7 @@
     </label>
     
     <FileUpload
+      ref="fileUploadRef"
       :accept="acceptedTypes"
       :auto="false"
       :class="uploadClass"
@@ -18,6 +19,7 @@
       :showUploadButton="false"
       :url="uploadUrl"
       :chooseLabel="chooseLabel"
+      :key="fileUploadKey"
       @clear="handleClear"
       @remove="handleRemove"
       @select="handleSelect"
@@ -213,6 +215,8 @@ const emit = defineEmits([
 ])
 
 // Локальное состояние
+const fileUploadRef = ref(null)
+const fileUploadKey = ref(0)
 const fileObjects = ref([...props.modelValue])
 
 // Computed свойства
@@ -328,6 +332,31 @@ const convertFilesToObjects = async (files) => {
   return newFileObjects
 }
 
+// Синхронизация с внутренним состоянием FileUpload
+const syncWithFileUpload = async () => {
+  await nextTick()
+  
+  if (fileUploadRef.value && fileUploadRef.value.files) {
+    // Получаем текущие файлы из FileUpload
+    const internalFiles = fileUploadRef.value.files
+    
+    // Оставляем только те файлы, которые есть в fileObjects
+    const validFiles = internalFiles.filter(internalFile => {
+      return fileObjects.value.some(fileObj =>
+        fileObj.name === internalFile.name &&
+        fileObj.size === internalFile.size &&
+        fileObj.type === internalFile.type
+      )
+    })
+    
+    // Обновляем внутреннее состояние FileUpload
+    fileUploadRef.value.files.splice(0, fileUploadRef.value.files.length, ...validFiles)
+    
+    // Принудительное обновление компонента
+    fileUploadRef.value.$forceUpdate()
+  }
+}
+
 // Обработчики событий FileUpload
 const handleSelect = async (event) => {
   const files = Array.from(event.files)
@@ -374,24 +403,49 @@ const handleClear = () => {
   emit('files-removed', null)
 }
 
-// Удаление файла по индексу
-const removeFileByIndex = (index) => {
+// ИСПРАВЛЕННЫЙ метод удаления файла по индексу
+const removeFileByIndex = async (index) => {
   if (index >= 0 && index < fileObjects.value.length) {
-    const removedFile = fileObjects.value.splice(index, 1)[0]
+    const removedFile = fileObjects.value[index]
+    
+    // Удаляем из нашего состояния
+    fileObjects.value.splice(index, 1)
+    
+    // Синхронизируем с FileUpload
+    await syncWithFileUpload()
+    
+    // Если синхронизация не помогла, принудительно перерисовываем
+    if (fileUploadRef.value && fileUploadRef.value.files && fileUploadRef.value.files.length !== fileObjects.value.length) {
+      fileUploadKey.value++
+    }
+    
     updateModelValue()
     emit('files-removed', removedFile)
   }
 }
 
-// Обновление v-model - УПРОЩЕНО!
+// Альтернативный метод удаления с полной перерисовкой
+const removeFileByIndexForced = (index) => {
+  if (index >= 0 && index < fileObjects.value.length) {
+    const removedFile = fileObjects.value.splice(index, 1)[0]
+    
+    // Принудительная перерисовка
+    fileUploadKey.value++
+    
+    updateModelValue()
+    emit('files-removed', removedFile)
+  }
+}
+
+// Обновление v-model
 const updateModelValue = () => {
-  // Отправляем все файлы в v-model, независимо от наличия base64
   emit('update:modelValue', [...fileObjects.value])
 }
 
 // Публичные методы компонента
 const clear = () => {
   handleClear()
+  fileUploadKey.value++
 }
 
 const getFiles = () => {
@@ -413,6 +467,7 @@ const addFile = async (file) => {
   
   try {
     await convertFilesToObjects([file])
+    await syncWithFileUpload()
     updateModelValue()
     return true
   } catch (error) {
@@ -426,6 +481,13 @@ const removeFile = (fileId) => {
   if (index > -1) {
     removeFileByIndex(index)
   }
+}
+
+// Принудительное обновление файлов (для внешнего управления)
+const updateFiles = (newFiles) => {
+  fileObjects.value = [...newFiles]
+  fileUploadKey.value++
+  updateModelValue()
 }
 
 // Создание превью для изображений
@@ -471,11 +533,15 @@ defineExpose({
   getAllFiles,
   addFile,
   removeFile,
+  removeFileByIndex,
+  removeFileByIndexForced,
+  updateFiles,
   createImagePreview,
   getFileAsBlob,
   totalFiles,
   formatFileSize,
-  getFileIcon
+  getFileIcon,
+  syncWithFileUpload
 })
 </script>
 
