@@ -149,7 +149,7 @@ const handleSubmit = async () => {
       }
     })
     console.log('response', response)
-    const createdDataGrid = response.data.data
+    const createdDataGrid = response.data
     emit('created', createdDataGrid)
     closeModal()
     

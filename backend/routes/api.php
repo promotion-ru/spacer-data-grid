@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DataGridController;
+use App\Http\Controllers\DataGridInvitationController;
+use App\Http\Controllers\DataGridMemberController;
 use App\Http\Controllers\DataGridRecordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
@@ -47,6 +49,18 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::patch('/{dataGrid}', [DataGridController::class, 'update'])->name('update.patch');
         Route::delete('/{dataGrid}', [DataGridController::class, 'destroy'])->name('destroy');
 
+        Route::prefix('{dataGrid}')->group(function () {
+            // Отправка приглашения
+            Route::post('invite', [DataGridInvitationController::class, 'store']);
+            // Управление участниками
+            Route::get('members', [DataGridMemberController::class, 'index']);
+            Route::put('members/{member}', [DataGridMemberController::class, 'update']);
+            Route::delete('members/{member}', [DataGridMemberController::class, 'destroy']);
+            Route::post('leave', [DataGridMemberController::class, 'leave']);
+            // Управление приглашениями
+            Route::delete('invitations/{invitation}', [DataGridInvitationController::class, 'destroy']);
+        });
+
         Route::prefix('{dataGrid}/records')->name('records.')->group(function () {
             Route::get('/', [DataGridRecordController::class, 'index'])->name('index');
             Route::post('/', [DataGridRecordController::class, 'store'])->name('store');
@@ -56,6 +70,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
         });
     });
 
+    // Получение приглашений для текущего пользователя
+    Route::get('invitations', [DataGridInvitationController::class, 'index']);
+    // Принятие/отклонение приглашений
+    Route::post('invitations/{token}/accept', [DataGridInvitationController::class, 'accept']);
+    Route::post('invitations/{token}/decline', [DataGridInvitationController::class, 'decline']);
+
+
     Route::prefix('users')->name('users.')->group(function () {
 
         // Публичные маршруты (если нужны)
@@ -63,9 +84,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
 
         // Защищенные маршруты (требуют авторизации)
-            Route::post('/', [UserController::class, 'store'])->name('store');
-            Route::put('/{user}', [UserController::class, 'update'])->name('update');
-            Route::patch('/{user}', [UserController::class, 'update'])->name('patch');
-            Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
+        Route::post('/', [UserController::class, 'store'])->name('store');
+        Route::put('/{user}', [UserController::class, 'update'])->name('update');
+        Route::patch('/{user}', [UserController::class, 'update'])->name('patch');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('destroy');
     });
 });

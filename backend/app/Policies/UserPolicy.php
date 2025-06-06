@@ -15,9 +15,9 @@ class UserPolicy
         return $user->can('users.view') && $user->hasRole('administrator');
     }
 
-    public function create(User $user): bool
+    public function store(User $user): bool
     {
-        return $user->can('users.create');
+        return $user->can('users.create') && $user->hasRole('administrator');
     }
 
     public function update(User $user, DataGrid $modelUser): bool

@@ -181,7 +181,7 @@ const handleSubmit = async () => {
       }
     })
     
-    const updatedDataGrid = response.data.data
+    const updatedDataGrid = response.data
     // Отправляем событие `updated` с обновленными данными
     emit('updated', updatedDataGrid)
     closeModal()

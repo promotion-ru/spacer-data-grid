@@ -1,6 +1,12 @@
 <template>
   <div class="min-h-screen bg-gray-50">
     <div class="container mx-auto px-4 py-8">
+      <!-- Приглашения -->
+      <InvitationNotifications
+        :invitations="invitations"
+        @updated="refreshData"
+      />
+      
       <!-- Заголовок и кнопка создания -->
       <div class="flex justify-between items-center mb-8">
         <div>
@@ -8,16 +14,16 @@
           <p class="text-gray-600 mt-2">Управляйте своими данными в удобном формате</p>
         </div>
         <Button
-          label="Создать таблицу"
-          icon="pi pi-plus"
           class="p-button-lg"
+          icon="pi pi-plus"
+          label="Создать таблицу"
           @click="showCreateModal = true"
         />
       </div>
       
       <!-- Загрузка -->
-      <div v-if="pending" class="flex justify-center py-12">
-        <ProgressSpinner />
+      <div v-if="pending || invitationsPending" class="flex justify-center py-12">
+        <ProgressSpinner/>
       </div>
       
       <!-- Список таблиц -->
@@ -32,22 +38,32 @@
             <div class="relative h-48 bg-gradient-to-br from-blue-400 to-purple-500">
               <img
                 v-if="grid.image_url"
-                :src="grid.image_url"
                 :alt="grid.name"
+                :src="grid.image_url"
                 class="w-full h-full object-cover"
               />
               <div v-else class="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center">
                 <i class="pi pi-table text-4xl text-white"></i>
+              </div>
+              
+              <!-- Индикатор чужой таблицы -->
+              <div v-if="!grid.is_owner" class="absolute top-2 left-2">
+                <Tag class="text-xs" severity="warning" value="Общая"/>
               </div>
             </div>
           </template>
           
           <template #title>
             <div class="flex justify-between items-start">
-              <h3 class="text-lg font-semibold text-gray-900 truncate">{{ grid.name }}</h3>
+              <div class="flex-1">
+                <h3 class="text-lg font-semibold text-gray-900 truncate">{{ grid.name }}</h3>
+                <p v-if="!grid.is_owner && grid.owner_name" class="text-sm text-gray-500">
+                  Владелец: {{ grid.owner_name }}
+                </p>
+              </div>
               <Button
-                icon="pi pi-ellipsis-v"
                 class="p-button-text p-button-sm"
+                icon="pi pi-ellipsis-v"
                 @click.stop="toggleGridMenu($event, grid)"
               />
             </div>
@@ -66,6 +82,17 @@
                 </span>
                 <span>{{ grid.created_at }}</span>
               </div>
+              
+              <!-- Права доступа для чужих таблиц -->
+              <div v-if="!grid.is_owner && grid.permissions" class="flex flex-wrap gap-1">
+                <Tag
+                  v-for="permission in grid.permissions"
+                  :key="permission"
+                  :value="getPermissionLabel(permission)"
+                  class="text-xs"
+                  severity="info"
+                />
+              </div>
             </div>
           </template>
         </Card>
@@ -77,8 +104,8 @@
         <h3 class="text-xl font-semibold text-gray-700 mb-2">У вас пока нет таблиц данных</h3>
         <p class="text-gray-500 mb-6">Создайте свою первую таблицу для управления данными</p>
         <Button
-          label="Создать таблицу"
           icon="pi pi-plus"
+          label="Создать таблицу"
           @click="showCreateModal = true"
         />
       </div>
@@ -97,14 +124,29 @@
       @updated="onGridUpdated"
     />
     
+    <!-- Модальное окно совместного использования -->
+    <DataGridShareModal
+      v-if="selectedGrid?.is_owner"
+      v-model:visible="showShareModal"
+      :grid="selectedGrid"
+      @invited="onUserInvited"
+    />
+    
+    <!-- Модальное окно управления участниками -->
+    <DataGridMembersModal
+      v-if="selectedGrid?.is_owner"
+      v-model:visible="showMembersModal"
+      :grid="selectedGrid"
+    />
+    
     <!-- Контекстное меню -->
-    <ContextMenu ref="gridMenu" :model="gridMenuItems" />
+    <ContextMenu ref="gridMenu" :model="gridMenuItems"/>
     
     <!-- Попап подтверждения удаления -->
-    <ConfirmPopup />
+    <ConfirmPopup/>
     
     <!-- Toast для уведомлений -->
-    <Toast />
+    <Toast/>
   </div>
 </template>
 
@@ -118,7 +160,7 @@ useSeoMeta({
   title: 'Дашборд'
 })
 
-const { $api } = useNuxtApp()
+const {$api} = useNuxtApp()
 const router = useRouter()
 const toast = useToast()
 const confirm = useConfirm()
@@ -126,17 +168,35 @@ const confirm = useConfirm()
 // Реактивные данные
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
+const showShareModal = ref(false)
+const showMembersModal = ref(false)
 const gridMenu = ref()
 const selectedGrid = ref(null)
 
-// Загрузка данных
-const { data: grids, pending, refresh } = await useLazyAsyncData('dataGrids', async () => {
-    const response = await $api('/data-grid', {
+// Загрузка данных таблиц
+const {data: grids, pending, refresh} = await useLazyAsyncData('dataGrids', async () => {
+  const response = await $api('/data-grid', {
+    method: 'GET'
+  })
+  return response.data
+})
+
+// Загрузка приглашений
+const {
+  data: invitations,
+  pending: invitationsPending,
+  refresh: refreshInvitations
+} = await useLazyAsyncData('invitations', async () => {
+  try {
+    const response = await $api('/invitations', {
       method: 'GET'
     })
     return response.data
+  } catch (error) {
+    console.error('Ошибка загрузки приглашений:', error)
+    return []
   }
-)
+})
 
 // Методы
 const navigateToGrid = (grid) => {
@@ -148,6 +208,18 @@ const toggleGridMenu = (event, grid) => {
   gridMenu.value.toggle(event)
 }
 
+const getPermissionLabel = (permission) => {
+  const labels = {
+    view: 'Просмотр',
+    create: 'Создание',
+    update: 'Редактирование',
+    delete: 'Удаление',
+    manage: 'Управление'
+  }
+  return labels[permission] || permission
+}
+
+// Обработчики событий
 const onGridCreated = (newGrid) => {
   showCreateModal.value = false
   refresh()
@@ -167,9 +239,64 @@ const onGridUpdated = (updatedGrid) => {
   })
 }
 
+const onUserInvited = () => {
+  showShareModal.value = false
+  toast.add({
+    severity: 'success',
+    summary: 'Успешно',
+    detail: 'Приглашение отправлено',
+    life: 3000
+  })
+}
+
+const refreshData = async () => {
+  await Promise.all([refresh(), refreshInvitations()])
+}
+
 const editGrid = () => {
   if (selectedGrid.value) {
     showEditModal.value = true
+  }
+}
+
+const shareGrid = () => {
+  if (selectedGrid.value?.is_owner) {
+    showShareModal.value = true
+  }
+}
+
+const manageGridMembers = () => {
+  if (selectedGrid.value?.is_owner) {
+    showMembersModal.value = true
+  }
+}
+
+const leaveGrid = async () => {
+  if (!selectedGrid.value || selectedGrid.value.is_owner) return
+  
+  try {
+    await $api(`/data-grid/${selectedGrid.value.id}/leave`, {
+      method: 'POST'
+    })
+    
+    await refreshData()
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Успешно',
+      detail: 'Вы покинули таблицу',
+      life: 3000
+    })
+    
+    selectedGrid.value = null
+  } catch (error) {
+    console.error('Ошибка при выходе из таблицы:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: 'Не удалось покинуть таблицу',
+      life: 3000
+    })
   }
 }
 
@@ -226,18 +353,46 @@ const deleteGrid = async () => {
 }
 
 // Элементы контекстного меню
-const gridMenuItems = [
-  {
-    label: 'Редактировать',
-    icon: 'pi pi-pencil',
-    command: editGrid
-  },
-  {
-    label: 'Удалить',
-    icon: 'pi pi-trash',
-    command: confirmDeleteGrid
+const gridMenuItems = computed(() => {
+  if (!selectedGrid.value) return []
+  
+  const baseItems = []
+  
+  if (selectedGrid.value.is_owner) {
+    baseItems.push(
+      {
+        label: 'Поделиться',
+        icon: 'pi pi-share-alt',
+        command: shareGrid
+      },
+      {
+        label: 'Настройка таблицы',
+        icon: 'pi pi-cog',
+        command: manageGridMembers
+      },
+      {
+        label: 'Редактировать',
+        icon: 'pi pi-pencil',
+        command: editGrid
+      },
+      {
+        label: 'Удалить',
+        icon: 'pi pi-trash',
+        command: confirmDeleteGrid
+      }
+    )
+  } else {
+    baseItems.push(
+      {
+        label: 'Покинуть таблицу',
+        icon: 'pi pi-sign-out',
+        command: leaveGrid
+      }
+    )
   }
-]
+  
+  return baseItems
+})
 </script>
 
 <style scoped>

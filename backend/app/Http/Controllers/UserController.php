@@ -65,6 +65,7 @@ class UserController extends Controller
     public function store(StoreUserRequest $request): JsonResponse
     {
         $this->authorize('store', User::class);
+
         try {
             $validatedData = $request->validated();
 

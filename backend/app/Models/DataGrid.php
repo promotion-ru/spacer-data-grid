@@ -2,8 +2,6 @@
 // app/Models/DataGrid.php
 namespace App\Models;
 
-use Eloquent;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -77,5 +75,51 @@ class DataGrid extends Model implements HasMedia
     public function getImageUrlAttribute(): ?string
     {
         return $this->getFirstMediaUrl('grid_image');
+    }
+
+    public function pendingInvitations(): HasMany
+    {
+        return $this->invitations()->pending();
+    }
+
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(DataGridInvitation::class);
+    }
+
+    public function hasAccess(User $user): bool
+    {
+        return $this->isOwner($user) || $this->isMember($user);
+    }
+
+    public function isOwner(User $user): bool
+    {
+        return $this->user_id === $user->id;
+    }
+
+    public function isMember(User $user): bool
+    {
+        return $this->members()->where('user_id', $user->id)->exists();
+    }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(DataGridMember::class);
+    }
+
+    public function canUserPerform(User $user, string $action): bool
+    {
+        $permissions = $this->getUserPermissions($user);
+        return in_array($action, $permissions);
+    }
+
+    public function getUserPermissions(User $user): array
+    {
+        if ($this->isOwner($user)) {
+            return ['view', 'create', 'update', 'delete', 'manage'];
+        }
+
+        $member = $this->members()->where('user_id', $user->id)->first();
+        return $member ? $member->permissions : [];
     }
 }

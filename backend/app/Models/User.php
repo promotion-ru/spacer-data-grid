@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Database\Factories\UserFactory;
-use Eloquent;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Notifications\DatabaseNotificationCollection;
@@ -73,6 +74,28 @@ class User extends Authenticatable implements HasMedia
     public function avatar(): BelongsTo
     {
         return $this->belongsTo(Media::class, 'avatar_id', 'id');
+    }
+
+    public function dataGrids(): HasMany
+    {
+        return $this->hasMany(DataGrid::class);
+    }
+
+    public function sharedGrids(): BelongsToMany
+    {
+        return $this->belongsToMany(DataGrid::class, 'data_grid_members')
+            ->withPivot(['permissions', 'invited_by'])
+            ->withTimestamps();
+    }
+
+    public function pendingInvitations(): HasMany
+    {
+        return $this->gridInvitations()->pending();
+    }
+
+    public function gridInvitations(): HasMany
+    {
+        return $this->hasMany(DataGridInvitation::class, 'user_id', 'id');
     }
 
     protected function casts(): array

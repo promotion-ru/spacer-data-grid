@@ -26,9 +26,7 @@ class DataGridRecordController extends Controller
 
     public function index(Request $request, DataGrid $dataGrid): JsonResponse
     {
-        if (!Gate::allows('table.view', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
-        }
+        $this->authorize('viewAny', [DataGridRecord::class, $dataGrid]);
 
         $records = $dataGrid->records()
             ->with(['media', 'creator', 'attachments'])
@@ -43,9 +41,7 @@ class DataGridRecordController extends Controller
 
     public function store(DataGridRecordRequest $request, DataGrid $dataGrid): JsonResponse
     {
-        if (!Gate::allows('table.create', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
-        }
+        $this->authorize('create', [DataGridRecord::class, $dataGrid]);
 
         $record = $dataGrid->records()->create([
             ...$request->validated(),
@@ -91,9 +87,16 @@ class DataGridRecordController extends Controller
 
     public function show(DataGrid $dataGrid, DataGridRecord $record): JsonResponse
     {
-        if (!Gate::allows('table.view', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
+        // Проверяем, что запись принадлежит указанной таблице
+        if ($record->data_grid_id !== $dataGrid->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Запись не найдена в указанной таблице',
+            ], 404);
         }
+
+        // Проверяем права на просмотр записи
+        $this->authorize('view', $record);
 
         $record->load(['media', 'creator', 'dataGrid']);
 
@@ -105,9 +108,16 @@ class DataGridRecordController extends Controller
 
     public function update(DataGridRecordRequest $request, DataGrid $dataGrid, DataGridRecord $record): JsonResponse
     {
-        if (!Gate::allows('table.update', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
+        // Проверяем, что запись принадлежит указанной таблице
+        if ($record->data_grid_id !== $dataGrid->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Запись не найдена в указанной таблице',
+            ], 404);
         }
+
+        // Проверяем права на редактирование записи
+        $this->authorize('update', $record);
 
         $record->update($request->validated());
 
@@ -152,9 +162,15 @@ class DataGridRecordController extends Controller
 
     public function destroy(DataGrid $dataGrid, DataGridRecord $record): JsonResponse
     {
-        if (!Gate::allows('table.view', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
+        // Проверяем, что запись принадлежит указанной таблице
+        if ($record->data_grid_id !== $dataGrid->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Запись не найдена в указанной таблице',
+            ], 404);
         }
+        // Проверяем права на удаление записи
+        $this->authorize('delete', $record);
 
         // Удаляем все вложения (включая файлы из S3)
         $record->clearMediaCollection('attachments');

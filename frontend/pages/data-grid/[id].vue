@@ -12,22 +12,81 @@
               @click="$router.push('/')"
             />
             <div>
-              <h1 class="text-3xl font-bold text-gray-900">{{ grid.name }}</h1>
+              <div class="flex items-center space-x-2">
+                <h1 class="text-3xl font-bold text-gray-900">{{ grid.name }}</h1>
+                <Tag v-if="!grid.is_owner" severity="warning" value="Общая"/>
+              </div>
               <p v-if="grid.description" class="text-gray-600 mt-1">{{ grid.description }}</p>
+              <p v-if="!grid.is_owner && grid.owner_name" class="text-sm text-gray-500 mt-1">
+                Владелец: {{ grid.owner_name }}
+              </p>
             </div>
           </div>
           
-          <Button
-            icon="pi pi-plus"
-            label="Добавить запись"
-            @click="showCreateRecordModal = true"
-          />
+          <div class="flex space-x-3">
+            <!-- Кнопка добавления записи (только если есть права) -->
+            <Button
+              v-if="hasPermission('create')"
+              icon="pi pi-plus"
+              label="Добавить запись"
+              @click="showCreateRecordModal = true"
+            />
+            
+            <!-- Кнопки управления для владельца -->
+            <template v-if="grid.is_owner">
+              <Button
+                class="p-button-outlined"
+                icon="pi pi-share-alt"
+                label="Поделиться"
+                @click="showShareModal = true"
+              />
+              <Button
+                class="p-button-outlined"
+                icon="pi pi-cog"
+                label="Настройка таблицы"
+                @click="showMembersModal = true"
+              />
+            </template>
+            
+            <!-- Кнопка покинуть таблицу для участников -->
+            <Button
+              v-else
+              class="p-button-outlined p-button-danger"
+              icon="pi pi-sign-out"
+              label="Покинуть таблицу"
+              @click="confirmLeaveGrid"
+            />
+          </div>
+        </div>
+        
+        <!-- Права доступа для участников -->
+        <div v-if="!grid.is_owner && grid.permissions" class="mb-6">
+          <Card class="border-l-4 border-l-blue-500 bg-blue-50">
+            <template #content>
+              <div class="flex items-center space-x-4">
+                <i class="pi pi-shield text-blue-600 text-xl"></i>
+                <div>
+                  <h3 class="font-semibold text-blue-900">Ваши права в этой таблице:</h3>
+                  <div class="flex flex-wrap gap-2 mt-2">
+                    <Tag
+                      v-for="permission in grid.permissions"
+                      :key="permission"
+                      :value="getPermissionLabel(permission)"
+                      class="text-sm"
+                      severity="info"
+                    />
+                  </div>
+                </div>
+              </div>
+            </template>
+          </Card>
         </div>
         
         <!-- Таблица записей -->
         <Card class="shadow-sm">
           <template #content>
             <DataTable
+              :globalFilter="globalFilter"
               :globalFilterFields="['name', 'description', 'creator.name']"
               :loading="pending || recordsLoading"
               :paginator="true"
@@ -35,7 +94,6 @@
               :value="grid.records"
               class="p-datatable-sm"
               dataKey="id"
-              :globalFilter="globalFilter"
             >
               <template #header>
                 <div class="flex justify-between items-center">
@@ -56,6 +114,7 @@
                   <i class="pi pi-inbox text-4xl text-gray-300 mb-4"></i>
                   <p class="text-gray-500">В таблице пока нет записей</p>
                   <Button
+                    v-if="hasPermission('create')"
                     class="p-button-outlined mt-4"
                     icon="pi pi-plus"
                     label="Добавить первую запись"
@@ -106,16 +165,19 @@
                 </template>
               </Column>
               
+              <!-- Действия с учетом прав -->
               <Column class="w-24" header="Действия">
                 <template #body="{ data }">
                   <div class="flex space-x-2">
                     <Button
+                      v-if="hasPermission('update')"
                       v-tooltip.top="'Редактировать'"
                       class="p-button-outlined p-button-sm"
                       icon="pi pi-pencil"
                       @click="editRecord(data)"
                     />
                     <Button
+                      v-if="hasPermission('delete')"
                       v-tooltip.top="'Удалить'"
                       class="p-button-outlined p-button-sm p-button-danger"
                       icon="pi pi-trash"
@@ -144,6 +206,7 @@
     
     <!-- Модальное окно создания записи -->
     <DataGridRecordCreateModal
+      v-if="hasPermission('create')"
       v-model:visible="showCreateRecordModal"
       :grid-id="grid?.id"
       @created="onRecordCreated"
@@ -152,10 +215,26 @@
     
     <!-- Модальное окно редактирования записи -->
     <DataGridRecordEditModal
+      v-if="hasPermission('update')"
       v-model:visible="showEditRecordModal"
       :record="selectedRecord"
       @updated="onRecordUpdated"
       @update:visible="onEditModalVisibilityChange"
+    />
+    
+    <!-- Модальное окно совместного использования -->
+    <DataGridShareModal
+      v-if="grid?.is_owner"
+      v-model:visible="showShareModal"
+      :grid="grid"
+      @invited="onUserInvited"
+    />
+    
+    <!-- Модальное окно управления участниками -->
+    <DataGridMembersModal
+      v-if="grid?.is_owner"
+      v-model:visible="showMembersModal"
+      :grid="grid"
     />
     
     <!-- Диалог подтверждения удаления -->
@@ -182,6 +261,8 @@ const toast = useToast()
 const recordsLoading = ref(false)
 const showCreateRecordModal = ref(false)
 const showEditRecordModal = ref(false)
+const showShareModal = ref(false)
+const showMembersModal = ref(false)
 const selectedRecord = ref(null)
 const globalFilter = ref('')
 
@@ -192,11 +273,26 @@ const {data: grid, pending, refresh} = await useLazyAsyncData(`dataGrid-${route.
   }).then(res => res.data)
 )
 
+// Методы проверки прав
+const hasPermission = (permission) => {
+  return grid.value?.permissions?.includes(permission) || false
+}
+
+const getPermissionLabel = (permission) => {
+  const labels = {
+    view: 'Просмотр',
+    create: 'Создание',
+    update: 'Редактирование',
+    delete: 'Удаление',
+    manage: 'Управление'
+  }
+  return labels[permission] || permission
+}
+
 // Методы для обработки событий модальных окон
 const onCreateModalVisibilityChange = (visible) => {
   showCreateRecordModal.value = visible
   if (!visible) {
-    // Дополнительная очистка при закрытии модального окна
     console.log('Модальное окно создания закрыто')
   }
 }
@@ -206,6 +302,54 @@ const onEditModalVisibilityChange = (visible) => {
   if (!visible) {
     selectedRecord.value = null
     console.log('Модальное окно редактирования закрыто')
+  }
+}
+
+// Обработчики событий для совместного использования
+const onUserInvited = () => {
+  showShareModal.value = false
+  toast.add({
+    severity: 'success',
+    summary: 'Успешно',
+    detail: 'Приглашение отправлено',
+    life: 3000
+  })
+}
+
+const confirmLeaveGrid = () => {
+  confirm.require({
+    message: 'Вы уверены, что хотите покинуть эту таблицу?',
+    header: 'Подтверждение',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    acceptLabel: 'Покинуть',
+    rejectLabel: 'Отмена',
+    accept: () => leaveGrid()
+  })
+}
+
+const leaveGrid = async () => {
+  try {
+    await $api(`/data-grid/${grid.value.id}/leave`, {
+      method: 'POST'
+    })
+    
+    $router.push('/')
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Успешно',
+      detail: 'Вы покинули таблицу',
+      life: 3000
+    })
+  } catch (error) {
+    console.error('Ошибка при выходе из таблицы:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: 'Не удалось покинуть таблицу',
+      life: 3000
+    })
   }
 }
 
@@ -342,6 +486,12 @@ const handleKeydown = (event) => {
     }
     if (showEditRecordModal.value) {
       showEditRecordModal.value = false
+    }
+    if (showShareModal.value) {
+      showShareModal.value = false
+    }
+    if (showMembersModal.value) {
+      showMembersModal.value = false
     }
   }
 }

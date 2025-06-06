@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\DataGridRequest;
+use App\Facades\TelegramDump;
 use App\Http\Requests\StoreDataGridRequest;
 use App\Http\Requests\UpdateDataGridRequest;
 use App\Http\Resources\DataGridResource;
@@ -27,15 +27,36 @@ class DataGridController extends Controller
 
         $user = Auth::user();
 
-        $dataGrids = DataGrid::query()
+        // Собственные таблицы
+        $ownGrids = DataGrid::query()
             ->where('user_id', $user->id)
             ->with(['media'])
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($grid) {
+                $grid->is_owner = true;
+                $grid->permissions = ['view', 'create', 'update', 'delete', 'manage'];
+                return $grid;
+            });
+
+        // Общие таблицы
+        $sharedGrids = $user->sharedGrids()
+            ->with(['media', 'user'])
+            ->latest('data_grid_members.created_at')
+            ->get()
+            ->map(function ($grid) {
+                $grid->is_owner = false;
+                $grid->permissions = json_decode($grid->pivot->permissions);
+                $grid->owner_name = $grid->user->name;
+                return $grid;
+            });
+
+        // Объединяем все таблицы
+        $allGrids = $ownGrids->concat($sharedGrids);
 
         return response()->json([
             'success' => true,
-            'data'    => DataGridResource::collection($dataGrids),
+            'data'    => DataGridResource::collection($allGrids),
         ]);
     }
 
@@ -76,8 +97,16 @@ class DataGridController extends Controller
     public function show(DataGrid $dataGrid): JsonResponse
     {
         $this->authorize('view', $dataGrid);
+        $user = Auth::user();
 
         $dataGrid->load(['records.attachments', 'records.creator', 'media']);
+        // Добавляем информацию о правах пользователя
+        $dataGrid->is_owner = $dataGrid->isOwner($user);
+        $dataGrid->permissions = $dataGrid->getUserPermissions($user);
+
+        if (!$dataGrid->is_owner) {
+            $dataGrid->owner_name = $dataGrid->user->name;
+        }
 
         return response()->json([
             'success' => true,
