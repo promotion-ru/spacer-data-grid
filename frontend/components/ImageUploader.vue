@@ -4,21 +4,22 @@
       {{ label }}
     </label>
     
-    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+    <div
+      class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
       <div v-if="!imagePreview" class="space-y-2">
         <i class="pi pi-image text-3xl text-gray-400"></i>
         <div>
           <FileUpload
-            mode="basic"
-            @select="onFileSelect"
-            customUpload
-            auto
-            severity="secondary"
-            class="p-button-outlined"
             :accept="accept"
-            :maxFileSize="maxFileSize"
             :chooseLabel="chooseLabel"
             :disabled="disabled"
+            :maxFileSize="maxFileSize"
+            auto
+            class="p-button-outlined"
+            customUpload
+            mode="basic"
+            severity="secondary"
+            @select="onFileSelect"
           />
         </div>
         <p class="text-xs text-gray-500">{{ hint }}</p>
@@ -26,18 +27,18 @@
       
       <div v-else class="relative">
         <img
-          :src="imagePreview"
           :alt="altText"
-          class="shadow-md rounded-xl w-full sm:w-64 max-h-32 object-cover mx-auto"
+          :src="imagePreview"
           :style="grayscale ? 'filter: grayscale(100%)' : ''"
+          class="shadow-md rounded-xl w-full sm:w-64 max-h-32 object-cover mx-auto"
           loading="lazy"
         />
         <Button
-          icon="pi pi-times"
-          class="p-button-rounded p-button-sm p-button-danger absolute -top-2 -right-2"
-          @click="removeImage"
-          type="button"
           :disabled="disabled"
+          class="p-button-rounded p-button-sm p-button-danger absolute -top-2 -right-2"
+          icon="pi pi-times"
+          type="button"
+          @click="removeImage"
         />
       </div>
     </div>
@@ -47,9 +48,15 @@
 </template>
 
 <script setup>
+import {computed, ref} from 'vue'
+
 const props = defineProps({
   modelValue: {
-    type: [Object, String],
+    type: String,
+    default: null
+  },
+  initialImageUrl: {
+    type: String,
     default: null
   },
   label: {
@@ -92,55 +99,46 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'file-selected', 'file-removed', 'error'])
 
-// Функция для извлечения превью из modelValue
-const getPreviewFromModelValue = (value) => {
-  if (!value) return null
-  
-  // Если это строка (base64 или URL)
-  if (typeof value === 'string') {
-    return value
+// Этот флаг будет отслеживать, удалил ли пользователь ИМЕННО начальное изображение
+const initialImageRemoved = ref(false)
+
+// `imagePreview` - это вычисляемое свойство для определения того, что нужно показать
+const imagePreview = computed(() => {
+  // 1. Приоритет у нового выбранного файла (`modelValue`)
+  if (props.modelValue && props.modelValue.data) {
+    return props.modelValue.data
   }
   
-  // Если это объект с data
-  if (typeof value === 'object' && value.data) {
-    return value.data
+  // 2. Показываем начальное изображение, только если оно есть И его не удаляли
+  if (props.initialImageUrl && !initialImageRemoved.value) {
+    return props.initialImageUrl
   }
   
+  // 3. Во всех остальных случаях - пусто (будет показан блок загрузки)
   return null
-}
+})
 
-const imagePreview = ref(getPreviewFromModelValue(props.modelValue))
-
-// Обновляем превью при изменении modelValue
-watch(() => props.modelValue, (newValue) => {
-  imagePreview.value = getPreviewFromModelValue(newValue)
-}, { immediate: true })
-
+// Метод, который вызывается при выборе файла
 const onFileSelect = (event) => {
   const file = event.files[0]
   if (!file) return
   
-  // Валидация типа файла
+  // Валидация типа и размера файла
   if (!file.type.startsWith('image/')) {
-    emit('error', 'Выберите изображение')
+    emit('error', 'Выберите изображение');
     return
   }
-  
-  // Валидация размера файла
   if (file.size > props.maxFileSize) {
     const maxSizeMB = (props.maxFileSize / 1024 / 1024).toFixed(0)
-    emit('error', `Размер файла не должен превышать ${maxSizeMB}MB`)
+    emit('error', `Размер файла не должен превышать ${maxSizeMB}MB`);
     return
   }
   
-  // Очищаем ошибку
   emit('error', null)
   
-  // Создание превью и конвертация в base64
   const reader = new FileReader()
   reader.onload = (e) => {
     const base64String = e.target.result
-    imagePreview.value = base64String
     
     const fileData = {
       data: base64String,
@@ -148,6 +146,9 @@ const onFileSelect = (event) => {
       type: file.type,
       size: file.size
     }
+    
+    // Если пользователь выбирает новый файл, мы "забываем", что он удалял начальный.
+    initialImageRemoved.value = false
     
     emit('update:modelValue', fileData)
     emit('file-selected', {
@@ -159,20 +160,32 @@ const onFileSelect = (event) => {
   reader.readAsDataURL(file)
 }
 
+// Метод, который вызывается при нажатии на кнопку удаления
 const removeImage = () => {
-  imagePreview.value = null
-  emit('update:modelValue', null)
+  // Если удаляется НОВЫЙ файл (он лежит в modelValue)
+  if (props.modelValue) {
+    emit('update:modelValue', null)
+  }
+  // Если удаляется НАЧАЛЬНЫЙ файл (modelValue пуст, но есть initialImageUrl)
+  else if (props.initialImageUrl) {
+    // Взводим внутренний флаг, чтобы computed-свойство скрыло картинку
+    initialImageRemoved.value = true
+  }
+  
+  // В любом случае сообщаем родителю, что произошло удаление
   emit('file-removed')
 }
 
-// Метод для сброса компонента
+// Метод для полного сброса состояния компонента из родителя
 const reset = () => {
-  removeImage()
+  emit('update:modelValue', null)
+  emit('error', null)
+  // При полном сбросе компонента сбрасываем и наш флаг
+  initialImageRemoved.value = false
 }
 
-// Экспортируем методы для родительского компонента
+// Экспортируем метод `reset` для использования в родительском компоненте
 defineExpose({
-  reset,
-  removeImage
+  reset
 })
 </script>

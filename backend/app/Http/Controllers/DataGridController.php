@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\DataGridRequest;
+use App\Http\Requests\StoreDataGridRequest;
+use App\Http\Requests\UpdateDataGridRequest;
 use App\Http\Resources\DataGridResource;
 use App\Models\DataGrid;
 use App\Services\FileUploadService;
-use Gate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,9 +23,7 @@ class DataGridController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        if (!Gate::allows('table.view')) {
-            abort(403, 'Доступ запрещен');
-        }
+        $this->authorize('viewAny', DataGrid::class);
 
         $user = Auth::user();
 
@@ -40,11 +39,10 @@ class DataGridController extends Controller
         ]);
     }
 
-    public function store(DataGridRequest $request): JsonResponse
+    public function store(StoreDataGridRequest $request): JsonResponse
     {
-        if (!Gate::allows('table.create')) {
-            abort(403, 'Доступ запрещен');
-        }
+        $this->authorize('create', DataGrid::class);
+
         $user = Auth::user();
 
         $dataGrid = new DataGrid();
@@ -52,7 +50,7 @@ class DataGridController extends Controller
         $dataGrid->user_id = $user->id;
         $dataGrid->save();
 
-        if ($request->has('image')) {
+        if ($request->filled('image')) {
             // Удаляем старое изображение
             $this->fileUploadService->deleteFilesByCollection($dataGrid, 'data_grid_image');
             // Загружаем новое изображение
@@ -77,9 +75,7 @@ class DataGridController extends Controller
 
     public function show(DataGrid $dataGrid): JsonResponse
     {
-        if (!Gate::allows('table.view', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
-        }
+        $this->authorize('view', $dataGrid);
 
         $dataGrid->load(['records.attachments', 'records.creator', 'media']);
 
@@ -91,9 +87,7 @@ class DataGridController extends Controller
 
     public function destroy(DataGrid $dataGrid): JsonResponse
     {
-        if (!Gate::allows('table.delete', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
-        }
+        $this->authorize('delete', $dataGrid);
 
         $dataGrid->update(['is_active' => false]);
 
@@ -103,22 +97,22 @@ class DataGridController extends Controller
         ]);
     }
 
-    public function update(DataGridRequest $request, DataGrid $dataGrid): JsonResponse
+    public function update(UpdateDataGridRequest $request, DataGrid $dataGrid): JsonResponse
     {
-        if (!Gate::allows('table.update', $dataGrid)) {
-            abort(403, 'Доступ запрещен');
-        }
+        $this->authorize('update', $dataGrid);
 
         $dataGrid->fill($request->validated());
 
-        if ($request->has('image')) {
+        if ($request->boolean('delete_image')) {
+            $this->fileUploadService->deleteFilesByCollection($dataGrid, 'data_grid_image');
+        } elseif ($request->has('new_image')) {
             // Удаляем старое изображение
             $this->fileUploadService->deleteFilesByCollection($dataGrid, 'data_grid_image');
             // Загружаем новое изображение
             $mediaFile = $this->fileUploadService
                 ->onlyImages()                    // Только изображения
                 ->setMaxFileSize(2 * 1024 * 1024) // 2MB как у вас
-                ->uploadFile($dataGrid, $request->image, 'data_grid_image', [
+                ->uploadFile($dataGrid, $request->new_image, 'data_grid_image', [
                     'filename_prefix' => $dataGrid->id . '_'
                 ]);
             $dataGrid->image_id = $mediaFile->id;

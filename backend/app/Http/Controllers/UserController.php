@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Constant;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
 use App\Http\Resources\UserResource;
@@ -11,6 +12,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Log;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -80,6 +82,9 @@ class UserController extends Controller
                 $user->avatar_id = $avatar->id;
                 $user->save();
             }
+
+            $role = Role::query()->where('id', Constant::ROLE_USER)->first();
+            $user->assignRole($role);
 
             return response()->json([
                 'success' => true,

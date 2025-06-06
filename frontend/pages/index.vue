@@ -90,6 +90,13 @@
       @created="onGridCreated"
     />
     
+    <!-- Модальное окно редактирования -->
+    <DataGridEditModal
+      v-model:visible="showEditModal"
+      :grid="selectedGrid"
+      @updated="onGridUpdated"
+    />
+    
     <!-- Контекстное меню -->
     <ContextMenu ref="gridMenu" :model="gridMenuItems" />
     <!-- Toast для уведомлений -->
@@ -113,6 +120,7 @@ const toast = useToast()
 
 // Реактивные данные
 const showCreateModal = ref(false)
+const showEditModal = ref(false)
 const gridMenu = ref()
 const selectedGrid = ref(null)
 
@@ -141,9 +149,23 @@ const onGridCreated = (newGrid) => {
   navigateToGrid(newGrid)
 }
 
+const onGridUpdated = (updatedGrid) => {
+  showEditModal.value = false
+  selectedGrid.value = null
+  refresh()
+  
+  toast.add({
+    severity: 'success',
+    summary: 'Успешно',
+    detail: `Таблица "${updatedGrid.name}" обновлена`,
+    life: 3000
+  })
+}
+
 const editGrid = () => {
-  // Реализация редактирования
-  console.log('Редактировать:', selectedGrid.value)
+  if (selectedGrid.value) {
+    showEditModal.value = true
+  }
 }
 
 const deleteGrid = async () => {
@@ -157,6 +179,7 @@ const deleteGrid = async () => {
       method: 'DELETE'
     })
     await refresh()
+    selectedGrid.value = null
     toast.add({
       severity: 'success',
       summary: 'Успешно',
