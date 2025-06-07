@@ -13,13 +13,17 @@ export const usePermissions = () => {
 
     // Проверка нескольких ролей (хотя бы одна)
     const hasAnyRole = (roles: string[]): boolean => {
-        if (!user.value?.roles) return false
+        if (!user.value?.roles) {
+            return false
+        }
         return roles.some(role => user.value.roles.includes(role))
     }
 
     // Проверка всех ролей (все должны быть)
     const hasAllRoles = (roles: string[]): boolean => {
-        if (!user.value?.roles) return false
+        if (!user.value?.roles) {
+            return false
+        }
         return roles.every(role => user.value.roles.includes(role))
     }
 
@@ -32,13 +36,17 @@ export const usePermissions = () => {
 
     // Проверка нескольких разрешений (хотя бы одно)
     const hasAnyPermission = (permissions: string[]): boolean => {
-        if (!user.value?.permissions) return false
+        if (!user.value?.permissions) {
+            return false
+        }
         return permissions.some(permission => user.value.permissions.includes(permission))
     }
 
     // Проверка всех разрешений (все должны быть)
     const hasAllPermissions = (permissions: string[]): boolean => {
-        if (!user.value?.permissions) return false
+        if (!user.value?.permissions) {
+            return false
+        }
         return permissions.every(permission => user.value.permissions.includes(permission))
     }
 
@@ -46,7 +54,9 @@ export const usePermissions = () => {
 
     // Проверка возможности выполнения действия (через группированные права)
     const can = (resource: keyof User['can'], action: string): boolean => {
-        if (!user.value?.can || !user.value.can[resource]) return false
+        if (!user.value?.can || !user.value.can[resource]) {
+            return false
+        }
         return (user.value.can[resource] as any)[action] || false
     }
 
@@ -78,13 +88,14 @@ export const usePermissions = () => {
         delete: can('users', 'delete')
     }))
 
-    // Проверки для постов
+    // Проверки для таблиц
     const table = computed(() => ({
         view: can('table', 'view'),
         create: can('table', 'create'),
         edit: can('table', 'edit'),
         delete: can('table', 'delete'),
         share: can('table', 'share'),
+        manage: can('table', 'manage'),
     }))
 
     // Проверки для системы

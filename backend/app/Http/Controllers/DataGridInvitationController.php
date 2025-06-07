@@ -151,8 +151,6 @@ class DataGridInvitationController extends Controller
             ], 403);
         }
 
-//        $invitation->update(['status' => 'declined']);
-
         $invitation->delete();
 
         return response()->json([
