@@ -16,6 +16,9 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
 use Laravel\Sanctum\HasApiTokens;
 use Laravel\Sanctum\PersonalAccessToken;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
@@ -48,7 +51,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements HasMedia
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, InteractsWithMedia, HasRoles, LogsActivity;
 
     protected $fillable = [
         'name',
@@ -96,6 +99,58 @@ class User extends Authenticatable implements HasMedia
     public function gridInvitations(): HasMany
     {
         return $this->hasMany(DataGridInvitation::class, 'user_id', 'id');
+    }
+
+    public function tapActivity(Activity $activity, string $eventName): void
+    {
+        switch ($eventName) {
+            case 'created':
+                $activity->description = "Создан новый пользователь: {$this->name} (ID: {$this->id})";
+                break;
+            case 'updated':
+                $changes = $this->getActivityLogChanges();
+                if (empty($changes)) {
+                    $activity->description = "Обновлены данные пользователя: {$this->name}";
+                } else {
+                    $activity->description = implode(', ', $changes);
+                }
+                break;
+            case 'deleted':
+                $activity->description = "Удален пользователь: {$this->name} (ID: {$this->id})";
+                break;
+        }
+    }
+
+    private function getActivityLogChanges(): array
+    {
+        $changes = [];
+        $dirty = $this->getDirty();
+
+        foreach ($dirty as $field => $newValue) {
+            if (!in_array($field, $this->getActivitylogOptions()->logAttributes)) {
+                continue;
+            }
+            $oldValue = $this->getOriginal($field);
+            $fieldName = match ($field) {
+                'name' => 'Имя',
+                'surname' => 'Фамилия',
+                'email' => 'Email',
+                'avatar_id' => 'Аватар',
+                default => ucfirst($field)
+            };
+            $changes[] = "{$fieldName} с '{$oldValue}' на '{$newValue}'";
+        }
+
+        return $changes;
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['name', 'email', 'surname', 'avatar_id'])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->useLogName('users');
     }
 
     protected function casts(): array

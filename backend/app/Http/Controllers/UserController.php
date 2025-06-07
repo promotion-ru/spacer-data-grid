@@ -76,7 +76,7 @@ class UserController extends Controller
             $user->password = bcrypt($validatedData['password']);
             $user->save();
 
-            if ($request->has('avatar')) {
+            if ($request->filled('avatar')) {
                 $avatar = $this->fileUploadService
                     ->onlyImages()
                     ->setMaxFileSize(2 * 1024 * 1024) // 2MB
@@ -138,7 +138,7 @@ class UserController extends Controller
             if ($request->boolean('delete_avatar')) {
                 $user->clearMediaCollection('avatars');
                 $user->avatar_id = null;
-            } elseif ($request->has('avatar')) {
+            } elseif ($request->filled('avatar')) {
                 $user->clearMediaCollection('avatars');
                 $avatar = $this->fileUploadService
                     ->onlyImages()
