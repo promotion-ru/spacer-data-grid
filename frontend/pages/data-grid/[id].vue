@@ -170,6 +170,12 @@
                 <template #body="{ data }">
                   <div class="flex space-x-2">
                     <Button
+                      v-tooltip.top="'Просмотр'"
+                      class="p-button-outlined p-button-sm p-button-info"
+                      icon="pi pi-eye"
+                      @click="viewRecord(data)"
+                    />
+                    <Button
                       v-if="hasPermission('update')"
                       v-tooltip.top="'Редактировать'"
                       class="p-button-outlined p-button-sm"
@@ -203,6 +209,13 @@
         />
       </div>
     </div>
+    
+    <!-- Модальное окно просмотра записи -->
+    <DataGridRecordViewModal
+      v-model:visible="showViewRecordModal"
+      :record="selectedRecord"
+      @update:visible="onViewModalVisibilityChange"
+    />
     
     <!-- Модальное окно создания записи -->
     <DataGridRecordCreateModal
@@ -259,6 +272,8 @@ const toast = useToast()
 
 // Реактивные данные
 const recordsLoading = ref(false)
+const showViewRecordModal = ref(false)
+
 const showCreateRecordModal = ref(false)
 const showEditRecordModal = ref(false)
 const showShareModal = ref(false)
@@ -290,6 +305,18 @@ const getPermissionLabel = (permission) => {
 }
 
 // Методы для обработки событий модальных окон
+const viewRecord = (record) => {
+  selectedRecord.value = record
+  showViewRecordModal.value = true
+}
+
+const onViewModalVisibilityChange = (visible) => {
+  showViewRecordModal.value = visible
+  if (!visible) {
+    selectedRecord.value = null
+    console.log('Модальное окно просмотра закрыто')
+  }
+}
 const onCreateModalVisibilityChange = (visible) => {
   showCreateRecordModal.value = visible
   if (!visible) {
@@ -486,6 +513,9 @@ const handleKeydown = (event) => {
     }
     if (showEditRecordModal.value) {
       showEditRecordModal.value = false
+    }
+    if (showViewRecordModal.value) {
+      showViewRecordModal.value = false
     }
     if (showShareModal.value) {
       showShareModal.value = false
