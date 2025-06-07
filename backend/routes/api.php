@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DataGridController;
+use App\Http\Controllers\DataGridFileDownloadController;
 use App\Http\Controllers\DataGridInvitationController;
 use App\Http\Controllers\DataGridMemberController;
 use App\Http\Controllers\DataGridRecordController;
@@ -40,6 +41,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::prefix('profile')->group(function () {
         Route::get('/', [ProfileController::class, 'show']);
         Route::patch('/', [ProfileController::class, 'update']);
+    });
+
+    // Роуты для скачивания файлов с middleware
+    Route::middleware(['sanctum.query'])->group(function () {
+        Route::get('/data-grid/{gridId}/records/{recordId}/media/{mediaId}/download',
+            [DataGridFileDownloadController::class, 'downloadMedia']
+        )->name('api.media.download');
     });
 
     // Data grid management

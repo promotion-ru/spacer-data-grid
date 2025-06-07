@@ -504,37 +504,6 @@ const forceRefreshRecords = async () => {
     recordsLoading.value = false
   }
 }
-
-// Закрытие модальных окон по Escape
-const handleKeydown = (event) => {
-  if (event.key === 'Escape') {
-    if (showCreateRecordModal.value) {
-      showCreateRecordModal.value = false
-    }
-    if (showEditRecordModal.value) {
-      showEditRecordModal.value = false
-    }
-    if (showViewRecordModal.value) {
-      showViewRecordModal.value = false
-    }
-    if (showShareModal.value) {
-      showShareModal.value = false
-    }
-    if (showMembersModal.value) {
-      showMembersModal.value = false
-    }
-  }
-}
-
-// Добавляем слушатель клавиш при монтировании
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-// Удаляем слушатель при размонтировании
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
 </script>
 
 <style scoped>

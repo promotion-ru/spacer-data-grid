@@ -5,6 +5,7 @@
     :closable="true"
     :draggable="false"
     :modal="true"
+    :closeOnEscape="true"
     class="w-full max-w-4xl"
     header="Управление участниками"
   >
@@ -137,6 +138,7 @@
     v-model:visible="showEditMemberModal"
     :closable="true"
     :modal="true"
+    :closeOnEscape="true"
     class="w-full max-w-md"
     header="Изменить права участника"
   >

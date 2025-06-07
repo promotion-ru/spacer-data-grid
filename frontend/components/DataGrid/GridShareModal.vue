@@ -5,6 +5,7 @@
     :closable="true"
     :draggable="false"
     :modal="true"
+    :closeOnEscape="true"
     class="w-full max-w-md"
     header="Поделиться таблицей"
   >

@@ -5,7 +5,7 @@
     modal
     :dismissableMask="true"
     class="p-fluid"
-    :style="{ width: '500px' }"
+    :closeOnEscape="true"
     @hide="onDialogHide"
   >
     <UsersAccountForm

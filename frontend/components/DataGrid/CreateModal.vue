@@ -6,6 +6,7 @@
     :closable="true"
     :draggable="false"
     :dismissableMask="true"
+    :closeOnEscape="true"
     class="w-full max-w-md"
   >
     <form @submit.prevent="handleSubmit" class="space-y-6">

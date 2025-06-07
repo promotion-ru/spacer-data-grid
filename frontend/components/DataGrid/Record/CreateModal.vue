@@ -5,6 +5,7 @@
     :dismissableMask="true"
     :draggable="false"
     :modal="true"
+    :closeOnEscape="true"
     class="w-full max-w-2xl"
     header="Добавить запись"
     @hide="onDialogHide"
@@ -316,20 +317,5 @@ watch(isVisible, (newValue) => {
       resetForm()
     })
   }
-})
-
-// Закрытие по Escape
-const handleKeydown = (event) => {
-  if (event.key === 'Escape' && isVisible.value) {
-    closeModal()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
 })
 </script>

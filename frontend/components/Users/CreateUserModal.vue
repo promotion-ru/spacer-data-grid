@@ -3,6 +3,7 @@
     v-model:visible="isVisible"
     :dismissableMask="true"
     :style="{ width: '500px' }"
+    :closeOnEscape="true"
     class="p-fluid"
     header="Создать пользователя"
     modal

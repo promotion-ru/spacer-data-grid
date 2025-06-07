@@ -6,6 +6,7 @@
     :closable="true"
     :draggable="false"
     :dismissableMask="true"
+    :closeOnEscape="true"
     class="w-full max-w-4xl"
     @hide="onDialogHide"
   >
@@ -84,10 +85,10 @@
             }"
           >
             <!-- Превью для изображений -->
-            <div v-if="attachment.mime_type.startsWith('image/')" class="mb-3">
+            <div v-if="attachment.mime_type && attachment.mime_type.startsWith('image/')" class="mb-3">
               <img
-                :src="attachment.url"
-                :alt="attachment.name"
+                :src="attachment.url || attachment.original_url"
+                :alt="attachment.name || attachment.file_name"
                 class="w-full h-32 object-cover rounded border cursor-pointer"
                 @click="previewImage(attachment)"
               />
@@ -103,11 +104,11 @@
             
             <!-- Информация о файле -->
             <div class="space-y-2">
-              <h4 class="text-sm font-medium text-gray-900 truncate text-wrap" :title="attachment.name">
-                {{ attachment.name }}
+              <h4 class="text-sm font-medium text-gray-900 truncate text-wrap" :title="attachment.name || attachment.file_name">
+                {{ attachment.name || attachment.file_name }}
               </h4>
               <div class="flex justify-between items-center text-xs text-gray-500">
-                <span>{{ attachment.human_readable_size }}</span>
+                <span>{{ attachment.human_readable_size || formatFileSize(attachment.size) }}</span>
                 <span>{{ getFileTypeLabel(attachment.mime_type) }}</span>
               </div>
             </div>
@@ -291,6 +292,7 @@
     header="Предпросмотр изображения"
     :modal="true"
     :dismissableMask="true"
+    :closeOnEscape="true"
     class="w-auto max-w-4xl"
   >
     <img
@@ -341,6 +343,7 @@ const previewVisible = ref(false)
 const previewImageUrl = ref('')
 const previewImageName = ref('')
 const previewDownloadUrl = ref('')
+const previewAttachmentId = ref(null)
 
 const form = ref({
   name: '',
@@ -381,8 +384,9 @@ const hasChanges = computed(() => {
   return formChanged || newAttachmentFiles.value.length > 0 || filesToRemove.value.length > 0
 })
 
-// Методы для работы с файлами
+// Методы для работы с файлами MediaLibrary
 const getFileIcon = (mimeType) => {
+  if (!mimeType) return 'pi pi-file'
   if (mimeType.startsWith('image/')) return 'pi pi-image'
   if (mimeType.includes('pdf')) return 'pi pi-file-pdf'
   if (mimeType.includes('word')) return 'pi pi-file-word'
@@ -390,10 +394,12 @@ const getFileIcon = (mimeType) => {
   if (mimeType.includes('zip') || mimeType.includes('rar')) return 'pi pi-file-archive'
   if (mimeType.startsWith('video/')) return 'pi pi-video'
   if (mimeType.startsWith('audio/')) return 'pi pi-volume-up'
+  if (mimeType.includes('text/')) return 'pi pi-file-edit'
   return 'pi pi-file'
 }
 
 const getFileTypeLabel = (mimeType) => {
+  if (!mimeType) return 'Документ'
   if (mimeType.startsWith('image/')) return 'Изображение'
   if (mimeType.includes('pdf')) return 'PDF'
   if (mimeType.includes('word')) return 'Word'
@@ -401,7 +407,16 @@ const getFileTypeLabel = (mimeType) => {
   if (mimeType.includes('zip') || mimeType.includes('rar')) return 'Архив'
   if (mimeType.startsWith('video/')) return 'Видео'
   if (mimeType.startsWith('audio/')) return 'Аудио'
+  if (mimeType.includes('text/')) return 'Текст'
   return 'Документ'
+}
+
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 const getImagePreview = (fileObj) => {
@@ -429,29 +444,96 @@ const unmarkForRemoval = (attachmentId) => {
   }
 }
 
-const downloadFile = (attachment) => {
-  window.open(attachment.url, '_blank')
+const downloadFile = async (attachment) => {
+  try {
+    const { token } = useAuthStore()
+    if (!token) {
+      throw new Error('Токен авторизации не найден')
+    }
+    // TODO решить проблему с localhost
+    const baseUrl = `http://localhost:8000/api/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
+    const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
+    
+    const link = document.createElement('a')
+    link.href = downloadUrl
+    link.download = attachment.name || attachment.file_name || 'file'
+    link.target = '_blank'
+    
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    
+    toast.add({
+      severity: 'success',
+      summary: 'Скачивание начато',
+      detail: `Файл ${attachment.name || attachment.file_name} начал скачиваться`,
+      life: 3000
+    })
+    
+  } catch (error) {
+    console.error('Ошибка при скачивании файла:', error)
+    
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка скачивания',
+      detail: error.message,
+      life: 5000
+    })
+    
+    // Fallback
+    window.open(attachment.url || attachment.original_url, '_blank')
+  }
+}
+
+const downloadPreviewImage = async () => {
+  if (previewAttachmentId.value) {
+    try {
+      const { token } = useAuthStore()
+      if (!token) {
+        throw new Error('Токен авторизации не найден')
+      }
+      // TODO решить проблему с localhost
+      const baseUrl = `http://localhost:8000/api/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
+      const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
+      
+      const link = document.createElement('a')
+      link.href = downloadUrl
+      link.download = previewImageName.value || 'image'
+      link.target = '_blank'
+      
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      toast.add({
+        severity: 'success',
+        summary: 'Скачивание начато',
+        detail: `Изображение ${previewImageName.value} начало скачиваться`,
+        life: 3000
+      })
+      
+    } catch (error) {
+      console.error('Ошибка при скачивании изображения:', error)
+      
+      toast.add({
+        severity: 'error',
+        summary: 'Ошибка',
+        detail: error.message,
+        life: 5000
+      })
+      
+      window.open(previewDownloadUrl.value, '_blank')
+    }
+  }
 }
 
 // Превью изображений
 const previewImage = (attachment) => {
-  previewImageUrl.value = attachment.url
-  previewImageName.value = attachment.name
-  previewDownloadUrl.value = attachment.url
+  previewImageUrl.value = attachment.url || attachment.original_url
+  previewImageName.value = attachment.name || attachment.file_name
+  previewDownloadUrl.value = attachment.url || attachment.original_url
+  previewAttachmentId.value = attachment.id
   previewVisible.value = true
-}
-
-const previewNewImage = (fileObj) => {
-  previewImageUrl.value = getImagePreview(fileObj)
-  previewImageName.value = fileObj.name
-  previewDownloadUrl.value = null // Новые файлы нельзя скачать напрямую
-  previewVisible.value = true
-}
-
-const downloadPreviewImage = () => {
-  if (previewDownloadUrl.value) {
-    window.open(previewDownloadUrl.value, '_blank')
-  }
 }
 
 // Обработчики событий MultiFileUpload
@@ -588,6 +670,7 @@ const resetForm = () => {
   previewImageUrl.value = ''
   previewImageName.value = ''
   previewDownloadUrl.value = ''
+  previewAttachmentId.value = null
   
   // Очищаем компонент загрузки
   if (fileUploadRef.value) {
@@ -618,19 +701,4 @@ watch([isVisible, () => props.record], ([visible, record]) => {
     })
   }
 }, { immediate: true })
-
-// Закрытие по Escape
-const handleKeydown = (event) => {
-  if (event.key === 'Escape' && isVisible.value) {
-    closeModal()
-  }
-}
-
-onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
 </script>
