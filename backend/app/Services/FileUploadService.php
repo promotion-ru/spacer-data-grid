@@ -373,8 +373,7 @@ class FileUploadService
 
     public function deleteFileById(HasMedia $model, int $mediaId): bool
     {
-        $media = $model->getMedia()->where('id', $mediaId)->first();
-
+        $media = $model->getMedia('attachments')->where('id', $mediaId)->first();
         if ($media) {
             $media->delete();
             return true;

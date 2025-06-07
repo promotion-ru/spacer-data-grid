@@ -121,6 +121,8 @@ class DataGridRecordController extends Controller
 
         $record->update($request->validated());
 
+        $record->load(['media', 'creator', 'dataGrid']);
+
         if ($request->has('new_attachments')) {
             $this->processAttachments($record, $request->input('new_attachments'));
         }
@@ -129,7 +131,7 @@ class DataGridRecordController extends Controller
             $this->removeAttachments($record, $request->input('remove_attachments'));
         }
 
-        $record->load(['media', 'creator']);
+        $record->refresh();
 
         return response()->json([
             'success' => true,

@@ -162,7 +162,6 @@
           label="Добавить новые вложения"
           :max-files="10"
           :max-file-size="10485760"
-          accepted-types="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar"
           :auto-convert="true"
           empty-text="Перетащите файлы сюда или нажмите для выбора"
           hint-text="Поддерживаемые форматы: изображения, документы, архивы (до 10MB каждый)"

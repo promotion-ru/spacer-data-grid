@@ -49,7 +49,6 @@
         :error-message="errors.new_attachments"
         :max-file-size="10485760"
         :max-files="10"
-        accepted-types="image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar"
         empty-text="Перетащите файлы сюда или нажмите для выбора"
         hint-text="Поддерживаемые форматы: изображения, документы, архивы (до 10MB каждый)"
         label="Вложения"

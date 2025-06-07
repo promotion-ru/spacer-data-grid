@@ -7,9 +7,11 @@
     </label>
     
     <FileUpload
+      :key="fileUploadKey"
       ref="fileUploadRef"
       :accept="acceptedTypes"
       :auto="false"
+      :chooseLabel="chooseLabel"
       :class="uploadClass"
       :disabled="disabled"
       :maxFileSize="maxFileSize"
@@ -18,8 +20,6 @@
       :showCancelButton="false"
       :showUploadButton="false"
       :url="uploadUrl"
-      :chooseLabel="chooseLabel"
-      :key="fileUploadKey"
       @clear="handleClear"
       @remove="handleRemove"
       @select="handleSelect"
@@ -31,7 +31,7 @@
             <i class="pi pi-cloud-upload text-3xl text-gray-400"></i>
             <span class="text-gray-600">{{ emptyText }}</span>
             <p v-if="showHint" class="text-xs text-gray-500">
-              {{ hintText }}
+              {{ dynamicHintText }}
             </p>
           </div>
         </slot>
@@ -153,7 +153,7 @@ const props = defineProps({
   },
   acceptedTypes: {
     type: String,
-    default: 'image/*,.pdf,.doc,.docx,.xls,.xlsx,.zip,.rar'
+    default: '' // Пустая строка означает принятие любых файлов
   },
   
   // Настройки обработки
@@ -179,7 +179,7 @@ const props = defineProps({
   },
   hintText: {
     type: String,
-    default: 'Поддерживаемые форматы: изображения, документы, архивы'
+    default: ''
   },
   selectedTitle: {
     type: String,
@@ -221,6 +221,19 @@ const fileObjects = ref([...props.modelValue])
 
 // Computed свойства
 const totalFiles = computed(() => fileObjects.value.length)
+
+// Динамический текст подсказки
+const dynamicHintText = computed(() => {
+  if (props.hintText) {
+    return props.hintText
+  }
+  
+  if (props.acceptedTypes) {
+    return `Поддерживаемые форматы: ${props.acceptedTypes}`
+  }
+  
+  return 'Поддерживаемые форматы: любые файлы'
+})
 
 // Методы для работы с файлами
 const getFileKey = (fileObj) => {
@@ -307,9 +320,6 @@ const convertFilesToObjects = async (files) => {
   
   for (const file of files) {
     const fileObj = createFileObject(file, null)
-    
-    // Сразу добавляем в массив
-    fileObjects.value.push(fileObj)
     newFileObjects.push(fileObj)
     
     if (props.autoConvert) {
@@ -319,15 +329,17 @@ const convertFilesToObjects = async (files) => {
         fileObj.data = base64Content
       } catch (error) {
         console.error('Ошибка конвертации файла:', file.name, error)
-        
-        // При ошибке удаляем файл
-        const index = fileObjects.value.findIndex(f => f.id === fileObj.id)
+        // При ошибке удаляем файл из новых объектов
+        const index = newFileObjects.findIndex(f => f.id === fileObj.id)
         if (index > -1) {
-          fileObjects.value.splice(index, 1)
+          newFileObjects.splice(index, 1)
         }
       }
     }
   }
+  
+  // Добавляем все успешно обработанные файлы в основной массив
+  fileObjects.value.push(...newFileObjects)
   
   return newFileObjects
 }
@@ -359,19 +371,34 @@ const syncWithFileUpload = async () => {
 
 // Обработчики событий FileUpload
 const handleSelect = async (event) => {
-  const files = Array.from(event.files)
+  const allFiles = Array.from(event.files)
   
-  if (!validateFiles(files)) {
+  // Фильтруем только новые файлы (которых еще нет в fileObjects)
+  const newFiles = allFiles.filter(file => {
+    return !fileObjects.value.some(existingFile =>
+      existingFile.name === file.name &&
+      existingFile.size === file.size &&
+      existingFile.type === file.type &&
+      existingFile.lastModified === file.lastModified
+    )
+  })
+  
+  // Если нет новых файлов, ничего не делаем
+  if (newFiles.length === 0) {
+    return
+  }
+  
+  if (!validateFiles(newFiles)) {
     return
   }
   
   try {
-    const newFileObjects = await convertFilesToObjects(files)
+    const newFileObjects = await convertFilesToObjects(newFiles)
     
     // Сразу обновляем v-model после добавления файлов
     updateModelValue()
     
-    emit('files-selected', files)
+    emit('files-selected', newFiles)
     
     if (props.autoConvert) {
       // После конвертации снова обновляем v-model
