@@ -128,6 +128,8 @@
 <script setup>
 const { getTokens, revokeToken, logoutOtherDevices, refreshToken } = useAuth()
 
+const toast = useToast()
+
 const tokens = ref([])
 const loading = ref(true)
 const revokingTokenId = ref(null)
@@ -153,14 +155,14 @@ const handleRevokeToken = async (tokenId) => {
     const result = await revokeToken(tokenId)
     if (result.success) {
       await loadTokens()
-      useToast().add({
+      toast.add({
         severity: 'success',
         summary: 'Успешно',
         detail: 'Токен отозван',
         life: 3000
       })
     } else {
-      useToast().add({
+      toast.add({
         severity: 'error',
         summary: 'Ошибка',
         detail: result.message || 'Не удалось отозвать токен',
@@ -169,7 +171,7 @@ const handleRevokeToken = async (tokenId) => {
     }
   } catch (error) {
     console.error('Ошибка отзыва токена:', error)
-    useToast().add({
+    toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: 'Произошла ошибка при отзыве токена',
@@ -186,14 +188,14 @@ const handleLogoutOthers = async () => {
     const result = await logoutOtherDevices()
     if (result.success) {
       await loadTokens()
-      useToast().add({
+      toast.add({
         severity: 'success',
         summary: 'Успешно',
         detail: 'Выход с других устройств выполнен',
         life: 3000
       })
     } else {
-      useToast().add({
+      toast.add({
         severity: 'error',
         summary: 'Ошибка',
         detail: result.message || 'Не удалось выйти с других устройств',
@@ -202,7 +204,7 @@ const handleLogoutOthers = async () => {
     }
   } catch (error) {
     console.error('Ошибка выхода с других устройств:', error)
-    useToast().add({
+    toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: 'Произошла ошибка при выходе с других устройств',
@@ -219,14 +221,14 @@ const handleRefreshToken = async () => {
     const result = await refreshToken()
     if (result.success) {
       await loadTokens()
-      useToast().add({
+      toast.add({
         severity: 'success',
         summary: 'Успешно',
         detail: 'Токен обновлен',
         life: 3000
       })
     } else {
-      useToast().add({
+      toast.add({
         severity: 'error',
         summary: 'Ошибка',
         detail: result.message || 'Не удалось обновить токен',
@@ -235,7 +237,7 @@ const handleRefreshToken = async () => {
     }
   } catch (error) {
     console.error('Ошибка обновления токена:', error)
-    useToast().add({
+    toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: 'Произошла ошибка при обновлении токена',

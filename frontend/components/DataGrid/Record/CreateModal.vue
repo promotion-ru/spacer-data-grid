@@ -232,7 +232,9 @@ const validateForm = () => {
 
 // Обработка отправки формы
 const handleSubmit = async () => {
-  if (!validateForm()) return
+  if (!validateForm()) {
+    return
+  }
   
   loading.value = true
   
@@ -253,14 +255,12 @@ const handleSubmit = async () => {
       body: JSON.stringify(jsonData)
     })
     
-    if (!response.ok) {
+    if (!response.success) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     
-    const result = await response.json()
-    
     // Сначала эмитим событие создания
-    emit('created', result.data)
+    emit('created', response.data)
     
     // Затем закрываем модальное окно
     closeModal()

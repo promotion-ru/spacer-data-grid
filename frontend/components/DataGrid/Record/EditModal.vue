@@ -535,15 +535,11 @@ const handleSubmit = async () => {
       }
     )
     
-    if (!response.ok) {
+    if (!response.success) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
     
-    const result = await response.json()
-    
-    // Сначала эмитим событие обновления
-    emit('updated', result.data)
-    
+    emit('updated', response.data)
     // Затем закрываем модальное окно
     closeModal()
     

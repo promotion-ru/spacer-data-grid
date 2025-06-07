@@ -81,6 +81,7 @@ const props = defineProps({
 const emit = defineEmits(['update:visible', 'created'])
 
 const { $api } = useNuxtApp()
+const toast = useToast()
 
 // Реактивные данные
 const loading = ref(false)
@@ -128,7 +129,9 @@ const validateForm = () => {
 }
 
 const handleSubmit = async () => {
-  if (!validateForm()) return
+  if (!validateForm()) {
+    return
+  }
   
   loading.value = true
   
@@ -148,29 +151,28 @@ const handleSubmit = async () => {
         'Content-Type': 'application/json'
       }
     })
-    console.log('response', response)
     const createdDataGrid = response.data
     emit('created', createdDataGrid)
     closeModal()
     
-    // useToast().add({
-    //   severity: 'success',
-    //   summary: 'Успешно',
-    //   detail: `Таблица "${createdDataGrid.name}" создана`,
-    //   life: 3000
-    // })
+    toast.add({
+      severity: 'success',
+      summary: 'Успешно',
+      detail: `Таблица "${createdDataGrid.name}" создана`,
+      life: 3000
+    })
   } catch (error) {
     console.error('Ошибка при создании таблицы:', error)
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
     }
     
-    // useToast().add({
-    //   severity: 'error',
-    //   summary: 'Ошибка',
-    //   detail: error.response?.data?.message || 'Не удалось создать таблицу',
-    //   life: 3000
-    // })
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: error.response?.data?.message || 'Не удалось создать таблицу',
+      life: 3000
+    })
   } finally {
     loading.value = false
   }

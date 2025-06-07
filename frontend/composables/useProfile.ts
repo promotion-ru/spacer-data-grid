@@ -16,8 +16,6 @@ export const useProfile = () => {
                 method: 'GET'
             })
 
-            console.log('fetchProfile response:', response)
-
             if (response.success && response.data) {
                 profile.value = response.data
             } else {

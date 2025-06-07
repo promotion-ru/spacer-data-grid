@@ -14,8 +14,8 @@ export default defineNuxtConfig({
     primevue: {
         options: {
             theme: {
-                preset: Aura
-            }
+                preset: Aura,
+            },
         }
     },
 
