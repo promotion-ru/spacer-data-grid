@@ -4,7 +4,12 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
     devtools: {enabled: true},
 
-    modules: ['@pinia/nuxt', '@primevue/nuxt-module', '@vueuse/nuxt'],
+    modules: [
+      '@pinia/nuxt',
+      '@primevue/nuxt-module',
+      '@vueuse/nuxt',
+      '@nuxtjs/device'
+    ],
 
     css: [
         '~/assets/css/main.css',

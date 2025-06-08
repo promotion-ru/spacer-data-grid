@@ -2,14 +2,12 @@
   <Drawer
     v-model:visible="isVisible"
     :dismissable="true"
-    :modal="isMobile"
     :showCloseIcon="false"
     class="w-80"
     @hide="$emit('hide')"
   >
     <template #container="{ closeCallback }">
       <div class="flex flex-col h-full bg-surface-0 dark:bg-surface-900">
-        <!-- Заголовок с логотипом -->
         <div
           class="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 border-b border-surface-200 dark:border-surface-700">
           <span class="inline-flex items-center gap-2">
@@ -32,10 +30,11 @@
           <div class="p-4">
             <ul class="list-none p-0 m-0 overflow-hidden">
               <li v-for="item in filteredFavoritesMenu" :key="item.label">
-                <a
+                <NuxtLink
                   v-ripple
+                  :to="item.route"
                   class="flex items-center cursor-pointer p-3 rounded-lg text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors p-ripple relative"
-                  @click="navigateToRoute(item.route)"
+                  @click="closeMobileSidebar(item.route)"
                 >
                   <i :class="item.icon + ' mr-3 text-surface-500'"></i>
                   <span class="font-medium">{{ item.label }}</span>
@@ -45,7 +44,7 @@
                   >
                       {{ item.badge }}
                     </span>
-                </a>
+                </NuxtLink>
               </li>
             </ul>
           </div>
@@ -53,10 +52,11 @@
         
         <!-- Профиль пользователя -->
         <div class="mt-auto border-t border-surface-200 dark:border-surface-700">
-          <a
+          <NuxtLink
             v-ripple
+            to="/profile"
             class="m-4 flex items-center cursor-pointer p-3 gap-3 rounded-lg text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors p-ripple"
-            @click="navigateToProfile"
+            @click="closeMobileSidebar"
           >
             <template v-if="user?.avatar_url">
               <Avatar
@@ -78,7 +78,7 @@
               <span class="font-bold text-sm">{{ user.name }} {{ user.surname }}</span>
               <span class="text-xs text-surface-500 dark:text-surface-400">{{ showUserRoles }}</span>
             </div>
-          </a>
+          </NuxtLink>
         </div>
       </div>
     </template>
@@ -88,7 +88,8 @@
 <script setup>
 
 const {user, logout} = useAuth()
-const { isAdmin } = usePermissions()
+const {isAdmin} = usePermissions()
+const { isMobile } = useDevice()
 
 const props = defineProps({
   visible: {
@@ -108,9 +109,6 @@ const isVisible = computed({
     }
   }
 })
-
-// Проверка мобильного устройства
-const isMobile = ref(false)
 
 // Пункты меню FAVORITES
 const favoritesMenu = ref([
@@ -150,13 +148,9 @@ const filteredFavoritesMenu = computed(() => {
   })
 })
 
-// Функции навигации
-const navigateToRoute = (route) => {
-  if (route) {
-    navigateTo(route)
-    if (isMobile.value) {
-      emit('hide')
-    }
+const closeMobileSidebar = () => {
+  if (isMobile) {
+    emit('hide')
   }
 }
 
@@ -169,33 +163,6 @@ const showUserRoles = computed(() => {
   }
   
   return roles.join(', ')
-})
-
-const navigateToProfile = () => {
-  navigateToRoute('/profile')
-  if (isMobile.value) {
-    emit('hide')
-  }
-}
-
-// Проверка размера экрана
-const checkScreenSize = () => {
-  if (process.client) {
-    isMobile.value = window.innerWidth < 768
-  }
-}
-
-onMounted(() => {
-  if (process.client) {
-    checkScreenSize()
-    window.addEventListener('resize', checkScreenSize)
-  }
-})
-
-onUnmounted(() => {
-  if (process.client) {
-    window.removeEventListener('resize', checkScreenSize)
-  }
 })
 </script>
 
