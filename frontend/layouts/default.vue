@@ -14,6 +14,15 @@
 </template>
 
 <script setup>
+// Инициализируем тему при загрузке layout
+const { isDark } = useTheme()
+// Устанавливаем атрибут data-theme на html элемент
+useHead({
+  htmlAttrs: {
+    'data-theme': computed(() => isDark.value ? 'dark' : 'light')
+  }
+})
+
 // Состояние бокового меню
 const sidebarVisible = ref(false)
 
