@@ -86,12 +86,7 @@
           >
             <!-- Превью для изображений -->
             <div v-if="attachment.mime_type && attachment.mime_type.startsWith('image/')" class="mb-3">
-              <img
-                :src="attachment.url || attachment.original_url"
-                :alt="attachment.name || attachment.file_name"
-                class="w-full h-32 object-cover rounded border cursor-pointer"
-                @click="previewImage(attachment)"
-              />
+              <Image :src="attachment.url || attachment.original_url" :alt="attachment.name || attachment.file_name" width="250" preview />
             </div>
             
             <!-- Иконка для других файлов -->
@@ -285,39 +280,6 @@
       </div>
     </template>
   </Dialog>
-  
-  <!-- Модальное окно для превью изображений -->
-  <Dialog
-    v-model:visible="previewVisible"
-    header="Предпросмотр изображения"
-    :modal="true"
-    :dismissableMask="true"
-    :closeOnEscape="true"
-    class="w-auto max-w-4xl"
-  >
-    <img
-      v-if="previewImageUrl"
-      :src="previewImageUrl"
-      :alt="previewImageName"
-      class="max-w-full max-h-96 object-contain"
-    />
-    
-    <template #footer>
-      <div class="flex gap-3">
-        <Button
-          v-if="previewDownloadUrl"
-          label="Скачать"
-          icon="pi pi-download"
-          @click="downloadPreviewImage"
-        />
-        <Button
-          label="Закрыть"
-          @click="previewVisible = false"
-          class="p-button-outlined"
-        />
-      </div>
-    </template>
-  </Dialog>
 </template>
 
 <script setup>
@@ -337,13 +299,6 @@ const fileUploadRef = ref(null)
 const newAttachmentFiles = ref([]) // Новые файлы через MultiFileUpload
 const filesToRemove = ref([]) // ID файлов для удаления
 const existingAttachments = ref([]) // Существующие вложения
-
-// Превью изображений
-const previewVisible = ref(false)
-const previewImageUrl = ref('')
-const previewImageName = ref('')
-const previewDownloadUrl = ref('')
-const previewAttachmentId = ref(null)
 
 const form = ref({
   name: '',
@@ -485,57 +440,6 @@ const downloadFile = async (attachment) => {
   }
 }
 
-const downloadPreviewImage = async () => {
-  if (previewAttachmentId.value) {
-    try {
-      const { token } = useAuthStore()
-      if (!token) {
-        throw new Error('Токен авторизации не найден')
-      }
-      // TODO решить проблему с localhost
-      const baseUrl = `http://localhost:8000/api/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
-      const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
-      
-      const link = document.createElement('a')
-      link.href = downloadUrl
-      link.download = previewImageName.value || 'image'
-      link.target = '_blank'
-      
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
-      toast.add({
-        severity: 'success',
-        summary: 'Скачивание начато',
-        detail: `Изображение ${previewImageName.value} начало скачиваться`,
-        life: 3000
-      })
-      
-    } catch (error) {
-      console.error('Ошибка при скачивании изображения:', error)
-      
-      toast.add({
-        severity: 'error',
-        summary: 'Ошибка',
-        detail: error.message,
-        life: 5000
-      })
-      
-      window.open(previewDownloadUrl.value, '_blank')
-    }
-  }
-}
-
-// Превью изображений
-const previewImage = (attachment) => {
-  previewImageUrl.value = attachment.url || attachment.original_url
-  previewImageName.value = attachment.name || attachment.file_name
-  previewDownloadUrl.value = attachment.url || attachment.original_url
-  previewAttachmentId.value = attachment.id
-  previewVisible.value = true
-}
-
 // Обработчики событий MultiFileUpload
 const onNewFilesSelected = (files) => {
   console.log('Новые файлы выбраны:', files.length)
@@ -664,13 +568,6 @@ const resetForm = () => {
   newAttachmentFiles.value = []
   filesToRemove.value = []
   existingAttachments.value = []
-  
-  // Закрываем превью
-  previewVisible.value = false
-  previewImageUrl.value = ''
-  previewImageName.value = ''
-  previewDownloadUrl.value = ''
-  previewAttachmentId.value = null
   
   // Очищаем компонент загрузки
   if (fileUploadRef.value) {

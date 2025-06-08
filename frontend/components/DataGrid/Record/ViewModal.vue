@@ -35,12 +35,7 @@
           >
             <!-- Превью для изображений -->
             <div v-if="attachment.mime_type && attachment.mime_type.startsWith('image/')" class="mb-3">
-              <img
-                :alt="attachment.name || attachment.file_name"
-                :src="attachment.url || attachment.original_url"
-                class="w-full h-32 object-cover rounded border cursor-pointer"
-                @click="previewImage(attachment)"
-              />
+              <Image :src="attachment.url || attachment.original_url" :alt="attachment.name || attachment.file_name" width="250" preview />
             </div>
             
             <!-- Иконка для других файлов -->
@@ -89,39 +84,6 @@
       </div>
     </template>
   </Dialog>
-  
-  <!-- Модальное окно для превью изображений -->
-  <Dialog
-    v-model:visible="previewVisible"
-    :dismissableMask="true"
-    :modal="true"
-    :closeOnEscape="true"
-    class="w-auto max-w-4xl"
-    header="Предпросмотр изображения"
-  >
-    <img
-      v-if="previewImageUrl"
-      :alt="previewImageName"
-      :src="previewImageUrl"
-      class="max-w-full max-h-96 object-contain"
-    />
-    
-    <template #footer>
-      <div class="flex gap-3">
-        <Button
-          v-if="previewDownloadUrl"
-          icon="pi pi-download"
-          label="Скачать"
-          @click="downloadPreviewImage"
-        />
-        <Button
-          class="p-button-outlined"
-          label="Закрыть"
-          @click="previewVisible = false"
-        />
-      </div>
-    </template>
-  </Dialog>
 </template>
 
 <script setup>
@@ -136,13 +98,6 @@ const toast = useToast()
 
 // Реактивные данные
 const existingAttachments = ref([])
-
-// Превью изображений
-const previewVisible = ref(false)
-const previewImageUrl = ref('')
-const previewImageName = ref('')
-const previewDownloadUrl = ref('')
-const previewAttachmentId = ref(null)
 
 const isVisible = computed({
   get: () => props.visible,
@@ -193,57 +148,6 @@ const downloadFile = async (attachment) => {
   }
 }
 
-const downloadPreviewImage = async () => {
-  if (previewAttachmentId.value) {
-    try {
-      const { token } = useAuthStore()
-      if (!token) {
-        throw new Error('Токен авторизации не найден')
-      }
-      // TODO решить проблему с localhost
-      const baseUrl = `http://localhost:8000/api/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
-      const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
-      
-      const link = document.createElement('a')
-      link.href = downloadUrl
-      link.download = previewImageName.value || 'image'
-      link.target = '_blank'
-      
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      
-      toast.add({
-        severity: 'success',
-        summary: 'Скачивание начато',
-        detail: `Изображение ${previewImageName.value} начало скачиваться`,
-        life: 3000
-      })
-      
-    } catch (error) {
-      console.error('Ошибка при скачивании изображения:', error)
-      
-      toast.add({
-        severity: 'error',
-        summary: 'Ошибка',
-        detail: error.message,
-        life: 5000
-      })
-      
-      window.open(previewDownloadUrl.value, '_blank')
-    }
-  }
-}
-
-// Превью изображений
-const previewImage = (attachment) => {
-  previewImageUrl.value = attachment.url || attachment.original_url
-  previewImageName.value = attachment.name || attachment.file_name
-  previewDownloadUrl.value = attachment.url || attachment.original_url
-  previewAttachmentId.value = attachment.id
-  previewVisible.value = true
-}
-
 // Utility функции
 const getFileIcon = (mimeType) => {
   if (!mimeType) return 'pi pi-file'
@@ -287,11 +191,6 @@ const closeModal = () => {
 
 const resetData = () => {
   existingAttachments.value = []
-  previewVisible.value = false
-  previewImageUrl.value = ''
-  previewImageName.value = ''
-  previewDownloadUrl.value = ''
-  previewAttachmentId.value = null
 }
 
 const loadRecordData = () => {
