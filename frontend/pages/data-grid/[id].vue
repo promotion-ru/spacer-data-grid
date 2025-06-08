@@ -249,9 +249,6 @@
       v-model:visible="showMembersModal"
       :grid="grid"
     />
-    
-    <!-- Диалог подтверждения удаления -->
-    <ConfirmDialog/>
   </div>
 </template>
 
