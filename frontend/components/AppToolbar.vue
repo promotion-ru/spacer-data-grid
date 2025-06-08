@@ -30,6 +30,15 @@
       
       <template #end>
         <div class="flex items-center gap-3">
+<!--          <Button-->
+<!--            @click="toggleDark()"-->
+<!--            :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"-->
+<!--            severity="secondary"-->
+<!--            text-->
+<!--            rounded-->
+<!--            :aria-label="isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'"-->
+<!--            class="w-10 h-10 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"-->
+<!--          />-->
           <!-- Профиль пользователя -->
           <div class="relative">
             <Button
@@ -73,6 +82,7 @@
 
 <script setup>
 const { user, logout } = useAuth()
+const { isDark, toggleDark } = useTheme()
 
 const emit = defineEmits(['toggle-sidebar'])
 const userMenu = ref()

@@ -20,7 +20,16 @@ export default defineNuxtConfig({
         options: {
             theme: {
                 preset: Aura,
+                options: {
+                    darkModeSelector: '[data-theme="dark"]',
+                }
             },
+        }
+    },
+
+    tailwindcss: {
+        config: {
+            darkMode: ['selector', '[data-theme="dark"]'],
         }
     },
 
