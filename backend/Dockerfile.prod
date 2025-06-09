@@ -45,9 +45,10 @@ WORKDIR /var/www
 
 # Копирование файлов composer для кеширования зависимостей
 COPY composer.json composer.lock ./
+COPY artisan ./
+COPY bootstrap bootstrap/
 
-# Установка зависимостей composer
-RUN composer install --no-dev
+RUN composer install --no-dev --optimize-autoloader
 
 # Копирование остального кода приложения
 COPY . .
