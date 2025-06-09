@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\DataGrid;
 
+use App\Http\Controllers\Controller;
 use App\Models\DataGridRecord;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -132,12 +133,10 @@ class DataGridFileDownloadController extends Controller
         if (!$user || !$dataGrid) {
             return false;
         }
-
         // Владелец имеет полный доступ
         if ($dataGrid->user_id === $user->id) {
             return true;
         }
-
         // Проверяем права участника
         $member = $dataGrid->members()->where('user_id', $user->id)->first();
         if (!$member) {

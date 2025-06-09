@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\DataGrid;
 
 use App\Facades\TelegramDump;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\DataGridRecordRequest;
 use App\Http\Resources\DataGridRecordResource;
 use App\Models\DataGrid;
@@ -10,7 +11,6 @@ use App\Models\DataGridRecord;
 use App\Models\DataGridRecordMedia;
 use App\Services\FileUploadService;
 use Exception;
-use Gate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Log;

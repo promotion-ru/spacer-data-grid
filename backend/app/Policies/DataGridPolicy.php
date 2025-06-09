@@ -85,7 +85,7 @@ class DataGridPolicy
     public function manage(User $user, DataGrid $dataGrid): bool
     {
         // Базовая проверка разрешения на совместное использование
-        if (!$user->can('table.share')) {
+        if (!$user->can('table.manage')) {
             return false;
         }
 

@@ -1,7 +1,8 @@
 <?php
 // app/Http/Controllers/Api/DataGridMemberController.php
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\DataGrid;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateMemberRequest;
 use App\Http\Resources\DataGridMemberResource;
 use App\Models\DataGrid;
@@ -12,7 +13,7 @@ class DataGridMemberController extends Controller
 {
     public function index(DataGrid $dataGrid): JsonResponse
     {
-//        $this->authorize('manage', $dataGrid);
+        $this->authorize('manage', $dataGrid);
 
         $members = $dataGrid->members()
             ->with(['user', 'invitedBy'])
@@ -43,7 +44,7 @@ class DataGridMemberController extends Controller
 
     public function update(UpdateMemberRequest $request, DataGrid $dataGrid, DataGridMember $member): JsonResponse
     {
-//        $this->authorize('manage', $dataGrid);
+        $this->authorize('manage', $dataGrid);
 
         if ($member->data_grid_id !== $dataGrid->id) {
             return response()->json([
@@ -63,7 +64,7 @@ class DataGridMemberController extends Controller
 
     public function destroy(DataGrid $dataGrid, DataGridMember $member): JsonResponse
     {
-//        $this->authorize('manage', $dataGrid);
+        $this->authorize('manage', $dataGrid);
 
         if ($member->data_grid_id !== $dataGrid->id) {
             return response()->json([

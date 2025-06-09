@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\DataGrid;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\DataGridType\SearchDataGridTypeRequest;
 use App\Http\Requests\DataGridType\StoreDataGridTypeRequest;
 use App\Http\Resources\DataGridType\DataGridTypeResource;

@@ -1,12 +1,12 @@
 <?php
 
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\DataGridController;
-use App\Http\Controllers\DataGridFileDownloadController;
-use App\Http\Controllers\DataGridInvitationController;
-use App\Http\Controllers\DataGridMemberController;
-use App\Http\Controllers\DataGridRecordController;
-use App\Http\Controllers\DataGridTypeController;
+use App\Http\Controllers\DataGrid\DataGridController;
+use App\Http\Controllers\DataGrid\DataGridFileDownloadController;
+use App\Http\Controllers\DataGrid\DataGridInvitationController;
+use App\Http\Controllers\DataGrid\DataGridMemberController;
+use App\Http\Controllers\DataGrid\DataGridRecordController;
+use App\Http\Controllers\DataGrid\DataGridTypeController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -92,14 +92,9 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('invitations/{token}/accept', [DataGridInvitationController::class, 'accept']);
     Route::post('invitations/{token}/decline', [DataGridInvitationController::class, 'decline']);
 
-
     Route::prefix('users')->name('users.')->group(function () {
-
-        // Публичные маршруты (если нужны)
         Route::get('/', [UserController::class, 'index'])->name('index');
         Route::get('/{user}', [UserController::class, 'show'])->name('show');
-
-        // Защищенные маршруты (требуют авторизации)
         Route::post('/', [UserController::class, 'store'])->name('store');
         Route::put('/{user}', [UserController::class, 'update'])->name('update');
         Route::patch('/{user}', [UserController::class, 'update'])->name('patch');

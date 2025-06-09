@@ -1,7 +1,8 @@
 <?php
 // app/Http/Controllers/Api/DataGridInvitationController.php
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\DataGrid;
 
+use App\Http\Controllers\Controller;
 use App\Http\Requests\InviteUserRequest;
 use App\Http\Resources\DataGridInvitationResource;
 use App\Models\DataGrid;
@@ -29,7 +30,7 @@ class DataGridInvitationController extends Controller
 
     public function store(InviteUserRequest $request, DataGrid $dataGrid): JsonResponse
     {
-//        $this->authorize('manage', $dataGrid);
+        $this->authorize('share', $dataGrid);
 
         $email = $request->validated('email');
         $permissions = $request->validated('permissions', ['view']);
@@ -161,7 +162,7 @@ class DataGridInvitationController extends Controller
 
     public function destroy(DataGrid $dataGrid, DataGridInvitation $invitation): JsonResponse
     {
-//        $this->authorize('manage', $dataGrid);
+        $this->authorize('share', $dataGrid);
 
         $invitation->delete();
 

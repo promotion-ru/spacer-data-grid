@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\DataGrid;
 
-use App\Facades\TelegramDump;
+use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreDataGridRequest;
 use App\Http\Requests\UpdateDataGridRequest;
 use App\Http\Resources\DataGridResource;
@@ -38,7 +38,6 @@ class DataGridController extends Controller
                 $grid->permissions = ['view', 'create', 'update', 'delete', 'manage'];
                 return $grid;
             });
-
         // Общие таблицы
         $sharedGrids = $user->sharedGrids()
             ->with(['media', 'user'])
@@ -117,13 +116,10 @@ class DataGridController extends Controller
     public function destroy(DataGrid $dataGrid): JsonResponse
     {
         $this->authorize('delete', $dataGrid);
-        $dataGrid->load(['records.attachments']);
 
-        foreach ($dataGrid->records as $record) {
-            $this->fileUploadService->deleteFilesByCollection($record, 'attachments');
-        }
-
-        $dataGrid->delete();
+        $dataGrid->update([
+            'is_active' => false,
+        ]);
 
         return response()->json([
             'success' => true,
