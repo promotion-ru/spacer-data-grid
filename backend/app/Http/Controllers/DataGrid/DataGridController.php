@@ -28,36 +28,170 @@ class DataGridController extends Controller
 
         $user = Auth::user();
 
-        // Собственные таблицы
-        $ownGrids = DataGrid::query()
+        // Начинаем с базового запроса
+        $ownGridsQuery = DataGrid::query()
             ->where('user_id', $user->id)
-            ->with(['media'])
-            ->latest()
-            ->get()
-            ->map(function ($grid) {
-                $grid->is_owner = true;
-                $grid->permissions = ['view', 'create', 'update', 'delete', 'manage'];
-                return $grid;
-            });
-        // Общие таблицы
-        $sharedGrids = $user->sharedGrids()
-            ->with(['media', 'user'])
-            ->latest('data_grid_members.created_at')
-            ->get()
-            ->map(function ($grid) {
-                $grid->is_owner = false;
-                $grid->permissions = json_decode($grid->pivot->permissions);
-                $grid->owner_name = $grid->user->name;
-                return $grid;
-            });
+            ->with(['media', 'records']);
 
-        // Объединяем все таблицы
-        $allGrids = $ownGrids->concat($sharedGrids);
+        $sharedGridsQuery = $user->sharedGrids()
+            ->with(['media', 'user']);
+
+        // Применяем фильтры
+        $this->applyFilters($ownGridsQuery, $request);
+        $this->applyFilters($sharedGridsQuery, $request);
+
+        // Получаем данные
+        $ownGrids = $ownGridsQuery->get()->map(function ($grid) {
+            $grid->is_owner = true;
+            $grid->permissions = ['view', 'create', 'update', 'delete', 'manage'];
+            return $grid;
+        });
+
+        $sharedGrids = $sharedGridsQuery->get()->map(function ($grid) {
+            $grid->is_owner = false;
+            $grid->permissions = json_decode($grid->pivot->permissions);
+            $grid->owner_name = $grid->user->name;
+            return $grid;
+        });
+
+        // Объединяем таблицы в зависимости от фильтра владения
+        $ownership = $request->get('ownership');
+        if ($ownership === 'own') {
+            $allGrids = $ownGrids;
+        } elseif ($ownership === 'shared') {
+            $allGrids = $sharedGrids;
+        } else {
+            $allGrids = $ownGrids->concat($sharedGrids);
+        }
+
+        // Применяем сортировку
+        $allGrids = $this->applySorting($allGrids, $request);
 
         return response()->json([
             'success' => true,
             'data'    => DataGridResource::collection($allGrids),
+            'meta'    => [
+                'total' => $allGrids->count(),
+                'filters_applied' => $this->getAppliedFilters($request),
+            ],
         ]);
+    }
+
+    private function applyFilters($query, Request $request)
+    {
+        // Поиск по названию и описанию
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Фильтр по активности
+        if ($request->filled('activity')) {
+            $activity = $request->get('activity');
+            if ($activity === 'active') {
+                $query->where('is_active', true);
+            } elseif ($activity === 'inactive') {
+                $query->where('is_active', false);
+            }
+        }
+
+        // Фильтр по дате создания
+        if ($request->filled('created_from')) {
+            $query->whereDate('created_at', '>=', $request->get('created_from'));
+        }
+
+        if ($request->filled('created_to')) {
+            $query->whereDate('created_at', '<=', $request->get('created_to'));
+        }
+
+        // Базовая сортировка на уровне запроса (если не переопределена позже)
+        $sort = $request->get('sort', 'created_desc');
+        switch ($sort) {
+            case 'created_asc':
+                $query->orderBy('created_at', 'asc');
+                break;
+            case 'updated_desc':
+                $query->orderBy('updated_at', 'desc');
+                break;
+            case 'updated_asc':
+                $query->orderBy('updated_at', 'asc');
+                break;
+            case 'name_asc':
+                $query->orderBy('name', 'asc');
+                break;
+            case 'name_desc':
+                $query->orderBy('name', 'desc');
+                break;
+            case 'records_desc':
+                $query->orderBy('records_count', 'desc');
+                break;
+            case 'records_asc':
+                $query->orderBy('records_count', 'asc');
+                break;
+            case 'created_desc':
+            default:
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+    }
+
+    private function applySorting($collection, Request $request)
+    {
+        $sort = $request->get('sort', 'created_desc');
+
+        switch ($sort) {
+            case 'created_asc':
+                return $collection->sortBy('created_at')->values();
+            case 'updated_desc':
+                return $collection->sortByDesc('updated_at')->values();
+            case 'updated_asc':
+                return $collection->sortBy('updated_at')->values();
+            case 'name_asc':
+                return $collection->sortBy('name')->values();
+            case 'name_desc':
+                return $collection->sortByDesc('name')->values();
+            case 'records_desc':
+                return $collection->sortByDesc('records_count')->values();
+            case 'records_asc':
+                return $collection->sortBy('records_count')->values();
+            case 'created_desc':
+            default:
+                return $collection->sortByDesc('created_at')->values();
+        }
+    }
+
+    private function getAppliedFilters(Request $request): array
+    {
+        $appliedFilters = [];
+
+        if ($request->filled('search')) {
+            $appliedFilters['search'] = $request->get('search');
+        }
+
+        if ($request->filled('ownership')) {
+            $appliedFilters['ownership'] = $request->get('ownership');
+        }
+
+        if ($request->filled('activity')) {
+            $appliedFilters['activity'] = $request->get('activity');
+        }
+
+        if ($request->filled('sort')) {
+            $appliedFilters['sort'] = $request->get('sort');
+        }
+
+        if ($request->filled('created_from')) {
+            $appliedFilters['created_from'] = $request->get('created_from');
+        }
+
+        if ($request->filled('created_to')) {
+            $appliedFilters['created_to'] = $request->get('created_to');
+        }
+
+        return $appliedFilters;
     }
 
     public function store(StoreDataGridRequest $request): JsonResponse

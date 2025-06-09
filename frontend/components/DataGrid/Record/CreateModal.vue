@@ -2,28 +2,118 @@
   <Dialog
     v-model:visible="isVisible"
     :closable="true"
+    :closeOnEscape="true"
     :dismissableMask="true"
     :draggable="false"
     :modal="true"
-    :closeOnEscape="true"
     class="w-full max-w-2xl"
     header="Добавить запись"
     @hide="onDialogHide"
   >
     <form class="space-y-6" @submit.prevent="handleSubmit">
-      <!-- Название записи -->
+      <!-- Основные поля в сетке -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Название записи -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="name">
+            Название записи *
+          </label>
+          <InputText
+            id="name"
+            v-model="form.name"
+            :class="{ 'p-invalid': errors.name }"
+            class="w-full"
+            placeholder="Введите название записи"
+          />
+          <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
+        </div>
+        
+        <!-- Дата -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="date">
+            Дата *
+          </label>
+          <Calendar
+            id="date"
+            v-model="form.date"
+            :class="{ 'p-invalid': errors.date }"
+            :manual-input="false"
+            class="w-full"
+            date-format="dd.mm.yy"
+            icon-display="input"
+            placeholder="Выберите дату"
+            show-icon
+          />
+          <small v-if="errors.date" class="p-error">{{ errors.date }}</small>
+        </div>
+      </div>
+      
+      <!-- Тип операции (радиокнопки) -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="name">
-          Название записи *
+        <label class="block text-sm font-medium text-gray-700 mb-3">
+          Тип операции *
         </label>
-        <InputText
-          id="name"
-          v-model="form.name"
-          :class="{ 'p-invalid': errors.name }"
-          class="w-full"
-          placeholder="Введите название записи"
+        <div class="flex space-x-6">
+          <div class="flex items-center">
+            <RadioButton
+              id="income"
+              v-model="form.operation_type_id"
+              :class="{ 'p-invalid': errors.operation_type_id }"
+              :value="1"
+              name="operation_type"
+            />
+            <label class="ml-2 text-sm text-gray-700" for="income">Доход</label>
+          </div>
+          <div class="flex items-center">
+            <RadioButton
+              id="expense"
+              v-model="form.operation_type_id"
+              :class="{ 'p-invalid': errors.operation_type_id }"
+              :value="2"
+              name="operation_type"
+            />
+            <label class="ml-2 text-sm text-gray-700" for="expense">Расход</label>
+          </div>
+        </div>
+        <small v-if="errors.operation_type_id" class="p-error">{{ errors.operation_type_id }}</small>
+      </div>
+      
+      <!-- Тип записи -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2">
+          Тип записи *
+        </label>
+        <DataGridTypeAutocomplete
+          v-model="form.type_id"
+          :class="{ 'p-invalid': errors.type_id }"
+          :data-grid-id="gridId"
+          placeholder="Выберите или создайте тип..."
+          @error="onTypeError"
+          @type-created="onTypeCreated"
         />
-        <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
+        <small v-if="errors.type_id" class="p-error">{{ errors.type_id }}</small>
+      </div>
+      
+      <!-- Сумма -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="amount">
+          Сумма *
+        </label>
+        <InputNumber
+          id="amount"
+          v-model="form.amount"
+          :class="{ 'p-invalid': errors.amount }"
+          :max="999999999"
+          :max-fraction-digits="0"
+          :min="0"
+          :min-fraction-digits="0"
+          class="w-full"
+          currency="RUB"
+          locale="ru-RU"
+          mode="currency"
+          placeholder="0"
+        />
+        <small v-if="errors.amount" class="p-error">{{ errors.amount }}</small>
       </div>
       
       <!-- Описание -->
@@ -172,7 +262,11 @@ const attachmentFiles = ref([]) // Массив объектов файлов
 
 const form = ref({
   name: '',
-  description: ''
+  date: null,
+  operation_type_id: null,
+  type_id: null,
+  description: '',
+  amount: null
 })
 
 const errors = ref({})
@@ -215,12 +309,47 @@ const onValidationError = (validationErrors) => {
   })
 }
 
+// Обработчики событий автокомплита типов
+const onTypeError = (errorMessage) => {
+  toast.add({
+    severity: 'error',
+    summary: 'Ошибка',
+    detail: errorMessage,
+    life: 3000
+  })
+}
+
+const onTypeCreated = (newType) => {
+  toast.add({
+    severity: 'success',
+    summary: 'Успешно',
+    detail: `Тип "${newType.name}" создан`,
+    life: 3000
+  })
+}
+
 // Валидация основной формы
 const validateForm = () => {
   errors.value = {}
   
   if (!form.value.name.trim()) {
     errors.value.name = 'Название записи обязательно'
+  }
+  
+  if (!form.value.date) {
+    errors.value.date = 'Дата обязательна'
+  }
+  
+  if (!form.value.operation_type_id) {
+    errors.value.operation_type_id = 'Выберите тип операции'
+  }
+  
+  if (!form.value.type_id) {
+    errors.value.type_id = 'Выберите тип записи'
+  }
+  
+  if (!form.value.amount || form.value.amount <= 0) {
+    errors.value.amount = 'Укажите сумму больше нуля'
   }
   
   if (form.value.description && form.value.description.length > 2000) {
@@ -242,7 +371,11 @@ const handleSubmit = async () => {
     // Подготавливаем данные для отправки
     const jsonData = {
       name: form.value.name.trim(),
+      date: form.value.date,
+      operation_type_id: form.value.operation_type_id,
+      type_id: form.value.type_id,
       description: form.value.description ? form.value.description.trim() : null,
+      amount: form.value.amount,
       new_attachments: attachmentFiles.value
     }
     
@@ -299,7 +432,11 @@ const closeModal = () => {
 const resetForm = () => {
   form.value = {
     name: '',
-    description: ''
+    date: null,
+    operation_type_id: null,
+    type_id: null,
+    description: '',
+    amount: null
   }
   errors.value = {}
   attachmentFiles.value = []

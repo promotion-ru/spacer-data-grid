@@ -21,15 +21,23 @@
         />
       </div>
       
+      <!-- Фильтры -->
+      <DataGridFilters
+        ref="filtersRef"
+        :loading="pending || invitationsPending"
+        :totalCount="grids?.length || 0"
+        @filtersChanged="onFiltersChanged"
+      />
+      
       <!-- Загрузка -->
       <div v-if="pending || invitationsPending" class="flex justify-center py-12">
         <ProgressSpinner/>
       </div>
       
       <!-- Список таблиц -->
-      <div v-else-if="grids?.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div v-else-if="filteredGrids?.length" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         <Card
-          v-for="grid in grids"
+          v-for="grid in filteredGrids"
           :key="grid.id"
           class="hover:shadow-lg transition-shadow duration-300 cursor-pointer"
           @click="navigateToGrid(grid)"
@@ -83,6 +91,12 @@
                 <span>{{ grid.created_at }}</span>
               </div>
               
+              <!-- Показатель последнего обновления -->
+              <div v-if="grid.updated_at && grid.updated_at !== grid.created_at" class="text-xs text-gray-400">
+                <i class="pi pi-clock mr-1"></i>
+                Обновлено: {{ grid.updated_at }}
+              </div>
+              
               <!-- Права доступа для чужих таблиц -->
               <div v-if="!grid.is_owner && grid.permissions" class="flex flex-wrap gap-1">
                 <Tag
@@ -101,13 +115,31 @@
       <!-- Пустое состояние -->
       <div v-else class="text-center py-12">
         <i class="pi pi-table text-6xl text-gray-300 mb-4"></i>
-        <h3 class="text-xl font-semibold text-gray-700 mb-2">У вас пока нет таблиц данных</h3>
-        <p class="text-gray-500 mb-6">Создайте свою первую таблицу для управления данными</p>
-        <Button
-          icon="pi pi-plus"
-          label="Создать таблицу"
-          @click="showCreateModal = true"
-        />
+        <h3 class="text-xl font-semibold text-gray-700 mb-2">
+          {{ hasActiveFilters ? 'Таблицы не найдены' : 'У вас пока нет таблиц данных' }}
+        </h3>
+        <p class="text-gray-500 mb-6">
+          {{
+            hasActiveFilters
+              ? 'Попробуйте изменить параметры поиска или сбросить фильтры'
+              : 'Создайте свою первую таблицу для управления данными'
+          }}
+        </p>
+        <div class="space-x-3">
+          <Button
+            v-if="!hasActiveFilters"
+            icon="pi pi-plus"
+            label="Создать таблицу"
+            @click="showCreateModal = true"
+          />
+          <Button
+            v-if="hasActiveFilters"
+            class="p-button-outlined"
+            icon="pi pi-times"
+            label="Сбросить фильтры"
+            @click="resetFilters"
+          />
+        </div>
       </div>
     </div>
     
@@ -179,10 +211,37 @@ const showMembersModal = ref(false)
 const showActivityLogsModal = ref(false)
 const gridMenu = ref()
 const selectedGrid = ref(null)
+const filtersRef = ref(null)
+const currentFilters = ref({})
 
 // Загрузка данных таблиц
 const {data: grids, pending, refresh} = await useLazyAsyncData('dataGrids', async () => {
-  const response = await $api('/data-grid', {
+  const params = new URLSearchParams()
+  
+  // Применяем текущие фильтры
+  if (currentFilters.value.search) {
+    params.append('search', currentFilters.value.search)
+  }
+  if (currentFilters.value.ownership) {
+    params.append('ownership', currentFilters.value.ownership)
+  }
+  if (currentFilters.value.activity) {
+    params.append('activity', currentFilters.value.activity)
+  }
+  if (currentFilters.value.sort) {
+    params.append('sort', currentFilters.value.sort)
+  }
+  if (currentFilters.value.created_from) {
+    params.append('created_from', currentFilters.value.created_from)
+  }
+  if (currentFilters.value.created_to) {
+    params.append('created_to', currentFilters.value.created_to)
+  }
+  
+  const queryString = params.toString()
+  const url = `/data-grid${queryString ? '?' + queryString : ''}`
+  
+  const response = await $api(url, {
     method: 'GET'
   })
   return response.data
@@ -205,6 +264,15 @@ const {
   }
 })
 
+// Вычисляемые свойства
+const filteredGrids = computed(() => {
+  return grids.value || []
+})
+
+const hasActiveFilters = computed(() => {
+  return Object.values(currentFilters.value).some(value => value !== null && value !== '')
+})
+
 // Методы
 const navigateToGrid = (grid) => {
   router.push(`/data-grid/${grid.id}`)
@@ -224,6 +292,19 @@ const getPermissionLabel = (permission) => {
     manage: 'Управление'
   }
   return labels[permission] || permission
+}
+
+const onFiltersChanged = (filters) => {
+  currentFilters.value = filters
+  refresh()
+}
+
+const resetFilters = () => {
+  if (filtersRef.value) {
+    filtersRef.value.resetFilters()
+  }
+  currentFilters.value = {}
+  refresh()
 }
 
 // Обработчики событий

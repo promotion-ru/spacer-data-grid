@@ -2,62 +2,180 @@
   <Dialog
     v-model:visible="isVisible"
     :closable="true"
+    :closeOnEscape="true"
     :dismissableMask="true"
     :draggable="false"
     :modal="true"
-    class="w-full max-w-4xl"
+    class="w-full max-w-5xl"
     header="Просмотр записи"
-    :closeOnEscape="true"
     @hide="onDialogHide"
   >
     <div class="space-y-6">
       <!-- Основная информация -->
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ record?.name }}</h3>
-        <p v-if="record?.description" class="text-gray-600">{{ record.description }}</p>
-        <div class="mt-3 text-sm text-gray-500">
-          <p>Создано: {{ record?.created_at }}</p>
-          <p>Автор: {{ record?.creator?.name }}</p>
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-100">
+        <div class="flex items-start justify-between mb-4">
+          <div class="flex-1">
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ record?.name }}</h3>
+            <div class="flex items-center space-x-4 text-sm">
+              <!-- Тип операции -->
+              <div class="flex items-center space-x-2">
+                <i
+                  :class="{
+                    'pi pi-arrow-up text-green-600': record?.operation_type_id === 1,
+                    'pi pi-arrow-down text-red-600': record?.operation_type_id === 2
+                  }"
+                  class="text-lg"
+                ></i>
+                <span
+                  :class="{
+                    'text-green-700 bg-green-100': record?.operation_type_id === 1,
+                    'text-red-700 bg-red-100': record?.operation_type_id === 2
+                  }"
+                  class="px-2 py-1 rounded-full text-xs font-medium"
+                >
+                  {{ getOperationTypeName(record?.operation_type_id) }}
+                </span>
+              </div>
+              
+              <!-- Дата -->
+              <div class="flex items-center space-x-1 text-gray-600">
+                <i class="pi pi-calendar text-gray-500"></i>
+                <span>{{ record?.date }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Сумма -->
+          <div class="text-right">
+            <div
+              :class="{
+                'text-green-600': record?.operation_type_id === 1,
+                'text-red-600': record?.operation_type_id === 2
+              }"
+              class="text-2xl font-bold"
+            >
+              {{ formatAmount(record?.amount, record?.operation_type_id) }}
+            </div>
+            <div class="text-sm text-gray-500">{{ record?.amount_formatted }}</div>
+          </div>
+        </div>
+        
+        <!-- Описание -->
+        <div v-if="record?.description" class="mb-4">
+          <p class="text-gray-700 leading-relaxed">{{ record.description }}</p>
+        </div>
+        
+        <!-- Дополнительная информация -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-blue-200">
+          <!-- Тип записи -->
+          <div class="flex items-center space-x-2">
+            <i class="pi pi-tag text-gray-500"></i>
+            <div>
+              <span class="text-xs text-gray-500 uppercase tracking-wide">Тип записи</span>
+              <p class="text-sm font-medium text-gray-900">
+                {{ record?.type_name || 'Не указан' }}
+                <span v-if="record?.type?.is_global" class="ml-1 text-xs text-blue-600">(Глобальный)</span>
+              </p>
+            </div>
+          </div>
+          
+          <!-- Автор и дата создания -->
+          <div class="flex items-center space-x-2">
+            <i class="pi pi-user text-gray-500"></i>
+            <div>
+              <span class="text-xs text-gray-500 uppercase tracking-wide">Создано</span>
+              <p class="text-sm font-medium text-gray-900">
+                {{ record?.creator?.name || 'Неизвестно' }}
+              </p>
+              <p class="text-xs text-gray-500">{{ record?.created_at }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Статистика -->
+      <div v-if="record" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
+          <div class="text-2xl font-bold text-blue-600">{{ existingAttachments.length }}</div>
+          <div class="text-sm text-gray-500">Вложений</div>
+        </div>
+        
+        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
+          <div class="text-2xl font-bold text-gray-700">
+            {{ record.date ? getDaysAgo(record.date) : '-' }}
+          </div>
+          <div class="text-sm text-gray-500">Дней назад</div>
+        </div>
+        
+        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
+          <div class="text-2xl font-bold text-purple-600">
+            {{ record?.updated_at !== record?.created_at ? '✓' : '—' }}
+          </div>
+          <div class="text-sm text-gray-500">Изменялась</div>
         </div>
       </div>
       
       <!-- Вложения -->
       <div v-if="existingAttachments.length > 0">
-        <h4 class="text-md font-semibold text-gray-700 mb-3">
-          Вложения ({{ existingAttachments.length }})
-        </h4>
+        <div class="flex items-center justify-between mb-4">
+          <h4 class="text-lg font-semibold text-gray-700 flex items-center space-x-2">
+            <i class="pi pi-paperclip text-gray-500"></i>
+            <span>Вложения ({{ existingAttachments.length }})</span>
+          </h4>
+        </div>
         
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div
             v-for="attachment in existingAttachments"
             :key="attachment.id"
-            class="bg-white border rounded-lg p-4 hover:shadow-md transition-shadow"
+            class="group bg-white border rounded-lg p-4 hover:shadow-lg hover:border-blue-300 transition-all duration-200"
           >
             <!-- Превью для изображений -->
             <div v-if="attachment.mime_type && attachment.mime_type.startsWith('image/')" class="mb-3">
-              <Image :src="attachment.url || attachment.original_url" :alt="attachment.name || attachment.file_name" width="250" preview />
+              <div class="relative">
+                <Image
+                  :alt="attachment.name || attachment.file_name"
+                  :src="attachment.url || attachment.original_url"
+                  class="rounded-lg"
+                  preview
+                  width="250"
+                />
+                <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                  {{ getFileTypeLabel(attachment.mime_type) }}
+                </div>
+              </div>
             </div>
             
             <!-- Иконка для других файлов -->
             <div v-else class="mb-3 flex justify-center">
-              <i :class="getFileIcon(attachment.mime_type)" class="text-4xl text-gray-500"></i>
+              <div class="relative">
+                <i :class="getFileIcon(attachment.mime_type)" class="text-6xl text-gray-400"></i>
+                <div
+                  class="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-gray-600 text-white text-xs px-2 py-1 rounded">
+                  {{ getFileTypeLabel(attachment.mime_type) }}
+                </div>
+              </div>
             </div>
             
             <!-- Информация о файле -->
             <div class="space-y-2">
-              <h5 :title="attachment.name || attachment.file_name" class="text-sm font-medium text-gray-900 truncate">
+              <h5
+                :title="attachment.name || attachment.file_name"
+                class="text-sm font-medium text-gray-900 truncate leading-tight"
+              >
                 {{ attachment.name || attachment.file_name }}
               </h5>
+              
               <div class="flex justify-between items-center text-xs text-gray-500">
-                <span>{{ attachment.human_readable_size || formatFileSize(attachment.size) }}</span>
-                <span>{{ getFileTypeLabel(attachment.mime_type) }}</span>
+                <span class="font-medium">{{ attachment.human_readable_size || formatFileSize(attachment.size) }}</span>
+                <span class="px-2 py-1 bg-gray-100 rounded">{{ getShortFileType(attachment.mime_type) }}</span>
               </div>
             </div>
             
-            <!-- Кнопка скачивания -->
-            <div class="mt-3">
+            <!-- Кнопки действий -->
+            <div class="mt-3 flex space-x-2">
               <Button
-                class="p-button-sm w-full"
+                class="p-button-sm flex-1"
                 icon="pi pi-download"
                 label="Скачать"
                 type="button"
@@ -68,14 +186,16 @@
         </div>
       </div>
       
-      <div v-else class="text-center py-8 text-gray-500">
-        <i class="pi pi-file text-4xl mb-2"></i>
-        <p>Нет вложений</p>
+      <!-- Нет вложений -->
+      <div v-else class="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+        <i class="pi pi-file text-6xl text-gray-300 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-500 mb-2">Нет вложений</h3>
+        <p class="text-sm text-gray-400">К этой записи не прикреплено файлов</p>
       </div>
     </div>
     
     <template #footer>
-      <div class="flex justify-end">
+      <div class="flex justify-between items-center">
         <Button
           class="p-button-outlined"
           label="Закрыть"
@@ -95,6 +215,12 @@ const props = defineProps({
 const emit = defineEmits(['update:visible'])
 
 const toast = useToast()
+const {
+  getFileIcon,
+  getFileTypeLabel,
+  getShortFileType,
+  formatFileSize,
+} = useFileUtils()
 
 // Реактивные данные
 const existingAttachments = ref([])
@@ -106,14 +232,88 @@ const isVisible = computed({
   }
 })
 
+// Utility функции для типа операции
+const getOperationTypeName = (operationTypeId) => {
+  switch (operationTypeId) {
+    case 1:
+      return 'Доход'
+    case 2:
+      return 'Расход'
+    default:
+      return 'Не указано'
+  }
+}
+
+// Форматирование суммы
+const formatAmount = (amount, operationTypeId) => {
+  if (!amount) return '0 ₽'
+  
+  const formatted = new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: 'RUB',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(amount)
+  
+  const prefix = operationTypeId === 1 ? '+' : operationTypeId === 2 ? '−' : ''
+  return prefix + formatted
+}
+
+// Получение диапазона суммы
+const getAmountRange = (amount) => {
+  if (!amount) return '0'
+  
+  const value = parseFloat(amount)
+  if (value < 1000) return '< 1К'
+  if (value < 10000) return '1К-10К'
+  if (value < 100000) return '10К-100К'
+  if (value < 1000000) return '100К-1М'
+  return '> 1М'
+}
+
+const getAmountRangeDescription = (range) => {
+  const ranges = {
+    'under_1k': 'До 1 000 ₽',
+    '1k_10k': '1 000 - 10 000 ₽',
+    '10k_100k': '10 000 - 100 000 ₽',
+    '100k_1m': '100 000 - 1 000 000 ₽',
+    'over_1m': 'Более 1 000 000 ₽'
+  }
+  return ranges[range] || 'Не определен'
+}
+
+// Вычисление дней назад
+const getDaysAgo = (dateString) => {
+  if (!dateString) {
+    return '-'
+  }
+  
+  try {
+    // Парсим дату в формате dd.mm.yyyy
+    const parts = dateString.split('.')
+    if (parts.length !== 3) return '-'
+    
+    const recordDate = new Date(parts[2], parts[1] - 1, parts[0])
+    const today = new Date()
+    const diffTime = Math.abs(today - recordDate)
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'Сегодня'
+    if (diffDays === 1) return '1'
+    return diffDays.toString()
+  } catch {
+    return '-'
+  }
+}
+
 // Скачивание файлов
 const downloadFile = async (attachment) => {
   try {
-    const { token } = useAuthStore()
+    const {token} = useAuthStore()
     if (!token) {
       throw new Error('Токен авторизации не найден')
     }
-    // TODO решить проблему с localhost
+    
     const baseUrl = `http://localhost:8000/api/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
     const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
     
@@ -146,35 +346,6 @@ const downloadFile = async (attachment) => {
     // Fallback
     window.open(attachment.url || attachment.original_url, '_blank')
   }
-}
-
-// Utility функции
-const getFileIcon = (mimeType) => {
-  if (!mimeType) return 'pi pi-file'
-  if (mimeType.startsWith('image/')) return 'pi pi-image'
-  if (mimeType.includes('pdf')) return 'pi pi-file-pdf'
-  if (mimeType.includes('word')) return 'pi pi-file-word'
-  if (mimeType.includes('excel')) return 'pi pi-file-excel'
-  if (mimeType.includes('zip')) return 'pi pi-file-archive'
-  return 'pi pi-file'
-}
-
-const getFileTypeLabel = (mimeType) => {
-  if (!mimeType) return 'Документ'
-  if (mimeType.startsWith('image/')) return 'Изображение'
-  if (mimeType.includes('pdf')) return 'PDF'
-  if (mimeType.includes('word')) return 'Word'
-  if (mimeType.includes('excel')) return 'Excel'
-  if (mimeType.includes('zip')) return 'Архив'
-  return 'Документ'
-}
-
-const formatFileSize = (bytes) => {
-  if (!bytes) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 // Обработчики

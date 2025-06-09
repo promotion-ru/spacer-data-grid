@@ -1,71 +1,171 @@
 <template>
   <Dialog
     v-model:visible="isVisible"
-    header="Редактировать запись"
-    :modal="true"
     :closable="true"
-    :draggable="false"
-    :dismissableMask="true"
     :closeOnEscape="true"
-    class="w-full max-w-4xl"
+    :dismissableMask="true"
+    :draggable="false"
+    :modal="true"
+    class="w-full max-w-2xl"
+    header="Редактировать запись"
     @hide="onDialogHide"
   >
-    <form @submit.prevent="handleSubmit" class="space-y-6">
-      <!-- Основные поля -->
+    <!-- Индикатор загрузки данных записи -->
+    <div v-if="loadingRecord" class="flex items-center justify-center p-8">
+      <div class="flex flex-col items-center space-y-3">
+        <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
+        <span class="text-gray-600">Загружаем актуальные данные записи...</span>
+      </div>
+    </div>
+    
+    <!-- Основная форма -->
+    <form v-else class="space-y-6" @submit.prevent="handleSubmit">
+      <!-- Основные поля в сетке -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Название записи -->
         <div>
-          <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="name">
             Название записи *
           </label>
           <InputText
             id="name"
             v-model="form.name"
-            placeholder="Введите название записи"
-            class="w-full"
             :class="{ 'p-invalid': errors.name }"
+            class="w-full"
+            placeholder="Введите название записи"
           />
           <small v-if="errors.name" class="p-error">{{ errors.name }}</small>
         </div>
         
-        <!-- Статистика файлов -->
-        <div class="bg-gray-50 p-4 rounded-lg">
-          <h4 class="font-semibold text-gray-700 mb-2">Статистика вложений</h4>
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-gray-600">Текущих:</span>
-              <span class="ml-2 font-medium">{{ currentAttachmentsCount }}</span>
-            </div>
-            <div>
-              <span class="text-gray-600">Новых:</span>
-              <span class="ml-2 font-medium text-blue-600">{{ newAttachmentFiles.length }}</span>
-            </div>
-            <div>
-              <span class="text-gray-600">К удалению:</span>
-              <span class="ml-2 font-medium text-red-600">{{ filesToRemove.length }}</span>
-            </div>
-            <div>
-              <span class="text-gray-600">Итого:</span>
-              <span class="ml-2 font-medium text-green-600">{{ totalFilesAfterSave }}</span>
-            </div>
+        <!-- Дата -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="date">
+            Дата *
+          </label>
+          <Calendar
+            id="date"
+            v-model="form.date"
+            :class="{ 'p-invalid': errors.date }"
+            :manual-input="false"
+            class="w-full"
+            date-format="dd.mm.yy"
+            icon-display="input"
+            placeholder="Выберите дату"
+            show-icon
+          />
+          <small v-if="errors.date" class="p-error">{{ errors.date }}</small>
+        </div>
+      </div>
+      
+      <!-- Тип операции (радиокнопки) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-3">
+          Тип операции *
+        </label>
+        <div class="flex space-x-6">
+          <div class="flex items-center">
+            <RadioButton
+              id="income_edit"
+              v-model="form.operation_type_id"
+              :class="{ 'p-invalid': errors.operation_type_id }"
+              :value="1"
+              name="operation_type_edit"
+            />
+            <label class="ml-2 text-sm text-gray-700" for="income_edit">Доход</label>
           </div>
+          <div class="flex items-center">
+            <RadioButton
+              id="expense_edit"
+              v-model="form.operation_type_id"
+              :class="{ 'p-invalid': errors.operation_type_id }"
+              :value="2"
+              name="operation_type_edit"
+            />
+            <label class="ml-2 text-sm text-gray-700" for="expense_edit">Расход</label>
+          </div>
+        </div>
+        <small v-if="errors.operation_type_id" class="p-error">{{ errors.operation_type_id }}</small>
+      </div>
+      
+      <div class="grid grid-cols-1">
+        <!-- Тип записи -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">
+            Тип записи *
+          </label>
+          <DataGridTypeAutocomplete
+            v-model="form.type_id"
+            :class="{ 'p-invalid': errors.type_id }"
+            :data-grid-id="currentRecord?.data_grid_id"
+            placeholder="Выберите или создайте тип..."
+            @error="onTypeError"
+            @type-created="onTypeCreated"
+          />
+          <small v-if="errors.type_id" class="p-error">{{ errors.type_id }}</small>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-1">
+        <!-- Сумма -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2" for="amount">
+            Сумма *
+          </label>
+          <InputNumber
+            id="amount"
+            v-model="form.amount"
+            :class="{ 'p-invalid': errors.amount }"
+            :max="999999999"
+            :max-fraction-digits="0"
+            :min="0"
+            :min-fraction-digits="0"
+            class="w-full"
+            currency="RUB"
+            locale="ru-RU"
+            mode="currency"
+            placeholder="0"
+          />
+          <small v-if="errors.amount" class="p-error">{{ errors.amount }}</small>
         </div>
       </div>
       
       <!-- Описание -->
       <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+        <label class="block text-sm font-medium text-gray-700 mb-2" for="description">
           Описание
         </label>
         <Textarea
           id="description"
           v-model="form.description"
+          :class="{ 'p-invalid': errors.description }"
+          class="w-full"
           placeholder="Добавьте описание к записи"
           rows="4"
-          class="w-full"
-          :class="{ 'p-invalid': errors.description }"
         />
         <small v-if="errors.description" class="p-error">{{ errors.description }}</small>
+      </div>
+      
+      <!-- Статистика файлов -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h4 class="font-semibold text-gray-700 mb-2">Статистика вложений</h4>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <span class="text-gray-600">Текущих:</span>
+            <span class="ml-2 font-medium">{{ currentAttachmentsCount }}</span>
+          </div>
+          <div>
+            <span class="text-gray-600">Новых:</span>
+            <span class="ml-2 font-medium text-blue-600">{{ newAttachmentFiles.length }}</span>
+          </div>
+          <div>
+            <span class="text-gray-600">К удалению:</span>
+            <span class="ml-2 font-medium text-red-600">{{ filesToRemove.length }}</span>
+          </div>
+          <div>
+            <span class="text-gray-600">Итого:</span>
+            <span class="ml-2 font-medium text-green-600">{{ totalFilesAfterSave }}</span>
+          </div>
+        </div>
       </div>
       
       <!-- Существующие вложения -->
@@ -78,15 +178,21 @@
           <div
             v-for="attachment in existingAttachments"
             :key="attachment.id"
-            class="group relative bg-white border rounded-lg p-4 hover:shadow-md transition-shadow"
             :class="{
               'border-red-300 bg-red-50': isMarkedForRemoval(attachment.id),
               'border-gray-200': !isMarkedForRemoval(attachment.id)
             }"
+            class="group relative bg-white border rounded-lg p-4 hover:shadow-md transition-shadow"
           >
             <!-- Превью для изображений -->
-            <div v-if="attachment.mime_type && attachment.mime_type.startsWith('image/')" class="mb-3">
-              <Image :src="attachment.url || attachment.original_url" :alt="attachment.name || attachment.file_name" width="250" preview />
+            <div v-if="attachment.mime_type && attachment.mime_type.startsWith('image/')"
+                 class="mb-3 rounded-md overflow-hidden">
+              <Image
+                :alt="attachment.name || attachment.file_name"
+                :src="attachment.url || attachment.original_url"
+                preview
+                width="250"
+              />
             </div>
             
             <!-- Иконка для других файлов -->
@@ -99,7 +205,8 @@
             
             <!-- Информация о файле -->
             <div class="space-y-2">
-              <h4 class="text-sm font-medium text-gray-900 truncate text-wrap" :title="attachment.name || attachment.file_name">
+              <h4 :title="attachment.name || attachment.file_name"
+                  class="text-sm font-medium text-gray-900 truncate text-wrap">
                 {{ attachment.name || attachment.file_name }}
               </h4>
               <div class="flex justify-between items-center text-xs text-gray-500">
@@ -111,29 +218,29 @@
             <!-- Действия -->
             <div class="mt-3 flex justify-between">
               <Button
-                icon="pi pi-download"
-                class="p-button-rounded p-button-sm p-button-outlined"
-                @click="downloadFile(attachment)"
                 v-tooltip.top="'Скачать'"
+                class="p-button-rounded p-button-sm p-button-outlined"
+                icon="pi pi-download"
                 type="button"
+                @click="downloadFile(attachment)"
               />
               
               <Button
                 v-if="!isMarkedForRemoval(attachment.id)"
-                icon="pi pi-trash"
-                class="p-button-rounded p-button-sm p-button-outlined p-button-danger"
-                @click="markForRemoval(attachment.id)"
                 v-tooltip.top="'Удалить'"
+                class="p-button-rounded p-button-sm p-button-outlined p-button-danger"
+                icon="pi pi-trash"
                 type="button"
+                @click="markForRemoval(attachment.id)"
               />
               
               <Button
                 v-else
-                icon="pi pi-undo"
-                class="p-button-rounded p-button-sm p-button-outlined p-button-success"
-                @click="unmarkForRemoval(attachment.id)"
                 v-tooltip.top="'Отменить удаление'"
+                class="p-button-rounded p-button-sm p-button-outlined p-button-success"
+                icon="pi pi-undo"
                 type="button"
+                @click="unmarkForRemoval(attachment.id)"
               />
             </div>
             
@@ -155,14 +262,14 @@
         <MultiFileUpload
           ref="fileUploadRef"
           v-model="newAttachmentFiles"
-          label="Добавить новые вложения"
-          :max-files="10"
-          :max-file-size="10485760"
           :auto-convert="true"
+          :error-message="errors.attachments"
+          :max-file-size="10485760"
+          :max-files="10"
           empty-text="Перетащите файлы сюда или нажмите для выбора"
           hint-text="Поддерживаемые форматы: изображения, документы, архивы (до 10MB каждый)"
+          label="Добавить новые вложения"
           selected-title="Новые файлы"
-          :error-message="errors.attachments"
           @files-selected="onNewFilesSelected"
           @files-converted="onNewFilesConverted"
           @files-removed="onNewFilesRemoved"
@@ -249,9 +356,9 @@
     </form>
     
     <template #footer>
-      <div class="flex justify-between items-center">
+      <div v-if="!loadingRecord" class="flex justify-between items-center">
         <!-- Информация об изменениях -->
-        <div v-if="hasChanges" class="text-sm text-gray-600">
+        <div v-if="hasChanges" class="text-sm text-gray-600 mr-2">
           <span v-if="newAttachmentFiles.length > 0" class="text-blue-600">
             +{{ newAttachmentFiles.length }} новых
           </span>
@@ -264,17 +371,17 @@
         <!-- Кнопки -->
         <div class="flex space-x-3">
           <Button
-            label="Отмена"
-            class="p-button-outlined"
-            @click="closeModal"
             :disabled="loading"
+            class="p-button-outlined"
+            label="Отмена"
+            @click="closeModal"
           />
           <Button
-            label="Сохранить изменения"
-            icon="pi pi-check"
-            @click="handleSubmit"
-            :loading="loading"
             :disabled="!hasChanges"
+            :loading="loading"
+            icon="pi pi-check"
+            label="Сохранить изменения"
+            @click="handleSubmit"
           />
         </div>
       </div>
@@ -290,19 +397,30 @@ const props = defineProps({
 
 const emit = defineEmits(['update:visible', 'updated'])
 
-const { $api } = useNuxtApp()
+const {$api} = useNuxtApp()
+const {
+  getFileIcon,
+  getFileTypeLabel,
+  formatFileSize,
+} = useFileUtils()
 const toast = useToast()
 
 // Реактивные данные
 const loading = ref(false)
+const loadingRecord = ref(false) // Загрузка данных записи
 const fileUploadRef = ref(null)
 const newAttachmentFiles = ref([]) // Новые файлы через MultiFileUpload
 const filesToRemove = ref([]) // ID файлов для удаления
 const existingAttachments = ref([]) // Существующие вложения
+const currentRecord = ref(null) // Текущие актуальные данные записи
 
 const form = ref({
   name: '',
-  description: ''
+  date: null,
+  operation_type_id: null,
+  type_id: null,
+  description: '',
+  amount: null
 })
 
 const errors = ref({})
@@ -330,48 +448,78 @@ const totalFilesAfterSave = computed(() => {
   return currentAttachmentsCount.value + newAttachmentFiles.value.length - filesToRemove.value.length
 })
 
+// Улучшенная логика определения изменений
 const hasChanges = computed(() => {
-  if (!props.record) return false
+  if (!currentRecord.value) return false
   
-  const formChanged = form.value.name !== (props.record.name || '') ||
-    form.value.description !== (props.record.description || '')
+  const originalDate = currentRecord.value.date ? parseDateFromBackend(currentRecord.value.date) : null
   
-  return formChanged || newAttachmentFiles.value.length > 0 || filesToRemove.value.length > 0
+  // Нормализуем значения для корректного сравнения
+  const normalizeString = (value) => (value || '').toString().trim()
+  const normalizeNumber = (value) => value || null
+  
+  const formChanged =
+    normalizeString(form.value.name) !== normalizeString(currentRecord.value.name) ||
+    normalizeString(form.value.description) !== normalizeString(currentRecord.value.description) ||
+    form.value.operation_type_id !== currentRecord.value.operation_type_id ||
+    form.value.type_id !== currentRecord.value.type_id ||
+    normalizeNumber(form.value.amount) !== normalizeNumber(currentRecord.value.amount) ||
+    !datesEqual(form.value.date, originalDate)
+  
+  const hasFileChanges = newAttachmentFiles.value.length > 0 || filesToRemove.value.length > 0
+  
+  console.log('hasChanges debug:', {
+    formChanged,
+    hasFileChanges,
+    originalValues: {
+      name: normalizeString(currentRecord.value.name),
+      description: normalizeString(currentRecord.value.description),
+      operation_type_id: currentRecord.value.operation_type_id,
+      type_id: currentRecord.value.type_id,
+      amount: normalizeNumber(currentRecord.value.amount),
+      date: originalDate
+    },
+    currentValues: {
+      name: normalizeString(form.value.name),
+      description: normalizeString(form.value.description),
+      operation_type_id: form.value.operation_type_id,
+      type_id: form.value.type_id,
+      amount: normalizeNumber(form.value.amount),
+      date: form.value.date
+    },
+    newFiles: newAttachmentFiles.value.length,
+    filesToRemove: filesToRemove.value.length
+  })
+  
+  return formChanged || hasFileChanges
 })
 
-// Методы для работы с файлами MediaLibrary
-const getFileIcon = (mimeType) => {
-  if (!mimeType) return 'pi pi-file'
-  if (mimeType.startsWith('image/')) return 'pi pi-image'
-  if (mimeType.includes('pdf')) return 'pi pi-file-pdf'
-  if (mimeType.includes('word')) return 'pi pi-file-word'
-  if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'pi pi-file-excel'
-  if (mimeType.includes('zip') || mimeType.includes('rar')) return 'pi pi-file-archive'
-  if (mimeType.startsWith('video/')) return 'pi pi-video'
-  if (mimeType.startsWith('audio/')) return 'pi pi-volume-up'
-  if (mimeType.includes('text/')) return 'pi pi-file-edit'
-  return 'pi pi-file'
+// Утилиты для работы с датами
+const parseDateFromBackend = (dateString) => {
+  if (!dateString) return null
+  
+  // Предполагаем, что с бэкенда приходит дата в формате 'dd.mm.yyyy'
+  const parts = dateString.split('.')
+  if (parts.length === 3) {
+    const day = parseInt(parts[0], 10)
+    const month = parseInt(parts[1], 10) - 1 // месяц в JS начинается с 0
+    const year = parseInt(parts[2], 10)
+    return new Date(year, month, day)
+  }
+  
+  return null
 }
 
-const getFileTypeLabel = (mimeType) => {
-  if (!mimeType) return 'Документ'
-  if (mimeType.startsWith('image/')) return 'Изображение'
-  if (mimeType.includes('pdf')) return 'PDF'
-  if (mimeType.includes('word')) return 'Word'
-  if (mimeType.includes('excel')) return 'Excel'
-  if (mimeType.includes('zip') || mimeType.includes('rar')) return 'Архив'
-  if (mimeType.startsWith('video/')) return 'Видео'
-  if (mimeType.startsWith('audio/')) return 'Аудио'
-  if (mimeType.includes('text/')) return 'Текст'
-  return 'Документ'
-}
-
-const formatFileSize = (bytes) => {
-  if (!bytes) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+// Улучшенная функция сравнения дат
+const datesEqual = (date1, date2) => {
+  if (!date1 && !date2) return true
+  if (!date1 || !date2) return false
+  
+  // Сравниваем только год, месяц и день (игнорируем время)
+  const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate())
+  const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate())
+  
+  return d1.getTime() === d2.getTime()
 }
 
 const getImagePreview = (fileObj) => {
@@ -401,12 +549,12 @@ const unmarkForRemoval = (attachmentId) => {
 
 const downloadFile = async (attachment) => {
   try {
-    const { token } = useAuthStore()
+    const {token} = useAuthStore()
     if (!token) {
       throw new Error('Токен авторизации не найден')
     }
     // TODO решить проблему с localhost
-    const baseUrl = `http://localhost:8000/api/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
+    const baseUrl = `http://localhost:8000/api/data-grid/${currentRecord.value.data_grid_id}/records/${currentRecord.value.id}/media/${attachment.id}/download`
     const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
     
     const link = document.createElement('a')
@@ -438,6 +586,76 @@ const downloadFile = async (attachment) => {
     // Fallback
     window.open(attachment.url || attachment.original_url, '_blank')
   }
+}
+
+// Функция для загрузки актуальных данных записи с сервера
+const fetchRecordData = async () => {
+  if (!props.record?.id || !props.record?.data_grid_id) {
+    console.error('Недостаточно данных для загрузки записи')
+    return
+  }
+  
+  loadingRecord.value = true
+  
+  try {
+    console.log('Загружаем актуальные данные записи:', props.record.id)
+    
+    const response = await $api(
+      `/data-grid/${props.record.data_grid_id}/records/${props.record.id}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    )
+    
+    if (!response.success) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    
+    currentRecord.value = response.data
+    console.log('Актуальные данные записи загружены:', currentRecord.value)
+    
+    // Загружаем данные в форму
+    loadRecordDataToForm()
+    
+  } catch (error) {
+    console.error('Ошибка при загрузке данных записи:', error)
+    
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка загрузки',
+      detail: error.message || 'Не удалось загрузить данные записи',
+      life: 5000
+    })
+    
+    // В случае ошибки используем данные из props как fallback
+    currentRecord.value = props.record
+    loadRecordDataToForm()
+    
+  } finally {
+    loadingRecord.value = false
+  }
+}
+
+// Обработчики событий автокомплита типов
+const onTypeError = (errorMessage) => {
+  toast.add({
+    severity: 'error',
+    summary: 'Ошибка',
+    detail: errorMessage,
+    life: 3000
+  })
+}
+
+const onTypeCreated = (newType) => {
+  toast.add({
+    severity: 'success',
+    summary: 'Успешно',
+    detail: `Тип "${newType.name}" создан`,
+    life: 3000
+  })
 }
 
 // Обработчики событий MultiFileUpload
@@ -472,23 +690,63 @@ const onValidationError = (validationErrors) => {
   })
 }
 
-// Валидация и отправка
+// Улучшенная валидация с отладкой
 const validateForm = () => {
   errors.value = {}
   
-  if (!form.value.name.trim()) {
+  if (!form.value.name?.trim()) {
     errors.value.name = 'Название записи обязательно'
+  }
+  
+  if (!form.value.date) {
+    errors.value.date = 'Дата обязательна'
+  }
+  
+  if (!form.value.operation_type_id) {
+    errors.value.operation_type_id = 'Выберите тип операции'
+  }
+  
+  if (!form.value.type_id) {
+    errors.value.type_id = 'Выберите тип записи'
+  }
+  
+  if (!form.value.amount || form.value.amount <= 0) {
+    errors.value.amount = 'Укажите сумму больше нуля'
   }
   
   if (form.value.description && form.value.description.length > 2000) {
     errors.value.description = 'Описание не должно превышать 2000 символов'
   }
   
-  return Object.keys(errors.value).length === 0
+  const isValid = Object.keys(errors.value).length === 0
+  
+  console.log('Validation result:', {
+    isValid,
+    errors: errors.value,
+    formData: {
+      name: form.value.name,
+      nameLength: form.value.name?.length,
+      date: form.value.date,
+      operation_type_id: form.value.operation_type_id,
+      type_id: form.value.type_id,
+      amount: form.value.amount,
+      description: form.value.description
+    }
+  })
+  
+  return isValid
 }
 
+// Улучшенная функция отправки с отладкой
 const handleSubmit = async () => {
-  if (!validateForm()) return
+  console.log('handleSubmit called')
+  console.log('hasChanges:', hasChanges.value)
+  console.log('validateForm result:', validateForm())
+  
+  if (!validateForm()) {
+    console.log('Validation failed, stopping submit')
+    return
+  }
   
   loading.value = true
   
@@ -496,13 +754,21 @@ const handleSubmit = async () => {
     // Подготавливаем JSON данные
     const jsonData = {
       name: form.value.name.trim(),
+      date: form.value.date,
+      operation_type_id: form.value.operation_type_id,
+      type_id: form.value.type_id,
       description: form.value.description ? form.value.description.trim() : null,
+      amount: form.value.amount,
       new_attachments: newAttachmentFiles.value, // Новые файлы с base64
       remove_attachments: filesToRemove.value // ID файлов для удаления
     }
     
     console.log('Отправляем обновления:', {
       name: jsonData.name,
+      date: jsonData.date,
+      operation_type_id: jsonData.operation_type_id,
+      type_id: jsonData.type_id,
+      amount: jsonData.amount,
       description: jsonData.description,
       newAttachments: jsonData.new_attachments.length,
       removeAttachments: jsonData.remove_attachments.length
@@ -510,7 +776,7 @@ const handleSubmit = async () => {
     
     // Отправка JSON данных
     const response = await $api(
-      `/data-grid/${props.record.data_grid_id}/records/${props.record.id}`,
+      `/data-grid/${currentRecord.value.data_grid_id}/records/${currentRecord.value.id}`,
       {
         method: 'PATCH',
         headers: {
@@ -562,12 +828,17 @@ const closeModal = () => {
 const resetForm = () => {
   form.value = {
     name: '',
-    description: ''
+    date: null,
+    operation_type_id: null,
+    type_id: null,
+    description: '',
+    amount: null
   }
   errors.value = {}
   newAttachmentFiles.value = []
   filesToRemove.value = []
   existingAttachments.value = []
+  currentRecord.value = null
   
   // Очищаем компонент загрузки
   if (fileUploadRef.value) {
@@ -575,27 +846,40 @@ const resetForm = () => {
   }
 }
 
-const loadRecordData = () => {
-  if (!props.record) return
+// Улучшенная загрузка данных записи в форму с отладкой
+const loadRecordDataToForm = () => {
+  if (!currentRecord.value) return
+  
+  console.log('Loading record data to form:', currentRecord.value)
   
   form.value = {
-    name: props.record.name || '',
-    description: props.record.description || ''
+    name: currentRecord.value.name || '',
+    date: parseDateFromBackend(currentRecord.value.date),
+    operation_type_id: currentRecord.value.operation_type_id || null,
+    type_id: currentRecord.value.type_id || null,
+    description: currentRecord.value.description || '',
+    amount: currentRecord.value.amount || null
   }
   
-  existingAttachments.value = [...(props.record.attachments || [])]
+  existingAttachments.value = [...(currentRecord.value.attachments || [])]
   filesToRemove.value = []
   newAttachmentFiles.value = []
+  
+  console.log('Form loaded with data:', {
+    form: form.value,
+    existingAttachments: existingAttachments.value.length,
+    hasChanges: hasChanges.value
+  })
 }
 
 // Загрузка данных записи при открытии модального окна
 watch([isVisible, () => props.record], ([visible, record]) => {
   if (visible && record) {
-    loadRecordData()
+    fetchRecordData()
   } else if (!visible) {
     nextTick(() => {
       resetForm()
     })
   }
-}, { immediate: true })
+}, {immediate: true})
 </script>

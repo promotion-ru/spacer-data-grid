@@ -39,12 +39,13 @@ class DataGridRecord extends Model implements HasMedia
 
     protected $fillable = [
         'data_grid_id',
-        'created_by',
         'name',
+        'date',
         'operation_type_id',
         'type_id',
         'description',
         'amount',
+        'created_by',
     ];
 
     protected $with = ['creator'];
@@ -57,6 +58,11 @@ class DataGridRecord extends Model implements HasMedia
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function type(): BelongsTo
+    {
+        return $this->belongsTo(DataGridType::class);
     }
 
     public function dataGridRecordMedia(): HasMany

@@ -26,6 +26,14 @@ return new class extends Migration
 
     public function down()
     {
+        if (Schema::hasTable('data_grid_records')) {
+            Schema::table('data_grid_records', function (Blueprint $table) {
+                if (Schema::hasColumn('data_grid_records', 'type_id')) {
+                    $table->dropForeign(['type_id']);
+                }
+            });
+        }
+
         Schema::dropIfExists('data_grid_types');
     }
 };

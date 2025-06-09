@@ -382,6 +382,11 @@ const pagination = ref(null)
 const currentPage = ref(1)
 const currentUserId = ref(null)
 
+// Флаги для предотвращения множественных запросов
+const isInitializing = ref(false)
+const watchersEnabled = ref(true)
+const lastFetchParams = ref('')
+
 // Опции фильтров
 const actionFilterOptions = ref([
   {label: 'Запись создана', value: 'record_created'},
@@ -458,23 +463,39 @@ const currentPageFirst = computed({
   }
 })
 
-// Debounced поиск
-const debouncedFetchLogs = debounce(() => {
-  currentPage.value = 1
-  fetchLogs()
-}, 500)
-
-// Методы
-const toggleFilters = () => {
-  showFilters.value = !showFilters.value
+// Генерация уникального ключа для параметров запроса
+const generateFetchKey = () => {
+  const params = {
+    search: searchQuery.value,
+    action: selectedActionFilter.value,
+    actionType: selectedActionTypeFilter.value,
+    field: selectedFieldFilter.value,
+    user: selectedUserFilter.value,
+    dateFrom: dateFrom.value ? formatDateForAPI(dateFrom.value) : null,
+    dateTo: dateTo.value ? formatDateForAPI(dateTo.value) : null,
+    page: currentPage.value,
+    perPage: pagination.value?.per_page || 50,
+    recordId: props.record?.id,
+    gridId: props.gridId
+  }
+  return JSON.stringify(params)
 }
 
+// Основная функция загрузки данных
 const fetchLogs = async () => {
   if (!props.record?.id || !props.gridId) {
     return
   }
   
+  // Проверяем, не выполняется ли уже запрос с такими же параметрами
+  const currentFetchKey = generateFetchKey()
+  if (loading.value && lastFetchParams.value === currentFetchKey) {
+    console.log('Duplicate request prevented')
+    return
+  }
+  
   loading.value = true
+  lastFetchParams.value = currentFetchKey
   
   try {
     const params = new URLSearchParams()
@@ -539,10 +560,35 @@ const fetchLogs = async () => {
     })
   } finally {
     loading.value = false
+    lastFetchParams.value = ''
   }
 }
 
+// Debounced поиск (только для поискового запроса)
+const debouncedFetchLogs = debounce(() => {
+  if (!isInitializing.value && watchersEnabled.value) {
+    currentPage.value = 1
+    fetchLogs()
+  }
+}, 500)
+
+// Обычная загрузка (для фильтров)
+const fetchLogsNormal = () => {
+  if (!isInitializing.value && watchersEnabled.value) {
+    currentPage.value = 1
+    fetchLogs()
+  }
+}
+
+// Методы
+const toggleFilters = () => {
+  showFilters.value = !showFilters.value
+}
+
 const applyQuickFilter = (filterType) => {
+  // Временно отключаем watchers
+  watchersEnabled.value = false
+  
   switch (filterType) {
     case 'record_changes':
     case 'attachments':
@@ -563,9 +609,19 @@ const applyQuickFilter = (filterType) => {
       selectedUserFilter.value = selectedUserFilter.value === currentUserId.value ? null : currentUserId.value
       break
   }
+  
+  // Включаем watchers обратно и загружаем данные
+  nextTick(() => {
+    watchersEnabled.value = true
+    currentPage.value = 1
+    fetchLogs()
+  })
 }
 
 const removeFilter = (filterKey) => {
+  // Временно отключаем watchers
+  watchersEnabled.value = false
+  
   switch (filterKey) {
     case 'action':
       selectedActionFilter.value = null
@@ -586,6 +642,13 @@ const removeFilter = (filterKey) => {
       dateTo.value = null
       break
   }
+  
+  // Включаем watchers обратно и загружаем данные
+  nextTick(() => {
+    watchersEnabled.value = true
+    currentPage.value = 1
+    fetchLogs()
+  })
 }
 
 const getFieldKeyByValue = (value) => {
@@ -611,6 +674,9 @@ const togglePerPage = () => {
 }
 
 const resetFilters = () => {
+  // Отключаем watchers перед сбросом
+  watchersEnabled.value = false
+  
   searchQuery.value = ''
   selectedActionFilter.value = null
   selectedActionTypeFilter.value = null
@@ -619,12 +685,21 @@ const resetFilters = () => {
   dateFrom.value = null
   dateTo.value = null
   currentPage.value = 1
-  fetchLogs()
+  
+  // Включаем watchers и загружаем данные только если не в процессе инициализации
+  nextTick(() => {
+    watchersEnabled.value = true
+    if (!isInitializing.value) {
+      fetchLogs()
+    }
+  })
 }
 
 const closeModal = () => {
   visible.value = false
   showFilters.value = false
+  // При закрытии не загружаем данные
+  watchersEnabled.value = false
   resetFilters()
 }
 
@@ -633,29 +708,62 @@ const onPageChange = (event) => {
   fetchLogs()
 }
 
+// Инициализация модала
+const initializeModal = async () => {
+  if (!props.record?.id || !props.gridId) return
+  
+  isInitializing.value = true
+  watchersEnabled.value = false
+  
+  // Сбрасываем состояние
+  showFilters.value = false
+  logs.value = []
+  pagination.value = null
+  
+  // Сбрасываем фильтры
+  searchQuery.value = ''
+  selectedActionFilter.value = null
+  selectedActionTypeFilter.value = null
+  selectedFieldFilter.value = null
+  selectedUserFilter.value = null
+  dateFrom.value = null
+  dateTo.value = null
+  currentPage.value = 1
+  
+  // Ждем следующий tick для завершения сброса
+  await nextTick()
+  
+  // Включаем watchers и загружаем данные
+  watchersEnabled.value = true
+  isInitializing.value = false
+  
+  // Загружаем данные один раз
+  fetchLogs()
+}
+
+// Watchers с проверкой флагов
 watch(() => props.visible, (newValue) => {
   if (newValue && props.record && props.gridId) {
-    showFilters.value = false
-    resetFilters()
-    fetchLogs()
+    initializeModal()
   }
 })
 
 watch(() => [props.record, props.gridId], ([newRecord, newGridId]) => {
   if (newRecord && newGridId && props.visible) {
-    showFilters.value = false
-    resetFilters()
-    fetchLogs()
+    initializeModal()
   }
 })
 
 watch(searchQuery, () => {
-  debouncedFetchLogs()
+  if (watchersEnabled.value && !isInitializing.value) {
+    debouncedFetchLogs()
+  }
 })
 
 watch([selectedActionFilter, selectedActionTypeFilter, selectedFieldFilter, selectedUserFilter, dateFrom, dateTo], () => {
-  currentPage.value = 1
-  fetchLogs()
+  if (watchersEnabled.value && !isInitializing.value) {
+    fetchLogsNormal()
+  }
 })
 </script>
 

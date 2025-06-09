@@ -106,9 +106,6 @@
 </template>
 
 <script setup>
-import {computed, nextTick, ref, watch} from 'vue'
-
-// Props для настройки компонента
 const props = defineProps({
   // Основные настройки
   modelValue: {
@@ -214,6 +211,12 @@ const emit = defineEmits([
   'validation-error'
 ])
 
+const {
+  getFileIcon,
+  formatFileSize,
+  getFileKey
+} = useFileUtils()
+
 // Локальное состояние
 const fileUploadRef = ref(null)
 const fileUploadKey = ref(0)
@@ -234,30 +237,6 @@ const dynamicHintText = computed(() => {
   
   return 'Поддерживаемые форматы: любые файлы'
 })
-
-// Методы для работы с файлами
-const getFileKey = (fileObj) => {
-  return `${fileObj.name}-${fileObj.type}-${fileObj.size}-${fileObj.id || Date.now()}`
-}
-
-const getFileIcon = (mimeType) => {
-  if (mimeType.startsWith('image/')) return 'pi pi-image'
-  if (mimeType.includes('pdf')) return 'pi pi-file-pdf'
-  if (mimeType.includes('word')) return 'pi pi-file-word'
-  if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return 'pi pi-file-excel'
-  if (mimeType.includes('zip') || mimeType.includes('rar')) return 'pi pi-file-archive'
-  if (mimeType.startsWith('video/')) return 'pi pi-video'
-  if (mimeType.startsWith('audio/')) return 'pi pi-volume-up'
-  return 'pi pi-file'
-}
-
-const formatFileSize = (bytes) => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
 
 const getTotalSize = () => {
   return fileObjects.value.reduce((total, file) => total + file.size, 0)

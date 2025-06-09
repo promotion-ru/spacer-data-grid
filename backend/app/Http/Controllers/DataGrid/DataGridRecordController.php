@@ -55,9 +55,11 @@ class DataGridRecordController extends Controller
             'Создана новая запись в таблице',
             $record->id,
             [],
-            $record->only(['name', 'description', 'status', 'priority']),
+            $record->only(['name', 'date', 'operation_type_id', 'type_id', 'description', 'amount']),
             [
-                'record_name' => $record->name ?? 'Без названия'
+                'record_name' => $record->name ?? 'Без названия',
+                'operation_type' => $record->operation_type_id === 1 ? 'Доход' : 'Расход',
+                'amount' => $record->amount
             ]
         );
 
@@ -66,7 +68,7 @@ class DataGridRecordController extends Controller
             $this->processAttachments($record, $request->input('new_attachments'), $dataGrid);
         }
 
-        $record->load(['media', 'creator']);
+        $record->load(['media', 'creator', 'type', 'attachments']);
 
         return response()->json([
             'success' => true,
@@ -130,7 +132,7 @@ class DataGridRecordController extends Controller
 
         $this->authorize('view', $record);
 
-        $record->load(['media', 'creator', 'dataGrid']);
+        $record->load(['media', 'creator', 'dataGrid', 'type', 'attachments']);
 
         return response()->json([
             'success' => true,
@@ -149,9 +151,9 @@ class DataGridRecordController extends Controller
 
         $this->authorize('update', $record);
 
-        $oldValues = $record->only(['name', 'description', 'status', 'priority']);
+        $oldValues = $record->only(['name', 'date', 'operation_type_id', 'type_id', 'description', 'amount']);
         $record->update($request->validated());
-        $newValues = $record->only(['name', 'description', 'status', 'priority']);
+        $newValues = $record->only(['name', 'date', 'operation_type_id', 'type_id', 'description', 'amount']);
 
         // Проверяем, были ли изменения
         $changes = [];
@@ -173,13 +175,15 @@ class DataGridRecordController extends Controller
                 $oldValues,
                 $newValues,
                 [
-                    'record_name'    => $record->name ?? 'Без названия',
-                    'changed_fields' => array_keys($changes)
+                    'record_name' => $record->name ?? 'Без названия',
+                    'changed_fields' => array_keys($changes),
+                    'operation_type' => $record->operation_type_id === 1 ? 'Доход' : 'Расход',
+                    'amount' => $record->amount
                 ]
             );
         }
 
-        $record->load(['media', 'creator', 'dataGrid']);
+        $record->load(['media', 'creator', 'dataGrid', 'type', 'attachments']);
 
         if ($request->has('new_attachments')) {
             $this->processAttachments($record, $request->input('new_attachments'), $dataGrid);
@@ -254,11 +258,16 @@ class DataGridRecordController extends Controller
 
         $this->authorize('delete', $record);
 
-        $recordData = $record->only(['name', 'description', 'status', 'priority']);
+        $recordData = $record->only(['name', 'date', 'operation_type_id', 'type_id', 'description', 'amount']);
         $recordName = $record->name ?? 'Без названия';
         $recordId = $record->id;
 
+        // Удаляем все вложения
         $record->clearMediaCollection('attachments');
+
+        // Удаляем связи с медиафайлами
+        DataGridRecordMedia::query()->where('data_grid_record_id', $record->id)->delete();
+
         $record->delete();
 
         // Логирование удаления записи
@@ -417,13 +426,13 @@ class DataGridRecordController extends Controller
         $allFields = $allFields->unique()->filter()->values()->toArray();
 
         $fieldLabels = [
-            'name'        => 'Название',
-            'description' => 'Описание',
-            'title'       => 'Заголовок',
-            'content'     => 'Содержание',
-            'status'      => 'Статус',
-            'priority'    => 'Приоритет',
-            'attachments' => 'Вложения',
+            'name'              => 'Название',
+            'date'              => 'Дата',
+            'operation_type_id' => 'Тип операции',
+            'type_id'           => 'Тип записи',
+            'amount'            => 'Сумма',
+            'description'       => 'Описание',
+            'attachments'       => 'Вложения',
         ];
 
         return collect($allFields)

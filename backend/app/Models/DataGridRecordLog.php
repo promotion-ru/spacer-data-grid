@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Helpers\Constant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -67,17 +68,12 @@ class DataGridRecordLog extends Model
     private function getFieldLabels(): array
     {
         return [
-            // Записи
-            'name'        => 'Название',
-            'description' => 'Описание',
-            'title'       => 'Заголовок',
-            'content'     => 'Содержание',
-            'status'      => 'Статус',
-            'priority'    => 'Приоритет',
-            'attachments' => 'Вложения',
-
-            // Типы
-            'is_global'   => 'Глобальный тип',
+            'name'              => 'Название',
+            'date'              => 'Дата',
+            'operation_type_id' => 'Тип операции',
+            'type_id'           => 'Тип записи',
+            'amount'            => 'Сумма',
+            'description'       => 'Описание',
         ];
     }
 
@@ -91,8 +87,20 @@ class DataGridRecordLog extends Model
             return $value ? 'Да' : 'Нет';
         }
 
-        if ($field === 'attachments' && is_array($value)) {
-            return implode(', ', $value);
+        if ($field === 'operation_type_id') {
+            if ($value == Constant::OPERATION_TYPE_INCOME) {
+                return 'Доход';
+            }
+            if ($value == Constant::OPERATION_TYPE_EXPENSE) {
+                return 'Расход';
+            }
+        }
+
+        if ($field === 'type_id') {
+            $type = DataGridType::query()->where('id', $value)->first();
+            if ($type) {
+                return $type->name;
+            }
         }
 
         return (string)$value;
@@ -107,10 +115,6 @@ class DataGridRecordLog extends Model
             'record_deleted'     => ['text' => 'Запись удалена', 'severity' => 'danger'],
             'attachment_added'   => ['text' => 'Вложение добавлено', 'severity' => 'info'],
             'attachment_removed' => ['text' => 'Вложение удалено', 'severity' => 'warning'],
-
-            // Типы данных
-            'type_created'       => ['text' => 'Тип создан', 'severity' => 'success'],
-            'type_deleted'       => ['text' => 'Тип удален', 'severity' => 'danger'],
         ];
 
         return $badges[$this->action] ?? ['text' => 'Действие', 'severity' => 'secondary'];
