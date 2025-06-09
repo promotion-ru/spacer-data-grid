@@ -3,10 +3,21 @@
     v-model:visible="visible"
     :dismissableMask="true"
     :style="{ width: '95vw', maxWidth: '1200px' }"
-    header="История изменений"
+    header="История изменений записи"
     modal
   >
-    <div class="activity-logs-modal">
+    <div class="record-logs-modal">
+      <!-- Информация о записи -->
+      <div v-if="record" class="mb-4 p-4 bg-gray-50 rounded-lg">
+        <div class="flex items-center space-x-3">
+          <i class="pi pi-file-edit text-blue-600 text-xl"></i>
+          <div>
+            <h3 class="font-semibold text-gray-900">{{ record.name || 'Без названия' }}</h3>
+            <p v-if="record.description" class="text-sm text-gray-600">{{ record.description }}</p>
+          </div>
+        </div>
+      </div>
+      
       <!-- Поиск и кнопка фильтров -->
       <div class="mb-4 space-y-3">
         <!-- Верхняя строка: поиск + кнопка фильтров -->
@@ -16,7 +27,7 @@
               <InputText
                 v-model="searchQuery"
                 :loading="loading"
-                class="w-full pl-20 input-search"
+                class="w-full pl-10 input-search"
                 placeholder="Поиск по описанию, пользователю..."
               />
               <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -37,7 +48,6 @@
           />
         </div>
         
-        <!-- Сворачиваемые фильтры -->
         <div v-show="showFilters" class="filters-container">
           <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
             <div class="text-sm font-medium text-gray-700 mb-3 flex items-center">
@@ -117,28 +127,28 @@
               <div class="text-xs font-medium text-gray-600 mb-2">Быстрые фильтры:</div>
               <div class="flex flex-wrap gap-2">
                 <Button
-                  :outlined="selectedActionTypeFilter !== 'grid'"
-                  label="Только изменения таблицы"
+                  :outlined="selectedActionTypeFilter !== 'record_changes'"
+                  label="Изменения записи"
                   size="small"
-                  @click="applyQuickFilter('grid')"
+                  @click="applyQuickFilter('record_changes')"
                 />
                 <Button
-                  :outlined="selectedActionTypeFilter !== 'members'"
-                  label="Действия с участниками"
+                  :outlined="selectedActionTypeFilter !== 'attachments'"
+                  label="Работа с вложениями"
                   size="small"
-                  @click="applyQuickFilter('members')"
-                />
-                <Button
-                  :outlined="selectedActionTypeFilter !== 'invitations'"
-                  label="Приглашения"
-                  size="small"
-                  @click="applyQuickFilter('invitations')"
+                  @click="applyQuickFilter('attachments')"
                 />
                 <Button
                   :outlined="!isLastWeekFilter"
                   label="За последнюю неделю"
                   size="small"
                   @click="applyQuickFilter('last_week')"
+                />
+                <Button
+                  :outlined="selectedUserFilter !== currentUserId"
+                  label="Только мои действия"
+                  size="small"
+                  @click="applyQuickFilter('my_actions')"
                 />
               </div>
             </div>
@@ -211,17 +221,11 @@
               </div>
             </div>
             
-            <!-- Информация о пользователях -->
-            <div class="mb-3 space-y-1">
+            <!-- Информация о пользователе -->
+            <div class="mb-3">
               <div class="text-sm text-gray-600">
                 <i class="pi pi-user mr-1"></i>
                 Пользователь: <span class="font-medium">{{ log.user_name }}</span>
-              </div>
-              <div v-if="log.target_user" class="text-sm text-gray-600">
-                <i class="pi pi-arrow-right mr-1"></i>
-                Целевой пользователь:
-                <span class="font-medium">{{ log.target_user.name }}</span>
-                <span v-if="log.target_user.email" class="text-gray-500 ml-1">({{ log.target_user.email }})</span>
               </div>
             </div>
             
@@ -255,8 +259,22 @@
               </div>
             </div>
             
-            <!-- Метаданные -->
-            <div v-if="log.metadata && Object.keys(log.metadata).length > 0" class="mt-3">
+            <!-- Метаданные для вложений -->
+            <div v-if="log.metadata?.files_names" class="mt-3">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Файлы:</h4>
+              <div class="flex flex-wrap gap-2">
+                <Tag
+                  v-for="fileName in log.metadata.files_names"
+                  :key="fileName"
+                  :value="fileName"
+                  class="text-xs"
+                  severity="info"
+                />
+              </div>
+            </div>
+            
+            <!-- Дополнительные метаданные -->
+            <div v-if="log.metadata && Object.keys(log.metadata).length > 0 && !log.metadata.files_names" class="mt-3">
               <details class="text-sm">
                 <summary class="cursor-pointer text-gray-600 hover:text-gray-800">
                   Дополнительная информация
@@ -295,7 +313,7 @@
           {{
             hasActiveFilters
               ? 'Не найдено записей с выбранными фильтрами'
-              : 'Пока нет записей об изменениях этой таблицы'
+              : 'Пока нет записей об изменениях этой записи'
           }}
         </p>
         <Button
@@ -332,8 +350,12 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  grid: {
+  record: {
     type: Object,
+    default: null
+  },
+  gridId: {
+    type: [String, Number],
     default: null
   }
 })
@@ -351,26 +373,22 @@ const searchQuery = ref('')
 const selectedActionFilter = ref(null)
 const selectedActionTypeFilter = ref(null)
 const selectedFieldFilter = ref(null)
+const selectedUserFilter = ref(null)
 const dateFrom = ref(null)
 const dateTo = ref(null)
 const availableFields = ref([])
 const actionTypeOptions = ref([])
 const pagination = ref(null)
 const currentPage = ref(1)
+const currentUserId = ref(null)
 
 // Опции фильтров
 const actionFilterOptions = ref([
-  {label: 'Создание', value: 'created'},
-  {label: 'Обновление', value: 'updated'},
-  {label: 'Удаление', value: 'deleted'},
-  {label: 'Участник добавлен', value: 'member_added'},
-  {label: 'Участник удален', value: 'member_removed'},
-  {label: 'Права изменены', value: 'member_updated'},
-  {label: 'Покинул таблицу', value: 'member_left'},
-  {label: 'Приглашение отправлено', value: 'invitation_sent'},
-  {label: 'Приглашение принято', value: 'invitation_accepted'},
-  {label: 'Приглашение отклонено', value: 'invitation_declined'},
-  {label: 'Приглашение отменено', value: 'invitation_cancelled'},
+  {label: 'Запись создана', value: 'record_created'},
+  {label: 'Запись обновлена', value: 'record_updated'},
+  {label: 'Запись удалена', value: 'record_deleted'},
+  {label: 'Вложение добавлено', value: 'attachment_added'},
+  {label: 'Вложение удалено', value: 'attachment_removed'},
 ])
 
 // Вычисляемые свойства
@@ -380,7 +398,7 @@ const visible = computed({
 })
 
 const hasActiveFilters = computed(() => {
-  return !!(searchQuery.value || selectedActionFilter.value || selectedActionTypeFilter.value || selectedFieldFilter.value || dateFrom.value || dateTo.value)
+  return !!(searchQuery.value || selectedActionFilter.value || selectedActionTypeFilter.value || selectedFieldFilter.value || selectedUserFilter.value || dateFrom.value || dateTo.value)
 })
 
 const isLastWeekFilter = computed(() => {
@@ -415,6 +433,13 @@ const activeFilterTags = computed(() => {
     }
   }
   
+  if (selectedUserFilter.value) {
+    tags.push({
+      key: 'user',
+      label: `Пользователь: ${selectedUserFilter.value === currentUserId.value ? 'Мои действия' : 'ID: ' + selectedUserFilter.value}`
+    })
+  }
+  
   if (dateFrom.value) {
     tags.push({key: 'dateFrom', label: `С: ${formatDate(dateFrom.value)}`})
   }
@@ -445,7 +470,7 @@ const toggleFilters = () => {
 }
 
 const fetchLogs = async () => {
-  if (!props.grid?.id) {
+  if (!props.record?.id || !props.gridId) {
     return
   }
   
@@ -470,6 +495,10 @@ const fetchLogs = async () => {
       params.append('changed_field', selectedFieldFilter.value)
     }
     
+    if (selectedUserFilter.value) {
+      params.append('user_id', selectedUserFilter.value)
+    }
+    
     if (dateFrom.value) {
       params.append('date_from', formatDateForAPI(dateFrom.value))
     }
@@ -482,23 +511,30 @@ const fetchLogs = async () => {
     params.append('per_page', pagination.value?.per_page?.toString() || '50')
     
     const queryString = params.toString()
-    const url = `/data-grid/${props.grid.id}/logs${queryString ? '?' + queryString : ''}`
+    const url = `/data-grid/${props.gridId}/records/${props.record.id}/logs${queryString ? '?' + queryString : ''}`
     
     const response = await $api(url)
     logs.value = response.data
     pagination.value = response.pagination
     
-    // Обновляем доступные фильтры
     if (response.filters) {
+      actionTypeOptions.value = response.filters.action_types || [
+        {value: 'record_changes', label: 'Изменения записи'},
+        {value: 'attachments', label: 'Работа с вложениями'},
+      ]
       availableFields.value = response.filters.available_fields || []
-      actionTypeOptions.value = response.filters.action_types || []
+    }
+    
+    // Получаем ID текущего пользователя для быстрого фильтра
+    if (!currentUserId.value && response.current_user_id) {
+      currentUserId.value = response.current_user_id
     }
   } catch (error) {
-    console.error('Ошибка загрузки логов:', error)
+    console.error('Ошибка загрузки логов записи:', error)
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
-      detail: 'Не удалось загрузить историю изменений',
+      detail: 'Не удалось загрузить историю изменений записи',
       life: 3000
     })
   } finally {
@@ -508,9 +544,8 @@ const fetchLogs = async () => {
 
 const applyQuickFilter = (filterType) => {
   switch (filterType) {
-    case 'grid':
-    case 'members':
-    case 'invitations':
+    case 'record_changes':
+    case 'attachments':
       selectedActionTypeFilter.value = selectedActionTypeFilter.value === filterType ? null : filterType
       break
     case 'last_week':
@@ -523,6 +558,9 @@ const applyQuickFilter = (filterType) => {
         dateFrom.value = weekAgo
         dateTo.value = new Date()
       }
+      break
+    case 'my_actions':
+      selectedUserFilter.value = selectedUserFilter.value === currentUserId.value ? null : currentUserId.value
       break
   }
 }
@@ -537,6 +575,9 @@ const removeFilter = (filterKey) => {
       break
     case 'field':
       selectedFieldFilter.value = null
+      break
+    case 'user':
+      selectedUserFilter.value = null
       break
     case 'dateFrom':
       dateFrom.value = null
@@ -574,6 +615,7 @@ const resetFilters = () => {
   selectedActionFilter.value = null
   selectedActionTypeFilter.value = null
   selectedFieldFilter.value = null
+  selectedUserFilter.value = null
   dateFrom.value = null
   dateTo.value = null
   currentPage.value = 1
@@ -592,15 +634,15 @@ const onPageChange = (event) => {
 }
 
 watch(() => props.visible, (newValue) => {
-  if (newValue && props.grid) {
+  if (newValue && props.record && props.gridId) {
     showFilters.value = false
     resetFilters()
     fetchLogs()
   }
 })
 
-watch(() => props.grid, (newGrid) => {
-  if (newGrid && props.visible) {
+watch(() => [props.record, props.gridId], ([newRecord, newGridId]) => {
+  if (newRecord && newGridId && props.visible) {
     showFilters.value = false
     resetFilters()
     fetchLogs()
@@ -611,8 +653,7 @@ watch(searchQuery, () => {
   debouncedFetchLogs()
 })
 
-// Отслеживаем изменения фильтров
-watch([selectedActionFilter, selectedActionTypeFilter, selectedFieldFilter, dateFrom, dateTo], () => {
+watch([selectedActionFilter, selectedActionTypeFilter, selectedFieldFilter, selectedUserFilter, dateFrom, dateTo], () => {
   currentPage.value = 1
   fetchLogs()
 })

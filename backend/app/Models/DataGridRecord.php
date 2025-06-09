@@ -98,4 +98,8 @@ class DataGridRecord extends Model implements HasMedia
         return $this->media()->wherePivot('media_type', 'image');
     }
 
+    public function logs()
+    {
+        return $this->hasMany(DataGridRecordLog::class, 'data_grid_id');
+    }
 }

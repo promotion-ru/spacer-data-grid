@@ -153,4 +153,29 @@ class DataGrid extends Model implements HasMedia
     {
         return $this->hasMany(DataGridLog::class, 'data_grid_id');
     }
+
+    public function logRecordAction(
+        string $action,
+        string $description,
+        ?int   $recordId = null,
+        array  $oldValues = [],
+        array  $newValues = [],
+        array  $metadata = []
+    ): DataGridRecordLog
+    {
+        return $this->recordLogs()->create([
+            'data_grid_record_id' => $recordId,
+            'action'              => $action,
+            'user_id'             => Auth::id(),
+            'description'         => $description,
+            'old_values'          => $oldValues,
+            'new_values'          => $newValues,
+            'metadata'            => $metadata,
+        ]);
+    }
+
+    public function recordLogs()
+    {
+        return $this->hasMany(DataGridRecordLog::class, 'data_grid_id');
+    }
 }

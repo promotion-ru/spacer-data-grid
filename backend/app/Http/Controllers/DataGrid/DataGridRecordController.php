@@ -5,6 +5,7 @@ namespace App\Http\Controllers\DataGrid;
 use App\Facades\TelegramDump;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\DataGridRecordRequest;
+use App\Http\Resources\DataGridRecordLogResource;
 use App\Http\Resources\DataGridRecordResource;
 use App\Models\DataGrid;
 use App\Models\DataGridRecord;
@@ -48,9 +49,21 @@ class DataGridRecordController extends Controller
             'created_by' => auth()->id(),
         ]);
 
+        // Логирование создания записи
+        $dataGrid->logRecordAction(
+            'record_created',
+            'Создана новая запись в таблице',
+            $record->id,
+            [],
+            $record->only(['name', 'description', 'status', 'priority']),
+            [
+                'record_name' => $record->name ?? 'Без названия'
+            ]
+        );
+
         // Обрабатываем вложения
         if ($request->has('new_attachments')) {
-            $this->processAttachments($record, $request->input('new_attachments'));
+            $this->processAttachments($record, $request->input('new_attachments'), $dataGrid);
         }
 
         $record->load(['media', 'creator']);
@@ -62,18 +75,23 @@ class DataGridRecordController extends Controller
         ], 201);
     }
 
-    private function processAttachments($record, $attachments): void
+    private function processAttachments($record, $attachments, DataGrid $dataGrid): void
     {
+        $attachedFiles = [];
+
         foreach ($attachments as $attachment) {
             try {
                 $media = $this->fileUploadService
                     ->uploadFile($record, $attachment, 'attachments', [
                         'filename_prefix' => $record->id . '_'
                     ]);
+
                 DataGridRecordMedia::query()->create([
                     'data_grid_record_id' => $record->id,
                     'media_id'            => $media->id,
                 ]);
+
+                $attachedFiles[] = $media->name ?? $attachment['name'] ?? 'файл';
 
             } catch (Exception $e) {
                 Log::error('Ошибка загрузки вложения', [
@@ -83,11 +101,26 @@ class DataGridRecordController extends Controller
                 TelegramDump::dump($e->getMessage());
             }
         }
+
+        // Логирование добавления вложений
+        if (!empty($attachedFiles)) {
+            $dataGrid->logRecordAction(
+                'attachment_added',
+                'Добавлены вложения к записи',
+                $record->id,
+                [],
+                ['attachments' => $attachedFiles],
+                [
+                    'record_name' => $record->name ?? 'Без названия',
+                    'files_count' => count($attachedFiles),
+                    'files_names' => $attachedFiles
+                ]
+            );
+        }
     }
 
     public function show(DataGrid $dataGrid, DataGridRecord $record): JsonResponse
     {
-        // Проверяем, что запись принадлежит указанной таблице
         if ($record->data_grid_id !== $dataGrid->id) {
             return response()->json([
                 'success' => false,
@@ -95,7 +128,6 @@ class DataGridRecordController extends Controller
             ], 404);
         }
 
-        // Проверяем права на просмотр записи
         $this->authorize('view', $record);
 
         $record->load(['media', 'creator', 'dataGrid']);
@@ -108,7 +140,6 @@ class DataGridRecordController extends Controller
 
     public function update(DataGridRecordRequest $request, DataGrid $dataGrid, DataGridRecord $record): JsonResponse
     {
-        // Проверяем, что запись принадлежит указанной таблице
         if ($record->data_grid_id !== $dataGrid->id) {
             return response()->json([
                 'success' => false,
@@ -116,19 +147,46 @@ class DataGridRecordController extends Controller
             ], 404);
         }
 
-        // Проверяем права на редактирование записи
         $this->authorize('update', $record);
 
+        $oldValues = $record->only(['name', 'description', 'status', 'priority']);
         $record->update($request->validated());
+        $newValues = $record->only(['name', 'description', 'status', 'priority']);
+
+        // Проверяем, были ли изменения
+        $changes = [];
+        foreach ($newValues as $key => $newValue) {
+            if ($oldValues[$key] !== $newValue) {
+                $changes[$key] = [
+                    'old' => $oldValues[$key],
+                    'new' => $newValue
+                ];
+            }
+        }
+
+        // Логирование обновления записи
+        if (!empty($changes)) {
+            $dataGrid->logRecordAction(
+                'record_updated',
+                'Обновлена запись в таблице',
+                $record->id,
+                $oldValues,
+                $newValues,
+                [
+                    'record_name'    => $record->name ?? 'Без названия',
+                    'changed_fields' => array_keys($changes)
+                ]
+            );
+        }
 
         $record->load(['media', 'creator', 'dataGrid']);
 
         if ($request->has('new_attachments')) {
-            $this->processAttachments($record, $request->input('new_attachments'));
+            $this->processAttachments($record, $request->input('new_attachments'), $dataGrid);
         }
 
         if ($request->has('remove_attachments')) {
-            $this->removeAttachments($record, $request->input('remove_attachments'));
+            $this->removeAttachments($record, $request->input('remove_attachments'), $dataGrid);
         }
 
         $record->refresh();
@@ -140,16 +198,23 @@ class DataGridRecordController extends Controller
         ]);
     }
 
-    private function removeAttachments($record, $mediaIds): void
+    private function removeAttachments($record, $mediaIds, DataGrid $dataGrid): void
     {
+        $removedFiles = [];
+
         foreach ($mediaIds as $mediaId) {
             try {
+                $mediaFile = $record->media()->where('id', $mediaId)->first();
+                $fileName = $mediaFile?->name ?? 'файл';
+
                 $deleted = $this->fileUploadService->deleteFileById($record, $mediaId);
                 if ($deleted) {
                     DataGridRecordMedia::query()
                         ->where('data_grid_record_id', $record->id)
                         ->where('media_id', $mediaId)
                         ->delete();
+
+                    $removedFiles[] = $fileName;
                 }
 
             } catch (Exception $e) {
@@ -160,28 +225,216 @@ class DataGridRecordController extends Controller
                 TelegramDump::dump($e->getMessage());
             }
         }
+
+        // Логирование удаления вложений
+        if (!empty($removedFiles)) {
+            $dataGrid->logRecordAction(
+                'attachment_removed',
+                'Удалены вложения из записи',
+                $record->id,
+                ['attachments' => $removedFiles],
+                [],
+                [
+                    'record_name' => $record->name ?? 'Без названия',
+                    'files_count' => count($removedFiles),
+                    'files_names' => $removedFiles
+                ]
+            );
+        }
     }
 
     public function destroy(DataGrid $dataGrid, DataGridRecord $record): JsonResponse
     {
-        // Проверяем, что запись принадлежит указанной таблице
         if ($record->data_grid_id !== $dataGrid->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Запись не найдена в указанной таблице',
             ], 404);
         }
-        // Проверяем права на удаление записи
+
         $this->authorize('delete', $record);
 
-        // Удаляем все вложения (включая файлы из S3)
-        $record->clearMediaCollection('attachments');
+        $recordData = $record->only(['name', 'description', 'status', 'priority']);
+        $recordName = $record->name ?? 'Без названия';
+        $recordId = $record->id;
 
+        $record->clearMediaCollection('attachments');
         $record->delete();
+
+        // Логирование удаления записи
+        $dataGrid->logRecordAction(
+            'record_deleted',
+            'Удалена запись из таблицы',
+            $recordId,
+            $recordData,
+            [],
+            [
+                'record_name' => $recordName
+            ]
+        );
 
         return response()->json([
             'success' => true,
             'message' => 'Запись успешно удалена',
         ]);
+    }
+
+    public function logs(Request $request, DataGrid $dataGrid, DataGridRecord $record): JsonResponse
+    {
+        $this->authorize('view', $record);
+
+        if ($record->data_grid_id !== $dataGrid->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Запись не найдена в указанной таблице',
+            ], 404);
+        }
+
+        $query = $dataGrid->recordLogs()
+            ->where('data_grid_record_id', $record->id)
+            ->with('user')
+            ->orderBy('created_at', 'desc');
+
+        // Фильтр по действию
+        if ($request->filled('action')) {
+            $query->where('action', $request->get('action'));
+        }
+
+        // Фильтр по типу действий
+        if ($request->filled('action_type')) {
+            $actionType = $request->get('action_type');
+            $actionGroups = [
+                'record_changes' => ['record_created', 'record_updated', 'record_deleted'],
+                'attachments'    => ['attachment_added', 'attachment_removed'],
+                'types'          => ['type_created', 'type_deleted'],
+            ];
+
+            if (isset($actionGroups[$actionType])) {
+                $query->whereIn('action', $actionGroups[$actionType]);
+            }
+        }
+
+        // Фильтр по измененным полям
+        if ($request->filled('changed_field')) {
+            $fieldName = $request->get('changed_field');
+            $query->where(function ($q) use ($fieldName) {
+                $q->whereJsonContains('metadata->changed_fields', $fieldName)
+                    ->orWhereRaw("JSON_EXTRACT(old_values, ?) IS NOT NULL", ["$.\"{$fieldName}\""])
+                    ->orWhereRaw("JSON_EXTRACT(new_values, ?) IS NOT NULL", ["$.\"{$fieldName}\""]);
+            });
+        }
+
+        // Фильтр по пользователю
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->get('user_id'));
+        }
+
+        // Поиск по тексту
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where(function ($q) use ($search) {
+                $q->where('description', 'LIKE', "%{$search}%")
+                    ->orWhereHas('user', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%")
+                            ->orWhere('email', 'LIKE', "%{$search}%");
+                    });;
+            });
+        }
+
+        // Фильтр по дате
+        if ($request->filled('date_from')) {
+            $query->whereDate('created_at', '>=', $request->get('date_from'));
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('created_at', '<=', $request->get('date_to'));
+        }
+
+        // Пагинация
+        $perPage = $request->get('per_page', 50);
+        $logs = $query->paginate($perPage);
+
+        // Получаем доступные поля для фильтрации
+        $availableFields = $this->getAvailableChangedFieldsForRecord($dataGrid, $record);
+
+        return response()->json([
+            'success'         => true,
+            'data'            => DataGridRecordLogResource::collection($logs->items()),
+            'pagination'      => [
+                'current_page' => $logs->currentPage(),
+                'last_page'    => $logs->lastPage(),
+                'per_page'     => $logs->perPage(),
+                'total'        => $logs->total(),
+            ],
+            'filters'         => [
+                'actions'          => [
+                    ['value' => 'record_created', 'label' => 'Запись создана'],
+                    ['value' => 'record_updated', 'label' => 'Запись обновлена'],
+                    ['value' => 'record_deleted', 'label' => 'Запись удалена'],
+                    ['value' => 'attachment_added', 'label' => 'Вложение добавлено'],
+                    ['value' => 'attachment_removed', 'label' => 'Вложение удалено'],
+                    ['value' => 'type_created', 'label' => 'Тип создан'],
+                    ['value' => 'type_deleted', 'label' => 'Тип удален'],
+                ],
+                'action_types'     => [
+                    ['value' => 'record_changes', 'label' => 'Изменения записи'],
+                    ['value' => 'attachments', 'label' => 'Работа с вложениями'],
+                ],
+                'available_fields' => $availableFields,
+            ],
+            'current_user_id' => auth()->id(),
+        ]);
+    }
+
+    private function getAvailableChangedFieldsForRecord(DataGrid $dataGrid, DataGridRecord $record): array
+    {
+        $logs = $dataGrid->recordLogs()
+            ->where('data_grid_record_id', $record->id)
+            ->where(function ($q) {
+                $q->whereNotNull('old_values')->orWhereNotNull('new_values');
+            })
+            ->get();
+
+        $allFields = collect();
+
+        foreach ($logs as $log) {
+            // Из metadata
+            if ($log->metadata && isset($log->metadata['changed_fields']) && is_array($log->metadata['changed_fields'])) {
+                $allFields = $allFields->merge($log->metadata['changed_fields']);
+            }
+
+            // Из old_values
+            if ($log->old_values && is_array($log->old_values)) {
+                $allFields = $allFields->merge(array_keys($log->old_values));
+            }
+
+            // Из new_values
+            if ($log->new_values && is_array($log->new_values)) {
+                $allFields = $allFields->merge(array_keys($log->new_values));
+            }
+        }
+
+        $allFields = $allFields->unique()->filter()->values()->toArray();
+
+        $fieldLabels = [
+            'name'        => 'Название',
+            'description' => 'Описание',
+            'title'       => 'Заголовок',
+            'content'     => 'Содержание',
+            'status'      => 'Статус',
+            'priority'    => 'Приоритет',
+            'attachments' => 'Вложения',
+        ];
+
+        return collect($allFields)
+            ->map(function ($field) use ($fieldLabels) {
+                return [
+                    'value' => $field,
+                    'label' => $fieldLabels[$field] ?? $field,
+                ];
+            })
+            ->sortBy('label')
+            ->values()
+            ->toArray();
     }
 }

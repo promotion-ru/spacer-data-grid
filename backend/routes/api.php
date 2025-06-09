@@ -77,6 +77,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/{record}', [DataGridRecordController::class, 'show'])->name('show');
             Route::patch('/{record}', [DataGridRecordController::class, 'update'])->name('update');
             Route::delete('/{record}', [DataGridRecordController::class, 'destroy'])->name('destroy');
+            Route::get('/{record}/logs', [DataGridRecordController::class, 'logs']);
         });
 
         Route::prefix('types')->name('types.')->group(function () {

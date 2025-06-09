@@ -183,6 +183,13 @@
                       @click="editRecord(data)"
                     />
                     <Button
+                      v-if="hasPermission('view')"
+                      v-tooltip.top="'История изменений'"
+                      class="p-button-outlined p-button-sm p-button-secondary"
+                      icon="pi pi-history"
+                      @click="viewRecordLogs(data)"
+                    />
+                    <Button
                       v-if="hasPermission('delete')"
                       v-tooltip.top="'Удалить'"
                       class="p-button-outlined p-button-sm p-button-danger"
@@ -243,6 +250,13 @@
       @invited="onUserInvited"
     />
     
+    <!-- Модальное окно истории изменений записи -->
+    <DataGridRecordLogsModal
+      v-model:visible="showRecordLogsModal"
+      :record="selectedRecord"
+      :grid-id="grid?.id"
+    />
+    
     <!-- Модальное окно управления участниками -->
     <DataGridMembersModal
       v-if="grid?.is_owner"
@@ -275,6 +289,7 @@ const showCreateRecordModal = ref(false)
 const showEditRecordModal = ref(false)
 const showShareModal = ref(false)
 const showMembersModal = ref(false)
+const showRecordLogsModal = ref(false)
 const selectedRecord = ref(null)
 const globalFilter = ref('')
 
@@ -327,6 +342,11 @@ const onEditModalVisibilityChange = (visible) => {
     selectedRecord.value = null
     console.log('Модальное окно редактирования закрыто')
   }
+}
+
+const viewRecordLogs = (record) => {
+  selectedRecord.value = record
+  showRecordLogsModal.value = true
 }
 
 // Обработчики событий для совместного использования
