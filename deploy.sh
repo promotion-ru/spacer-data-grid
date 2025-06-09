@@ -1,7 +1,15 @@
 #!/bin/bash
 
 # Загрузка переменных окружения
-source ./backend/.env
+set -a
+source .env.production
+set +a
+
+# Проверка переменных
+if [ -z "$MYSQL_ROOT_PASSWORD" ] || [ -z "$MYSQL_PASSWORD" ]; then
+    echo "ERROR: MYSQL_ROOT_PASSWORD and MYSQL_PASSWORD must be set in .env.production"
+    exit 1
+fi
 
 # Остановка существующих контейнеров
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml down

@@ -1,5 +1,16 @@
 #!/bin/bash
 
+# Загрузка переменных окружения
+set -a
+source .env.production
+set +a
+
+# Проверка переменных
+if [ -z "$MYSQL_ROOT_PASSWORD" ] || [ -z "$MYSQL_PASSWORD" ]; then
+    echo "ERROR: MYSQL_ROOT_PASSWORD and MYSQL_PASSWORD must be set in .env.production"
+    exit 1
+fi
+
 domains=(grid.lk.cool)
 rsa_key_size=4096
 data_path="./certbot"
