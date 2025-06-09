@@ -50,6 +50,11 @@ RUN composer install --no-dev --no-scripts --no-autoloader
 # Копирование остальных файлов
 COPY . .
 
+# Создаём каталоги и права ДО composer
+RUN mkdir -p bootstrap/cache storage/logs \
+    && chown -R www-data:www-data bootstrap/cache storage \
+    && chmod -R 775 bootstrap/cache storage
+
 # Генерация автозагрузчика
 RUN composer dump-autoload --optimize
 
