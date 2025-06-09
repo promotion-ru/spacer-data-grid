@@ -46,6 +46,8 @@ WORKDIR /var/www
 COPY composer.json composer.lock ./
 COPY artisan ./
 COPY bootstrap bootstrap/
+COPY config config/
+COPY routes routes/
 
 # 2) Гарантируем существование и права папки cache
 RUN mkdir -p bootstrap/cache \
