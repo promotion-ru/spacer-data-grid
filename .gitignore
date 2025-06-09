@@ -24,9 +24,8 @@ frontend/node_modules
 frontend/.env
 frontend/npm-debug.log
 frontend/yarn-error.log
-
-# Docker
-mysql_data/
+frontend/.output
+frontend/node_modules/
 
 # IDE
 .idea
@@ -35,9 +34,35 @@ mysql_data/
 *.swo
 *~
 
+# Backups
+*.backup
+*.bak
+backup/
+backups/
+
+# Docker
+mysql_data/
+/var/lib/mysql_prod/
+
+
 # OS
 .DS_Store
 Thumbs.db
 
 # Logs
 *.log
+
+# SSL certificates - NEVER commit these!
+certbot/
+/certbot/
+certbot/conf/
+certbot/www/
+*.pem
+*.key
+*.crt
+*.csr
+
+.env
+.env.*
+!.env.example
+.env.production

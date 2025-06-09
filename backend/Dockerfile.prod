@@ -1,0 +1,64 @@
+FROM php:8.4-fpm
+
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Установка PHP расширений
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd opcache
+
+# Настройка opcache для продакшена
+RUN { \
+        echo 'opcache.memory_consumption=128'; \
+        echo 'opcache.interned_strings_buffer=8'; \
+        echo 'opcache.max_accelerated_files=4000'; \
+        echo 'opcache.revalidate_freq=2'; \
+        echo 'opcache.fast_shutdown=1'; \
+        echo 'opcache.enable_cli=1'; \
+    } > /usr/local/etc/php/conf.d/opcache-recommended.ini
+
+# Настройка PHP-FPM
+RUN { \
+        echo '[global]'; \
+        echo 'error_log = /proc/self/fd/2'; \
+        echo; \
+        echo '[www]'; \
+        echo 'access.log = /proc/self/fd/2'; \
+        echo 'clear_env = no'; \
+        echo 'catch_workers_output = yes'; \
+    } > /usr/local/etc/php-fpm.d/docker.conf
+
+# Установка Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+WORKDIR /var/www
+
+# Копирование файлов composer для кеширования зависимостей
+COPY composer.json composer.lock ./
+
+# Установка зависимостей
+RUN composer install --no-dev --no-scripts --no-autoloader
+
+# Копирование остальных файлов
+COPY . .
+
+# Генерация автозагрузчика
+RUN composer dump-autoload --optimize
+
+# Права доступа
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www/storage \
+    && chmod -R 755 /var/www/bootstrap/cache
+
+EXPOSE 9000
+
+# PHP-FPM запускается в foreground режиме по умолчанию
+CMD ["php-fpm"]
