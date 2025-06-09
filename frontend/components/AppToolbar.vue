@@ -8,18 +8,18 @@
         <div class="flex items-center gap-4">
           <!-- Кнопка меню (гамбургер) -->
           <Button
+            aria-label="Toggle sidebar"
+            class="mr-2 lg:hidden"
             icon="pi pi-bars"
-            @click="$emit('toggle-sidebar')"
-            text
             rounded
             size="large"
-            class="mr-2 lg:hidden"
-            aria-label="Toggle sidebar"
+            text
+            @click="$emit('toggle-sidebar')"
           />
           
           <!-- Логотип и навигация -->
           <div class="flex items-center gap-4">
-            <NuxtLink to="/" class="flex items-center gap-3 no-underline">
+            <NuxtLink class="flex items-center gap-3 no-underline" to="/">
               <span class="font-bold text-xl text-surface-900 dark:text-surface-0 hidden sm:block">
                 Data grid
               </span>
@@ -30,38 +30,38 @@
       
       <template #end>
         <div class="flex items-center gap-3">
-<!--          <Button-->
-<!--            @click="toggleDark()"-->
-<!--            :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"-->
-<!--            severity="secondary"-->
-<!--            text-->
-<!--            rounded-->
-<!--            :aria-label="isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'"-->
-<!--            class="w-10 h-10 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"-->
-<!--          />-->
+          <Button
+            :aria-label="isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'"
+            :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
+            class="w-10 h-10 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            rounded
+            severity="secondary"
+            text
+            @click="toggleDark()"
+          />
           <!-- Профиль пользователя -->
           <div class="relative">
             <Button
-              @click="toggleUserMenu"
-              text
-              rounded
-              class="p-1"
               aria-label="User menu"
+              class="p-1"
+              rounded
+              text
+              @click="toggleUserMenu"
             >
               <template v-if="user?.avatar_url">
                 <Avatar
                   :image="user.avatar_url"
-                  size="normal"
-                  shape="circle"
                   class="w-8 h-8"
+                  shape="circle"
+                  size="normal"
                 />
               </template>
               <template v-else>
                 <Avatar
-                  image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
-                  size="normal"
-                  shape="circle"
                   class="w-8 h-8"
+                  image="https://primefaces.org/cdn/primevue/images/avatar/amyelsner.png"
+                  shape="circle"
+                  size="normal"
                 />
               </template>
             </Button>
@@ -81,8 +81,8 @@
 </template>
 
 <script setup>
-const { user, logout } = useAuth()
-const { isDark, toggleDark } = useTheme()
+const {user, logout} = useAuth()
+const {isDark, toggleDark} = useTheme()
 
 const emit = defineEmits(['toggle-sidebar'])
 const userMenu = ref()

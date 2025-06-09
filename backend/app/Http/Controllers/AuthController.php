@@ -2,6 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Auth\LoginRequest;
+use App\Http\Requests\Auth\RegisterRequest;
+use App\Http\Resources\TokenResource;
+use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,14 +18,8 @@ class AuthController extends Controller
     /**
      * Login user and create token
      */
-    public function login(Request $request): JsonResponse
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->validate([
-            'email'       => 'required|email',
-            'password'    => 'required',
-            'device_name' => 'string|max:255',
-        ]);
-
         $user = User::query()->where('email', $request->email)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -40,9 +38,12 @@ class AuthController extends Controller
             'device_name' => $deviceName,
         ]);
 
+        // Загружаем роли и права для пользователя
+        $user->load(['roles.permissions']);
+
         return response()->json([
             'message'    => 'Login successful',
-            'user'       => $user,
+            'user'       => new UserResource($user),
             'token'      => $token->plainTextToken,
             'token_type' => 'Bearer',
             'expires_at' => $token->accessToken->expires_at,
@@ -75,7 +76,7 @@ class AuthController extends Controller
     /**
      * Log authentication activity
      */
-    private function logAuthActivity(Request $request, User $user, string $action, array $extra = [])
+    private function logAuthActivity(Request $request, User $user, string $action, array $extra = []): void
     {
         $data = array_merge([
             'action'     => $action,
@@ -90,19 +91,12 @@ class AuthController extends Controller
     /**
      * Register new user and create token
      */
-    public function register(Request $request)
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name'        => 'required|string|max:255',
-            'email'       => 'required|string|email|max:255|unique:users',
-            'password'    => 'required|string|min:8|confirmed',
-            'device_name' => 'string|max:255',
-        ]);
-
         $user = User::create([
-            'name'     => $validated['name'],
-            'email'    => $validated['email'],
-            'password' => Hash::make($validated['password']),
+            'name'     => $request->name,
+            'email'    => $request->email,
+            'password' => Hash::make($request->password),
         ]);
 
         // Создаем токен после регистрации
@@ -114,9 +108,12 @@ class AuthController extends Controller
             'device_name' => $deviceName,
         ]);
 
+        // Загружаем роли и права для пользователя
+        $user->load(['roles.permissions']);
+
         return response()->json([
             'message'    => 'Registration successful',
-            'user'       => $user,
+            'user'       => new UserResource($user),
             'token'      => $token->plainTextToken,
             'token_type' => 'Bearer',
             'expires_at' => $token->accessToken->expires_at,
@@ -126,7 +123,7 @@ class AuthController extends Controller
     /**
      * Logout (revoke current token)
      */
-    public function logout(Request $request)
+    public function logout(Request $request): JsonResponse
     {
         $tokenId = $request->user()->currentAccessToken()->id;
 
@@ -151,16 +148,16 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
-        $user->load('roles.permissions');
-        $user->is_admin = $user->hasRole('administrator');
+        // Загружаем роли и права
+        $user->load(['roles.permissions']);
 
-        return response()->json($user);
+        return response()->json(new UserResource($user));
     }
 
     /**
      * Revoke all tokens except current
      */
-    public function logoutOtherDevices(Request $request)
+    public function logoutOtherDevices(Request $request): JsonResponse
     {
         $currentTokenId = $request->user()->currentAccessToken()->id;
 
@@ -182,7 +179,7 @@ class AuthController extends Controller
     /**
      * Get user's active tokens
      */
-    public function tokens(Request $request)
+    public function tokens(Request $request): JsonResponse
     {
         $currentTokenId = $request->user()->currentAccessToken()->id;
 
@@ -191,25 +188,17 @@ class AuthController extends Controller
             ->orderBy('last_used_at', 'desc')
             ->get()
             ->map(function ($token) use ($currentTokenId) {
-                return [
-                    'id'           => $token->id,
-                    'name'         => $token->name,
-                    'abilities'    => $token->abilities,
-                    'last_used_at' => $token->last_used_at,
-                    'expires_at'   => $token->expires_at,
-                    'created_at'   => $token->created_at,
-                    'is_current'   => $token->id === $currentTokenId,
-                    'is_expired'   => $token->expires_at && $token->expires_at->isPast(),
-                ];
+                $token->is_current = $token->id === $currentTokenId;
+                return $token;
             });
 
-        return response()->json($tokens);
+        return response()->json(TokenResource::collection($tokens));
     }
 
     /**
      * Revoke all tokens (logout from all devices)
      */
-    public function logoutAllDevices(Request $request)
+    public function logoutAllDevices(Request $request): JsonResponse
     {
         $deletedCount = $request->user()->tokens()->delete();
 
@@ -226,7 +215,7 @@ class AuthController extends Controller
     /**
      * Revoke specific token
      */
-    public function revokeToken(Request $request, $tokenId)
+    public function revokeToken(Request $request, $tokenId): JsonResponse
     {
         $token = $request->user()->tokens()->find($tokenId);
 
@@ -258,7 +247,7 @@ class AuthController extends Controller
     /**
      * Refresh current token (create new, revoke old)
      */
-    public function refreshToken(Request $request)
+    public function refreshToken(Request $request): JsonResponse
     {
         $user = $request->user();
         $currentToken = $user->currentAccessToken();
@@ -286,21 +275,16 @@ class AuthController extends Controller
     /**
      * Check token validity
      */
-    public function checkToken(Request $request)
+    public function checkToken(Request $request): JsonResponse
     {
         $token = $request->user()->currentAccessToken();
+        $user = $request->user();
+        $user->load(['roles.permissions']);
 
         return response()->json([
             'valid'      => true,
-            'token_info' => [
-                'id'           => $token->id,
-                'name'         => $token->name,
-                'abilities'    => $token->abilities,
-                'last_used_at' => $token->last_used_at,
-                'expires_at'   => $token->expires_at,
-                'is_expired'   => $token->expires_at && $token->expires_at->isPast(),
-            ],
-            'user'       => $request->user(),
+            'token_info' => new TokenResource($token),
+            'user'       => new UserResource($user),
         ]);
     }
 }

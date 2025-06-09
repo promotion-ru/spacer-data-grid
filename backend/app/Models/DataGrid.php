@@ -74,7 +74,7 @@ class DataGrid extends Model implements HasMedia
 
     public function getImageUrlAttribute(): ?string
     {
-        return $this->getFirstMediaUrl('grid_image');
+        return $this->getFirstMediaUrl('data_grid_image');
     }
 
     public function pendingInvitations(): HasMany
