@@ -40,30 +40,32 @@ RUN { \
 # Установка Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Рабочая директория
 WORKDIR /var/www
 
-# Копирование файлов composer для кеширования зависимостей
+# 1) Копируем файлы для composer и Laravel bootstrap
 COPY composer.json composer.lock ./
 COPY artisan ./
 COPY bootstrap bootstrap/
 
+# 2) Гарантируем существование и права папки cache
+RUN mkdir -p bootstrap/cache \
+    && chown -R www-data:www-data bootstrap/cache \
+    && chmod -R 775 bootstrap/cache
+
+# 3) Устанавливаем зависимости
 RUN composer install --no-dev --optimize-autoloader
 
-# Копирование остального кода приложения
+# 4) Копируем остальной код
 COPY . .
 
-# Создание необходимых директорий и установка прав
-RUN mkdir -p bootstrap/cache storage/logs storage/framework/sessions storage/framework/views storage/framework/cache/data \
-    && chown -R www-data:www-data /var/www \
+# 5) Генерируем автозагрузчик и дискавери на всякий случай
+RUN composer dump-autoload --optimize \
+    && php artisan package:discover --ansi
+
+# 6) Создаём storage и настраиваем права
+RUN mkdir -p storage/{logs,framework/{sessions,views,cache/data}} \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
 
-# Генерация оптимизированного автозагрузчика
-RUN composer dump-autoload --optimize
-
-# Проверка наличия vendor
-RUN ls -la /var/www/vendor/
-
 EXPOSE 9000
-
 CMD ["php-fpm"]
