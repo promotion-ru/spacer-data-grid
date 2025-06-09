@@ -102,7 +102,7 @@
         
         <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
           <div class="text-2xl font-bold text-gray-700">
-            {{ record.date ? getDaysAgo(record.date) : '-' }}
+            {{ formattedDate }}
           </div>
           <div class="text-sm text-gray-500">Дней назад</div>
         </div>
@@ -221,6 +221,7 @@ const {
   getShortFileType,
   formatFileSize,
 } = useFileUtils()
+const { getRelativeTime } = useDate();
 
 // Реактивные данные
 const existingAttachments = ref([])
@@ -259,52 +260,22 @@ const formatAmount = (amount, operationTypeId) => {
   return prefix + formatted
 }
 
-// Получение диапазона суммы
-const getAmountRange = (amount) => {
-  if (!amount) return '0'
-  
-  const value = parseFloat(amount)
-  if (value < 1000) return '< 1К'
-  if (value < 10000) return '1К-10К'
-  if (value < 100000) return '10К-100К'
-  if (value < 1000000) return '100К-1М'
-  return '> 1М'
-}
 
-const getAmountRangeDescription = (range) => {
-  const ranges = {
-    'under_1k': 'До 1 000 ₽',
-    '1k_10k': '1 000 - 10 000 ₽',
-    '10k_100k': '10 000 - 100 000 ₽',
-    '100k_1m': '100 000 - 1 000 000 ₽',
-    'over_1m': 'Более 1 000 000 ₽'
+const formattedDate = computed(() => {
+  const relative = getRelativeTime(props.record.date);
+  if (relative.includes('секунд') || relative.includes('минут') || relative.includes('час')) {
+    return 'Сегодня';
   }
-  return ranges[range] || 'Не определен'
-}
-
-// Вычисление дней назад
-const getDaysAgo = (dateString) => {
-  if (!dateString) {
-    return '-'
+  if (relative === 'день назад') {
+    return '1';
   }
   
-  try {
-    // Парсим дату в формате dd.mm.yyyy
-    const parts = dateString.split('.')
-    if (parts.length !== 3) return '-'
-    
-    const recordDate = new Date(parts[2], parts[1] - 1, parts[0])
-    const today = new Date()
-    const diffTime = Math.abs(today - recordDate)
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
-    if (diffDays === 0) return 'Сегодня'
-    if (diffDays === 1) return '1'
-    return diffDays.toString()
-  } catch {
-    return '-'
+  const match = relative.match(/(\d+)\s+д(ень|ня|ней)\s+назад/);
+  if (match && match[1]) {
+    return match[1];
   }
-}
+  return relative;
+});
 
 // Скачивание файлов
 const downloadFile = async (attachment) => {

@@ -17,6 +17,7 @@
     "@primevue/forms": "^4.3.5",
     "@tailwindcss/vite": "^4.1.8",
     "@vueuse/nuxt": "^13.3.0",
+    "dayjs-nuxt": "^2.1.11",
     "nuxt": "^3.17.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.3.5",

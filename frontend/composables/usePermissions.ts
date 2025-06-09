@@ -1,4 +1,3 @@
-// composables/usePermissions.ts
 import type { User } from '~/types/auth'
 
 export const usePermissions = () => {

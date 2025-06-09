@@ -4,12 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
     devtools: {enabled: true},
 
-    modules: [
-        '@pinia/nuxt',
-        '@primevue/nuxt-module',
-        '@vueuse/nuxt',
-        '@nuxtjs/device'
-    ],
+    modules: ['@pinia/nuxt', '@primevue/nuxt-module', '@vueuse/nuxt', '@nuxtjs/device', 'dayjs-nuxt'],
 
     css: [
         '~/assets/css/main.css',
@@ -52,6 +47,12 @@ export default defineNuxtConfig({
         config: {
             darkMode: ['selector', '[data-theme="dark"]'],
         }
+    },
+
+    dayjs: {
+        locales: ['ru'],
+        plugins: ['relativeTime', 'customParseFormat'],
+        defaultLocale: 'ru',
     },
 
     runtimeConfig: {
