@@ -16,7 +16,7 @@ sleep 10
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan migrate --force
 
 # Генерация ключа приложения (только первый раз!)
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan key:generate
+#docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan key:generate
 
 # Создание символической ссылки для storage
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan storage:link
