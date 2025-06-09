@@ -139,6 +139,12 @@
       :grid="selectedGrid"
     />
     
+    <!-- Модальное окно истории изменений -->
+    <DataGridActivityLogsModal
+      v-model:visible="showActivityLogsModal"
+      :grid="selectedGrid"
+    />
+    
     <!-- Контекстное меню -->
     <ContextMenu ref="gridMenu" :model="gridMenuItems"/>
     
@@ -170,6 +176,7 @@ const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showShareModal = ref(false)
 const showMembersModal = ref(false)
+const showActivityLogsModal = ref(false)
 const gridMenu = ref()
 const selectedGrid = ref(null)
 
@@ -271,6 +278,12 @@ const manageGridMembers = () => {
   }
 }
 
+const showActivityLogs = () => {
+  if (selectedGrid.value?.is_owner) {
+    showActivityLogsModal.value = true
+  }
+}
+
 const leaveGrid = async () => {
   if (!selectedGrid.value || selectedGrid.value.is_owner) return
   
@@ -369,6 +382,11 @@ const gridMenuItems = computed(() => {
         label: 'Настройка таблицы',
         icon: 'pi pi-cog',
         command: manageGridMembers
+      },
+      {
+        label: 'История изменений',
+        icon: 'pi pi-history',
+        command: showActivityLogs
       },
       {
         label: 'Редактировать',

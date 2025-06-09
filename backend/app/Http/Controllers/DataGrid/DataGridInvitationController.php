@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/Api/DataGridInvitationController.php
+
 namespace App\Http\Controllers\DataGrid;
 
 use App\Http\Controllers\Controller;
@@ -78,6 +78,16 @@ class DataGridInvitationController extends Controller
             'permissions' => $permissions,
         ]);
 
+        // Логирование отправки приглашения
+        $dataGrid->logAction(
+            'invitation_sent',
+            'Отправлено приглашение в таблицу',
+            $user->id,
+            [],
+            ['permissions' => $permissions],
+            ['invitation_id' => $invitation->id, 'token' => $invitation->token]
+        );
+
         return response()->json([
             'success' => true,
             'message' => 'Приглашение отправлено',
@@ -116,12 +126,22 @@ class DataGridInvitationController extends Controller
         }
 
         // Создаем участника
-        DataGridMember::query()->create([
+        $member = DataGridMember::query()->create([
             'data_grid_id' => $invitation->data_grid_id,
             'user_id'      => auth()->id(),
             'invited_by'   => $invitation->invited_by,
             'permissions'  => $invitation->permissions,
         ]);
+
+        // Логирование принятия приглашения
+        $invitation->dataGrid->logAction(
+            'invitation_accepted',
+            'Приглашение принято, участник добавлен в таблицу',
+            auth()->user()->id,
+            [],
+            ['permissions' => $invitation->permissions],
+            ['invitation_id' => $invitation->id, 'member_id' => $member->id]
+        );
 
         $invitation->delete();
 
@@ -152,6 +172,16 @@ class DataGridInvitationController extends Controller
             ], 403);
         }
 
+        // Логирование отклонения приглашения
+        $invitation->dataGrid->logAction(
+            'invitation_declined',
+            'Приглашение отклонено',
+            auth()->user()->id,
+            [],
+            [],
+            ['invitation_id' => $invitation->id, 'token' => $invitation->token]
+        );
+
         $invitation->delete();
 
         return response()->json([
@@ -163,6 +193,16 @@ class DataGridInvitationController extends Controller
     public function destroy(DataGrid $dataGrid, DataGridInvitation $invitation): JsonResponse
     {
         $this->authorize('share', $dataGrid);
+
+        // Логирование отмены приглашения
+        $dataGrid->logAction(
+            'invitation_cancelled',
+            'Приглашение отменено',
+            $invitation->user->id ?? null,
+            ['permissions' => $invitation->permissions],
+            [],
+            ['invitation_id' => $invitation->id, 'token' => $invitation->token]
+        );
 
         $invitation->delete();
 

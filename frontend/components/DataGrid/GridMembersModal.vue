@@ -6,67 +6,75 @@
     :draggable="false"
     :modal="true"
     :closeOnEscape="true"
-    class="w-full max-w-4xl"
+    class="w-[95vw] sm:w-[85vw] md:w-[75vw] lg:w-[65vw] xl:max-w-4xl mx-4 sm:mx-0"
     header="Управление участниками"
   >
     <!-- Загрузка -->
-    <div v-if="loading" class="flex justify-center py-8">
+    <div v-if="loading" class="flex justify-center py-6 sm:py-8">
       <ProgressSpinner/>
     </div>
     
     <!-- Контент -->
-    <div v-else class="space-y-6">
+    <div v-else class="space-y-4 sm:space-y-6">
       <!-- Участники -->
       <div>
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
           Участники ({{ members?.length || 0 }})
         </h3>
         
-        <div v-if="members?.length" class="space-y-3">
+        <div v-if="members?.length" class="space-y-2 sm:space-y-3">
           <div
             v-for="member in members"
             :key="member.id"
-            class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border"
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-gray-50 rounded-lg border space-y-3 sm:space-y-0"
           >
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                <span class="text-white font-medium text-sm">
+            <!-- Информация о пользователе -->
+            <div class="flex items-center space-x-3 min-w-0 flex-1">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span class="text-white font-medium text-sm sm:text-base">
                   {{ member.user.name.charAt(0).toUpperCase() }}
                 </span>
               </div>
-              <div>
-                <p class="font-medium text-gray-900">{{ member.user.name }}</p>
-                <p class="text-sm text-gray-500">{{ member.user.email }}</p>
-                <p class="text-xs text-gray-400">
+              <div class="min-w-0 flex-1">
+                <p class="font-medium text-gray-900 text-sm sm:text-base truncate">{{ member.user.name }}</p>
+                <p class="text-xs sm:text-sm text-gray-500 truncate">{{ member.user.email }}</p>
+                <p class="text-xs text-gray-400 hidden sm:block">
                   Присоединился {{ member.joined_at }} • Пригласил {{ member.invited_by.name }}
+                </p>
+                <!-- Мобильная версия информации -->
+                <p class="text-xs text-gray-400 sm:hidden">
+                  {{ member.joined_at }}
                 </p>
               </div>
             </div>
             
-            <div class="flex items-center space-x-3">
+            <!-- Права и действия -->
+            <div class="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-3 sm:flex-shrink-0">
               <!-- Права доступа -->
-              <div class="flex flex-wrap gap-1">
+              <div class="flex flex-wrap gap-1 sm:gap-2">
                 <Tag
                   v-for="permission in member.permissions"
                   :key="permission"
                   :value="getPermissionLabel(permission)"
-                  class="text-xs"
+                  class="text-xs sm:text-sm py-1 px-2"
                   severity="info"
                 />
               </div>
               
               <!-- Действия -->
-              <div class="flex space-x-2">
+              <div class="flex space-x-2 justify-end sm:justify-start">
                 <Button
                   v-tooltip.top="'Изменить права'"
-                  class="p-button-sm p-button-outlined"
+                  class="p-button-sm p-button-outlined flex-shrink-0 flex-1"
                   icon="pi pi-pencil"
+                  :class="{ 'p-2': true }"
                   @click="editMember(member)"
                 />
                 <Button
                   v-tooltip.top="'Удалить'"
-                  class="p-button-sm p-button-outlined p-button-danger"
+                  class="p-button-sm p-button-outlined p-button-danger flex-shrink-0 flex-1"
                   icon="pi pi-trash"
+                  :class="{ 'p-2': true }"
                   @click="confirmRemoveMember(member)"
                 />
               </div>
@@ -74,46 +82,49 @@
           </div>
         </div>
         
-        <div v-else class="text-center py-8">
-          <i class="pi pi-users text-4xl text-gray-300 mb-2"></i>
-          <p class="text-gray-500">Участников пока нет</p>
+        <div v-else class="text-center py-6 sm:py-8">
+          <i class="pi pi-users text-3xl sm:text-4xl text-gray-300 mb-2"></i>
+          <p class="text-sm sm:text-base text-gray-500">Участников пока нет</p>
         </div>
       </div>
       
       <!-- Ожидающие приглашения -->
       <div v-if="pendingInvitations?.length">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
           Ожидающие приглашения ({{ pendingInvitations.length }})
         </h3>
         
-        <div class="space-y-3">
+        <div class="space-y-2 sm:space-y-3">
           <div
             v-for="invitation in pendingInvitations"
             :key="invitation.id"
-            class="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200"
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3 sm:space-y-0"
           >
-            <div>
-              <p class="font-medium text-gray-900">{{ invitation.email }}</p>
-              <p class="text-sm text-gray-500">
+            <!-- Информация о приглашении -->
+            <div class="min-w-0 flex-1">
+              <p class="font-medium text-gray-900 text-sm sm:text-base truncate">{{ invitation.email }}</p>
+              <p class="text-xs sm:text-sm text-gray-500 truncate">
                 Приглашен {{ invitation.invited_by }} • {{ invitation.created_at }}
               </p>
-              <div class="flex flex-wrap gap-1 mt-2">
+              <div class="flex flex-wrap gap-1 sm:gap-2 mt-2">
                 <Tag
                   v-for="permission in invitation.permissions"
                   :key="permission"
                   :value="getPermissionLabel(permission)"
-                  class="text-xs"
+                  class="text-xs sm:text-sm py-1 px-2"
                   severity="warning"
                 />
               </div>
             </div>
             
-            <div class="flex space-x-2">
+            <!-- Действия -->
+            <div class="flex justify-end sm:justify-start">
               <Button
                 v-tooltip.top="'Отменить'"
                 :loading="processing === `cancel-${invitation.id}`"
-                class="p-button-sm p-button-outlined p-button-danger"
+                class="p-button-sm p-button-outlined p-button-danger flex-1"
                 icon="pi pi-times"
+                :class="{ 'p-2': true }"
                 @click="cancelInvitation(invitation)"
               />
             </div>
@@ -123,9 +134,9 @@
     </div>
     
     <template #footer>
-      <div class="flex justify-end">
+      <div class="flex justify-end pt-3 sm:pt-0">
         <Button
-          class="p-button-outlined"
+          class="p-button-outlined w-full sm:w-auto px-4 py-2 sm:px-6"
           label="Закрыть"
           @click="closeModal"
         />
@@ -139,68 +150,83 @@
     :closable="true"
     :modal="true"
     :closeOnEscape="true"
-    class="w-full max-w-md"
+    class="w-[95vw] sm:w-[80vw] md:w-[60vw] lg:w-[40vw] xl:max-w-md mx-4 sm:mx-0"
     header="Изменить права участника"
   >
-    <div v-if="editingMember" class="space-y-4">
-      <div class="text-center">
-        <p class="font-medium">{{ editingMember.user.name }}</p>
-        <p class="text-sm text-gray-500">{{ editingMember.user.email }}</p>
+    <div v-if="editingMember" class="space-y-4 sm:space-y-6">
+      <!-- Информация о пользователе -->
+      <div class="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
+        <div class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
+          <span class="text-white font-medium text-base sm:text-lg">
+            {{ editingMember.user.name.charAt(0).toUpperCase() }}
+          </span>
+        </div>
+        <p class="font-medium text-sm sm:text-base text-gray-900">{{ editingMember.user.name }}</p>
+        <p class="text-xs sm:text-sm text-gray-500 break-all">{{ editingMember.user.email }}</p>
       </div>
       
+      <!-- Права доступа -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-3">
+        <label class="block text-sm sm:text-base font-medium text-gray-700 mb-3 sm:mb-4">
           Права доступа
         </label>
-        <div class="space-y-3">
+        <div class="space-y-3 sm:space-y-4">
           <div class="flex items-center">
             <Checkbox
               id="edit-view"
               v-model="editForm.permissions"
               :disabled="true"
-              class="mr-2"
+              class="mr-3"
               value="view"
             />
-            <label class="text-sm text-gray-700" for="edit-view">Просмотр</label>
+            <label class="text-sm sm:text-base text-gray-700 cursor-pointer" for="edit-view">
+              Просмотр
+            </label>
           </div>
           
           <div class="flex items-center">
             <Checkbox
               id="edit-create"
               v-model="editForm.permissions"
-              class="mr-2"
+              class="mr-3"
               value="create"
             />
-            <label class="text-sm text-gray-700" for="edit-create">Создание записей</label>
+            <label class="text-sm sm:text-base text-gray-700 cursor-pointer" for="edit-create">
+              Создание записей
+            </label>
           </div>
           
           <div class="flex items-center">
             <Checkbox
               id="edit-update"
               v-model="editForm.permissions"
-              class="mr-2"
+              class="mr-3"
               value="update"
             />
-            <label class="text-sm text-gray-700" for="edit-update">Редактирование</label>
+            <label class="text-sm sm:text-base text-gray-700 cursor-pointer" for="edit-update">
+              Редактирование
+            </label>
           </div>
           
           <div class="flex items-center">
             <Checkbox
               id="edit-delete"
               v-model="editForm.permissions"
-              class="mr-2"
+              class="mr-3"
               value="delete"
             />
-            <label class="text-sm text-gray-700" for="edit-delete">Удаление</label>
+            <label class="text-sm sm:text-base text-gray-700 cursor-pointer" for="edit-delete">
+              Удаление
+            </label>
           </div>
         </div>
       </div>
     </div>
     
     <template #footer>
-      <div class="flex justify-end space-x-3">
+      <div class="flex flex-col flex-row justify-end space-y-2 sm:space-x-3 pt-3 sm:pt-0">
         <Button
-          class="p-button-outlined"
+          class="p-button-outlined w-full mb-0 mr-2"
           label="Отмена"
           @click="showEditMemberModal = false"
         />
@@ -208,14 +234,12 @@
           :loading="updateLoading"
           icon="pi pi-check"
           label="Сохранить"
+          class="w-full sm:w-auto pr-5! pl-5!"
           @click="updateMember"
         />
       </div>
     </template>
   </Dialog>
-  
-  <!-- Диалог подтверждения удаления -->
-  <ConfirmDialog/>
 </template>
 
 <script setup>
@@ -403,3 +427,49 @@ watch(isVisible, (newValue) => {
   }
 })
 </script>
+
+<style scoped>
+/* Дополнительные стили для улучшения touch-интерфейса */
+@media (max-width: 640px) {
+  :deep(.p-dialog .p-dialog-header) {
+    padding: 1rem 1.5rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-content) {
+    padding: 0 1.5rem 1rem 1.5rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer) {
+    padding: 1rem 1.5rem;
+  }
+  
+  :deep(.p-button.p-button-sm) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  :deep(.p-checkbox) {
+    width: 20px;
+    height: 20px;
+  }
+  
+  :deep(.p-tag) {
+    min-height: 28px;
+  }
+}
+
+/* Улучшение отображения на планшетах */
+@media (min-width: 641px) and (max-width: 1024px) {
+  :deep(.p-dialog .p-dialog-header) {
+    padding: 1.25rem 2rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-content) {
+    padding: 0 2rem 1.25rem 2rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer) {
+    padding: 1.25rem 2rem;
+  }
+}
+</style>

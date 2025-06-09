@@ -57,6 +57,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/{dataGrid}', [DataGridController::class, 'show'])->name('show');
         Route::patch('/{dataGrid}', [DataGridController::class, 'update'])->name('update.patch');
         Route::delete('/{dataGrid}', [DataGridController::class, 'destroy'])->name('destroy');
+        Route::get('/{dataGrid}/logs', [DataGridController::class, 'logs']);
 
         Route::prefix('{dataGrid}')->group(function () {
             // Отправка приглашения

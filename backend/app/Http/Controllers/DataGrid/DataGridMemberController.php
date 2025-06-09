@@ -1,5 +1,5 @@
 <?php
-// app/Http/Controllers/Api/DataGridMemberController.php
+
 namespace App\Http\Controllers\DataGrid;
 
 use App\Http\Controllers\Controller;
@@ -53,7 +53,21 @@ class DataGridMemberController extends Controller
             ], 404);
         }
 
+        $oldValues = $member->only(['permissions']);
         $member->update($request->validated());
+        $newValues = $member->only(['permissions']);
+
+        // Логирование обновления прав участника
+        if ($oldValues !== $newValues) {
+            $dataGrid->logAction(
+                'member_updated',
+                'Обновлены права участника',
+                $member->user->id,
+                $oldValues,
+                $newValues,
+                ['member_id' => $member->id]
+            );
+        }
 
         return response()->json([
             'success' => true,
@@ -72,6 +86,16 @@ class DataGridMemberController extends Controller
                 'message' => 'Участник не найден в этой таблице',
             ], 404);
         }
+
+        // Логирование удаления участника
+        $dataGrid->logAction(
+            'member_removed',
+            'Участник удален из таблицы',
+            $member->user->id,
+            ['permissions' => $member->permissions],
+            [],
+            ['member_id' => $member->id, 'removed_by' => auth()->user()->name]
+        );
 
         $member->delete();
 
@@ -93,6 +117,16 @@ class DataGridMemberController extends Controller
                 'message' => 'Вы не являетесь участником этой таблицы',
             ], 404);
         }
+
+        // Логирование выхода из таблицы
+        $dataGrid->logAction(
+            'member_left',
+            'Участник покинул таблицу',
+            auth()->user()->id,
+            ['permissions' => $member->permissions],
+            [],
+            ['member_id' => $member->id, 'self_removed' => true]
+        );
 
         $member->delete();
 

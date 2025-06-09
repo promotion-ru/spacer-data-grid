@@ -94,6 +94,20 @@ class DataGridPolicy
     }
 
     /**
+     * Проверка прав на управление участниками
+     */
+    public function viewLogs(User $user, DataGrid $dataGrid): bool
+    {
+        // Базовая проверка разрешения на совместное использование
+        if (!$user->can('table.view.logs')) {
+            return false;
+        }
+
+        // Только владелец может управлять участниками
+        return $dataGrid->isOwner($user);
+    }
+
+    /**
      * Проверка прав на просмотр списка таблиц
      */
     public function viewAny(User $user): bool

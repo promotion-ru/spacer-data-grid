@@ -34,6 +34,7 @@ class RolePermissionSeeder extends Seeder
         Permission::create(['name' => 'table.delete']);
         Permission::create(['name' => 'table.share']);
         Permission::create(['name' => 'table.manage']);
+        Permission::create(['name' => 'table.view.logs']);
 
         Permission::create(['name' => 'system.settings']);
         Permission::create(['name' => 'system.logs']);

@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Collections\MediaCollection;
@@ -126,5 +127,30 @@ class DataGrid extends Model implements HasMedia
 
         $member = $this->members()->where('user_id', $user->id)->first();
         return $member ? $member->permissions : [];
+    }
+
+    public function logAction(
+        string  $action,
+        string  $description,
+        ?string $targetUserId = null,
+        array   $oldValues = [],
+        array   $newValues = [],
+        array   $metadata = []
+    ): DataGridLog
+    {
+        return $this->logs()->create([
+            'action'         => $action,
+            'user_id'        => Auth::id(),
+            'target_user_id' => $targetUserId,
+            'description'    => $description,
+            'old_values'     => $oldValues,
+            'new_values'     => $newValues,
+            'metadata'       => $metadata,
+        ]);
+    }
+
+    public function logs()
+    {
+        return $this->hasMany(DataGridLog::class, 'data_grid_id');
     }
 }
