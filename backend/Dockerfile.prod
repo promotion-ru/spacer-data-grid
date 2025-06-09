@@ -46,8 +46,8 @@ WORKDIR /var/www
 # Копирование файлов composer для кеширования зависимостей
 COPY composer.json composer.lock ./
 
-# Установка зависимостей composer БЕЗ --no-scripts
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Установка зависимостей composer
+RUN composer install --no-dev --no-scripts --no-autoloader
 
 # Копирование остального кода приложения
 COPY . .
