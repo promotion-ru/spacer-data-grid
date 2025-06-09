@@ -17,6 +17,8 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
 # Сборка и запуск контейнеров
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend composer install --no-dev --optimize-autoloader --no-interaction
+
 # Ожидание запуска
 sleep 10
 
