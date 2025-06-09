@@ -801,16 +801,16 @@ const handleSubmit = async () => {
       life: 3000
     })
   } catch (error) {
-    console.error('Ошибка при обновлении записи:', error)
-    
+    let errorMessage = 'Ошибка при обновлении записи'
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
+      errorMessage = error.response?._data?.message || ''
     }
     
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
-      detail: error.message || 'Не удалось обновить запись',
+      detail: errorMessage,
       life: 3000
     })
   } finally {

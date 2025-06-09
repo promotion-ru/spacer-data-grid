@@ -188,11 +188,18 @@ const handleSubmit = async () => {
     closeModal()
     
   } catch (error) {
-    console.error('Ошибка при обновлении таблицы:', error)
+    let errorMessage = 'Не удалось обновить таблицу'
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
+      errorMessage = error.response?._data?.message || ''
     }
-    // Здесь можно добавить ваше уведомление об ошибке (Toast)
+    
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: errorMessage,
+      life: 3000
+    })
   } finally {
     loading.value = false
   }

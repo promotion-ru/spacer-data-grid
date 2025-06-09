@@ -178,14 +178,16 @@ const handleSubmit = async () => {
       life: 3000
     })
   } catch (error) {
+    let errorMessage = 'Не удалось отправить приглашение'
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
+      errorMessage = error.response?._data?.message || ''
     }
     
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
-      detail: error.response?.data?.message || 'Не удалось отправить приглашение',
+      detail: errorMessage,
       life: 3000
     })
   } finally {

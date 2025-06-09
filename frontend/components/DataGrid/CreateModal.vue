@@ -163,15 +163,16 @@ const handleSubmit = async () => {
       life: 3000
     })
   } catch (error) {
-    console.error('Ошибка при создании таблицы:', error)
+    let errorMessage = 'Не удалось создать таблицу'
     if (error.response?.status === 422) {
       errors.value = error.response.data.errors || {}
+      errorMessage = error.response?._data?.message || ''
     }
     
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
-      detail: error.response?.data?.message || 'Не удалось создать таблицу',
+      detail: errorMessage,
       life: 3000
     })
   } finally {
