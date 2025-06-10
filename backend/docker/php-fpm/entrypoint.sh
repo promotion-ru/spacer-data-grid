@@ -1,55 +1,34 @@
 #!/bin/bash
 set -e
 
-# Функция для логирования
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1"
 }
 
-log "Запуск PHP-FPM entrypoint скрипта..."
+log "Инициализация storage директорий..."
 
-# Инициализация структуры storage, если она не существует
-if [ ! -d "/var/www/storage/logs" ]; then
-    log "Инициализация структуры storage..."
-    cp -r /var/www/storage-init/* /var/www/storage/
+# Создаем все необходимые директории
+mkdir -p /var/www/storage/{app/{public,framework},framework/{sessions,views,cache/{data,repository}},logs}
+mkdir -p /var/www/bootstrap/cache
+
+# Копируем начальную структуру, если storage пустой
+if [ ! -f "/var/www/storage/.gitignore" ] && [ -d "/var/www/storage-init" ]; then
+    log "Инициализация пустого storage..."
+    cp -r /var/www/storage-init/* /var/www/storage/ 2>/dev/null || true
 fi
 
-# Создание необходимых директорий storage
-mkdir -p /var/www/storage/{app,framework/{sessions,views,cache/data},logs}
-
-# Установка правильных прав доступа для storage и bootstrap/cache
-if [ -w "/var/www/storage" ]; then
-    chmod -R 775 /var/www/storage
-    log "Права доступа для storage установлены"
+# Устанавливаем права в зависимости от контекста
+CURRENT_USER=$(whoami)
+if [ "$CURRENT_USER" = "root" ]; then
+    log "Установка ownership для www-data..."
+    chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+elif [ "$CURRENT_USER" = "www-data" ]; then
+    log "Установка прав доступа..."
+    chmod -R 775 /var/www/storage /var/www/bootstrap/cache 2>/dev/null || true
+else
+    log "Пользователь: $CURRENT_USER, пропускаем изменение прав"
 fi
 
-#if [ -w "/var/www/bootstrap/cache" ]; then
-#    chmod -R 775 /var/www/bootstrap/cache
-#    log "Права доступа для bootstrap/cache установлены"
-#fi
-
-# Проверка переменных окружения Laravel
-if [ -z "$APP_KEY" ]; then
-    log "ПРЕДУПРЕЖДЕНИЕ: APP_KEY не установлен"
-fi
-
-if [ -z "$DB_CONNECTION" ]; then
-    log "ПРЕДУПРЕЖДЕНИЕ: DB_CONNECTION не установлен"
-fi
-
-# Очистка кеша конфигурации (на случай, если он был закеширован в build stage)
-if [ -f "/var/www/bootstrap/cache/config.php" ]; then
-    log "Очистка кеша конфигурации..."
-    rm -f /var/www/bootstrap/cache/config.php
-fi
-
-# Проверка доступности базы данных (опционально)
-if [ "$DB_CONNECTION" = "mysql" ] && [ -n "$DB_HOST" ]; then
-    log "Проверка подключения к MySQL..."
-    # Здесь можно добавить проверку подключения к БД
-fi
-
-log "Entrypoint завершен, запуск PHP-FPM..."
-
-# Выполнение основной команды
+log "Storage инициализация завершена"
 exec "$@"
