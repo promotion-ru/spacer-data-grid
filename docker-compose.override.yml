@@ -2,35 +2,20 @@ services:
   mysql:
     ports:
       - "3306:3306"
-    # Убираем healthcheck в development для быстрого старта
-    healthcheck:
-      disable: true
-
-  backend:
-    # Используем development конфигурацию opcache
-    build:
-      args:
-        APP_ENV: development
-    volumes:
-      # Монтируем код в development для live reload
-      - ./backend:/var/www
-    environment:
-      APP_ENV: development
-      APP_DEBUG: "true"
-      # Отключаем opcache в development для лучшей отладки
-      OPCACHE_ENABLE: "0"
-      # Включаем подробное логирование
-      LOG_LEVEL: debug
-    # Убираем healthcheck в development
-    healthcheck:
-      disable: true
 
   redis:
     ports:
       - "6379:6379"
-    # Убираем healthcheck в development
-    healthcheck:
-      disable: true
+
+  backend:
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/var/www
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost
 
   frontend:
     ports:
@@ -40,26 +25,11 @@ services:
       - /app/node_modules
     environment:
       NODE_ENV: development
-      NITRO_HOST: 0.0.0.0
-      NITRO_PORT: 3000
-      # API URL для development
-      API_URL: http://localhost/api
-      # Включаем hot reload
-      NITRO_DEV: "true"
-    # Убираем healthcheck в development
-    healthcheck:
-      disable: true
+      API_URL: http://localhost:8000
 
-  nginx:
-    ports:
-      - "80:80"
+  scheduler:
     volumes:
-      # Development конфигурация nginx
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      # Монтируем статические файлы для development
-      - ./backend/public:/var/www/backend/public:ro
-      # Логи nginx для отладки
-      - ./logs/nginx:/var/log/nginx
-    # Убираем healthcheck в development
-    healthcheck:
-      disable: true
+      - ./backend:/var/www
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
