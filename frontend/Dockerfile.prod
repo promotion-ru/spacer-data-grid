@@ -63,4 +63,4 @@ EXPOSE 3000
 
 # Команда для запуска production-сервера Nuxt.
 # Путь server/index.mjs корректен, так как мы скопировали содержимое .output в /app.
-CMD ["node", "server/index.mjs"]
+CMD ["node", ".output/server/index.mjs"]
