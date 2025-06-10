@@ -97,7 +97,6 @@ services:
       APP_URL: https://grid.lk.cool
       # Production оптимизации
       NITRO_MINIFY: "true"
-      NITRO_PRESET: node-server
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000/_health"]
       interval: 30s
