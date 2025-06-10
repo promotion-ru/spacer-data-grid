@@ -68,6 +68,8 @@ export default defineNuxtConfig({
         preset: 'node-server',
         host: '0.0.0.0',
         port: 3000,
+        minify: true,
+        sourceMap: false,
         storage: {
             redis: {
                 driver: 'memory'
@@ -86,7 +88,12 @@ export default defineNuxtConfig({
                 protocol: 'ws',
                 host: 'localhost',
             }
-        }
+        },
+        build: {
+            rollupOptions: {
+                treeshake: true,
+            },
+        },
     },
 
     app: {
