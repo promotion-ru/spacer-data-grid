@@ -36,23 +36,6 @@ if [ -w "/var/www/bootstrap/cache" ]; then
     log "Права доступа для bootstrap/cache проверены"
 fi
 
-# Проверка критических переменных окружения Laravel
-if [ -z "$APP_KEY" ]; then
-    log "ОШИБКА: APP_KEY обязательно должен быть установлен в production!"
-    if [ "$APP_ENV" = "production" ]; then
-        exit 1
-    fi
-fi
-
-if [ -z "$DB_CONNECTION" ]; then
-    log "ПРЕДУПРЕЖДЕНИЕ: DB_CONNECTION не установлен"
-fi
-
-# Проверка доступности базы данных (базовая проверка)
-if [ "$DB_CONNECTION" = "mysql" ] && [ -n "$DB_HOST" ] && [ -n "$DB_PORT" ]; then
-    log "Проверка подключения к MySQL $DB_HOST:$DB_PORT..."
-fi
-
 log "Entrypoint завершен успешно, запуск PHP-FPM..."
 
 # Выполнение основной команды
