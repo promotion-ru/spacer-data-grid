@@ -1,5 +1,5 @@
 # Production Dockerfile для Laravel приложения
-# Это тот же многоэтапный Dockerfile из ранее созданного artifacts
+# Исправленная версия с правильными правами доступа
 
 # Stage 1: Build environment and Composer dependencies
 FROM php:8.4-fpm AS builder
@@ -80,8 +80,13 @@ COPY ./docker/php-fpm/php-fpm-pool.conf /usr/local/etc/php-fpm.d/www.conf
 COPY --from=builder /var/www /var/www
 
 WORKDIR /var/www
-RUN chown -R www-data:www-data /var/www
 
+RUN mkdir -p /var/www/storage/{app/{public,framework},framework/{sessions,views,cache/{data,repository}},logs} \
+    && mkdir -p /var/www/bootstrap/cache \
+    && chown -R www-data:www-data /var/www \
+    && chmod -R 775 /var/www/storage /var/www/bootstrap/cache
+
+# ТЕПЕРЬ переключаемся на www-data (директории уже созданы)
 USER www-data
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
