@@ -5,10 +5,14 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
       - /var/lib/mysql_prod:/var/lib/mysql
+    networks:
+      - app-network
 
   redis:
     volumes:
       - redis_prod_data:/data
+    networks:
+      - app-network
 
   backend:
     build:
@@ -28,13 +32,14 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     volumes:
-      - ./backend/storage/app:/var/www/storage/app
-      - ./backend/storage/logs:/var/www/storage/logs
+      - laravel_storage_prod:/var/www/storage
+      - laravel_bootstrap_cache_prod:/var/www/bootstrap/cache
     depends_on:
       - mysql
       - redis
     networks:
       - app-network
+    restart: unless-stopped
 
   scheduler:
     build:
@@ -53,8 +58,16 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
     volumes:
-      - ./backend/storage/app:/var/www/storage/app
-      - ./backend/storage/logs:/var/www/storage/logs
+      - laravel_storage_prod:/var/www/storage
+      - laravel_bootstrap_cache_prod:/var/www/bootstrap/cache
+    depends_on:
+      - mysql
+      - redis
+      - backend
+    networks:
+      - app-network
+    command: php artisan schedule:work
+    restart: unless-stopped
 
   frontend:
     build:
@@ -65,6 +78,11 @@ services:
       NITRO_HOST: 0.0.0.0
       NITRO_PORT: 3000
       API_URL: https://grid.lk.cool
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
 
   nginx:
     ports:
@@ -74,7 +92,13 @@ services:
       - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-      - ./backend/public:/var/www/backend/public
+      - ./backend/public:/var/www/public
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - app-network
+    restart: unless-stopped
 
   certbot:
     image: certbot/certbot
@@ -83,7 +107,18 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - app-network
+    restart: unless-stopped
 
 volumes:
   redis_prod_data:
     driver: local
+  laravel_storage_prod:
+    driver: local
+  laravel_bootstrap_cache_prod:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
