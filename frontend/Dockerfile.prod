@@ -1,40 +1,66 @@
+# Имя файла: ./frontend/Dockerfile.prod
+
+# --- Этап 1: Установка зависимостей ---
+# Цель: Установить зависимости отдельно, чтобы этот слой кешировался.
+# Он будет пересобираться только при изменении package.json или package-lock.json
+FROM node:22-alpine AS dependencies
+
+WORKDIR /app
+
+# Копируем только файлы, от которых зависят node_modules
+COPY package.json package-lock.json* ./
+
+# Устанавливаем ВСЕ зависимости, включая dev-dependencies, так как они нужны для сборки.
+# Используем npm ci для быстрой и детерминированной установки.
+RUN npm ci
+
+# --- Этап 2: Сборка приложения (Builder) ---
+# Цель: Собрать production-ready артефакты.
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# Копирование package файлов
-COPY package*.json ./
+# Копируем уже установленные зависимости из предыдущего этапа.
+COPY --from=dependencies /app/node_modules ./node_modules
 
-# Установка зависимостей
-RUN npm ci
-
-# Копирование исходного кода
+# Копируем весь исходный код.
+# Этот слой будет пересобираться при любом изменении кода, но зависимости останутся в кеше.
 COPY . .
 
-# Сборка приложения
+# Устанавливаем переменную окружения для production-сборки Nuxt.
+ENV NUXT_HOST=0.0.0.0
+ENV NUXT_PORT=3000
+
+# Запускаем команду сборки. Nuxt создаст папку .output.
 RUN npm run build
 
-# Продакшен стадия
-FROM node:22-alpine
+# --- Этап 3: Финальный образ (Production) ---
+# Цель: Создать минимальный и безопасный образ для запуска приложения.
+FROM node:22-alpine AS production
 
 WORKDIR /app
 
-# Копирование собранного приложения
-COPY --from=builder /app/.output ./.output
-COPY --from=builder /app/package*.json ./
+# Устанавливаем окружение для Node.js в "production".
+ENV NODE_ENV=production
 
-# Установка только продакшен зависимостей
-RUN npm ci --only=production
+# Копируем только собранные артефакты из папки .output этапа "builder".
+# Nuxt 3 помещает в .output всё необходимое для запуска, включая production-зависимости.
+# Нам НЕ НУЖНО запускать npm ci --only=production снова!
+COPY --from=builder /app/.output .
 
-# Создание непривилегированного пользователя
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nodejs -u 1001
+# Создаем специального пользователя и группу для запуска приложения.
+# Это лучшая практика безопасности, чтобы не запускать контейнер от root.
+RUN addgroup -S nuxtgroup && adduser -S nuxtuser -G nuxtgroup
 
-# Смена владельца
-RUN chown -R nodejs:nodejs /app
+# Меняем владельца директории на нашего нового пользователя.
+RUN chown -R nuxtuser:nuxtgroup /app
 
-USER nodejs
+# Переключаемся на непривилегированного пользователя.
+USER nuxtuser
 
+# Порт, который будет слушать Nuxt-сервер внутри контейнера.
 EXPOSE 3000
 
-CMD ["node", ".output/server/index.mjs"]
+# Команда для запуска production-сервера Nuxt.
+# Путь server/index.mjs корректен, так как мы скопировали содержимое .output в /app.
+CMD ["node", "server/index.mjs"]
