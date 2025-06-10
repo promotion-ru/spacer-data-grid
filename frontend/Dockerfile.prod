@@ -1,26 +1,21 @@
 # syntax=docker/dockerfile:1
 
+#########################
+# Этап 1 — deps         #
+#########################
 FROM node:22-alpine AS deps
 WORKDIR /app
 
-# Установка pnpm
-RUN corepack enable && corepack prepare pnpm@latest --activate
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev --ignore-scripts
 
-COPY package.json pnpm-lock.yaml* ./
-RUN --mount=type=cache,target=/root/.local/share/pnpm \
-    pnpm install --frozen-lockfile --prod
-
+#########################
+# Этап 2 — build        #
+#########################
 FROM node:22-alpine AS builder
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
 COPY --from=deps /app/node_modules ./node_modules
-COPY package.json pnpm-lock.yaml* ./
-
-RUN --mount=type=cache,target=/root/.local/share/pnpm \
-    pnpm install --frozen-lockfile
-
 COPY . .
 
 ARG NUXT_PUBLIC_API_URL
@@ -28,19 +23,35 @@ ARG NUXT_PUBLIC_APP_URL
 ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
 ENV NUXT_PUBLIC_APP_URL=$NUXT_PUBLIC_APP_URL
 
-RUN pnpm build
+# Убедимся что у нас есть все dev зависимости для build
+RUN npm ci --ignore-scripts
 
+# Установим переменные окружения для build
+ENV NITRO_PRESET=node-server
+ENV NODE_ENV=production
+
+# Выполним build
+RUN npm run build
+
+# Проверим что файлы созданы
+RUN ls -la .output/ && ls -la .output/server/
+
+#########################
+# Этап 3 — prod         #
+#########################
 FROM node:22-alpine AS prod
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# Установим только production зависимости
+COPY package.json package-lock.json* ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/package.json ./package.json
+# Копируем только .output из builder
 COPY --from=builder /app/.output ./.output
 
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nuxtjs
+# Создаем пользователя для безопасности
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nuxtjs
 USER nuxtjs
 
 ENV NODE_ENV=production
