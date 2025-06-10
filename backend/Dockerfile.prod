@@ -1,10 +1,12 @@
 # Production Dockerfile для Laravel приложения
-# Исправленная версия с правильными правами доступа
+# Версия с оптимизацией кеширования и правильной последовательностью команд
 
-# Stage 1: Build environment and Composer dependencies
+# -----------------------------------------------------------------------------
+# Этап 1: Сборка зависимостей (Builder)
+# -----------------------------------------------------------------------------
 FROM php:8.4-fpm AS builder
 
-# Установка системных зависимостей и PHP расширений для Laravel
+# Установка системных зависимостей, необходимых для сборки и PHP расширений
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     curl \
@@ -15,6 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcurl4-openssl-dev \
     libicu-dev \
     libzip-dev \
+    # Установка расширений PHP
     && docker-php-ext-install -j$(nproc) \
     pdo_mysql \
     mbstring \
@@ -25,22 +28,42 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     opcache \
     intl \
     zip \
+    # Очистка
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Устанавливаем рабочую директорию
 WORKDIR /var/www
 
+# Копируем файлы composer для кеширования зависимостей
 COPY composer.json composer.lock ./
 
-# Установка Composer и зависимостей
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
-    && composer install --no-dev --optimize-autoloader --no-interaction --no-progress --prefer-dist
+# Устанавливаем Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
+# Устанавливаем зависимости, не запуская скрипты (файла artisan еще нет)
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-plugins \
+    --no-scripts \
+    --prefer-dist \
+    --optimize-autoloader
+
+# Теперь копируем остальной код приложения
 COPY . .
 
+# Выполняем скрипты Composer и кэширование Laravel для production
 RUN composer dump-autoload --optimize \
-    && php artisan package:discover --ansi
+    && php artisan package:discover --ansi \
+    && php artisan event:cache \
+    && php artisan config:cache \
+    && php artisan route:cache \
+    && php artisan view:cache
 
-# Stage 2: Production environment
+
+# -----------------------------------------------------------------------------
+# Этап 2: Финальный образ для Production
+# -----------------------------------------------------------------------------
 FROM php:8.4-fpm
 
 # Устанавливаем только runtime библиотеки, нужные в production
@@ -52,55 +75,44 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libzip-dev \
     libfcgi-bin \
     procps \
+    # Очистка
     && apt-get autoremove -y && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Скачиваем и устанавливаем скрипт health check для php-fpm
-RUN curl -o /usr/local/bin/php-fpm-healthcheck \
-    https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck \
-    && chmod +x /usr/local/bin/php-fpm-healthcheck
-
-# Копируем скрипт инициализации
-COPY ./docker/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Копируем начальную структуру storage
-COPY ./storage /var/www/storage-init
-
-# Копируем PHP расширения и библиотеки из builder этапа
-COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
-COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
-COPY --from=builder /usr/local/bin/docker-php-ext-* /usr/local/bin/
 
 # Используем рекомендуемую production конфигурацию PHP
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-# Копируем конфигурационные файлы PHP и PHP-FPM
+# Копируем кастомные конфигурационные файлы PHP и PHP-FPM
+# Убедитесь, что эти файлы существуют в вашей структуре проекта (например, ./docker/php-fpm/)
 COPY ./docker/php-fpm/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
 COPY ./docker/php-fpm/php-custom.ini /usr/local/etc/php/conf.d/php-custom.ini
 COPY ./docker/php-fpm/php-fpm-pool.conf /usr/local/etc/php-fpm.d/www.conf
+COPY ./docker/php-fpm/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-# Копируем код приложения и зависимости из build этапа
+# Копируем PHP расширения и библиотеки из builder этапа
+COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+
+# Копируем скомпилированное приложение из builder этапа
 COPY --from=builder /var/www /var/www
 
+# Устанавливаем рабочую директорию
 WORKDIR /var/www
 
-# КРИТИЧЕСКОЕ ИЗМЕНЕНИЕ: Создаем все директории с правильными правами сразу
-RUN mkdir -p /var/www/storage/app/public \
-    && mkdir -p /var/www/storage/framework/sessions \
-    && mkdir -p /var/www/storage/framework/views \
-    && mkdir -p /var/www/storage/framework/cache/data \
-    && mkdir -p /var/www/storage/framework/cache/repository \
-    && mkdir -p /var/www/storage/logs \
-    && mkdir -p /var/www/bootstrap/cache \
-    && touch /var/www/storage/logs/laravel.log \
-    && chown -R www-data:www-data /var/www \
-    && chmod -R 775 /var/www/storage \
-    && chmod -R 775 /var/www/bootstrap/cache \
-    && chmod 664 /var/www/storage/logs/laravel.log
+# Устанавливаем правильные права доступа.
+# Storage и cache будут управляться Docker-томами, но права должны быть верными
+# для первоначального создания и для файлов, которые не в томах.
+# chown должен идти перед USER www-data
+RUN chown -R www-data:www-data /var/www
 
-# ПЕРЕКЛЮЧАЕМСЯ на www-data ПОСЛЕ установки всех прав
+# Переключаемся на непривилегированного пользователя
 USER www-data
 
+# Запускаем entrypoint, который будет выполнять CMD
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
+# Открываем порт для PHP-FPM
 EXPOSE 9000
+
+# Команда по умолчанию для запуска PHP-FPM
 CMD ["php-fpm"]
