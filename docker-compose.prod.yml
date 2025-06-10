@@ -104,12 +104,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 60s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-        reservations:
-          memory: 128M
     networks:
       - app-network
 
