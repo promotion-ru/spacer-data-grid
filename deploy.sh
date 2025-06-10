@@ -14,11 +14,34 @@ fi
 # Остановка существующих контейнеров
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml down
 
+# Проверка состояния MySQL тома
+if ! docker volume inspect spacer-data-grid_mysql_prod_data >/dev/null 2>&1; then
+    echo "Creating new MySQL volume..."
+    docker volume create spacer-data-grid_mysql_prod_data
+fi
+
 # Сборка и запуск контейнеров
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 
-# Ожидание запуска
-sleep 10
+# Ожидание запуска MySQL с проверкой здоровья
+echo "Waiting for MySQL to be ready..."
+timeout=60
+counter=0
+while [ $counter -lt $timeout ]; do
+    if docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec mysql mysqladmin ping -h"localhost" -u"root" -p"${MYSQL_ROOT_PASSWORD}" --silent; then
+        echo "MySQL is ready!"
+        break
+    fi
+    echo "MySQL is not ready yet... ($counter/$timeout)"
+    sleep 2
+    counter=$((counter + 2))
+done
+
+if [ $counter -ge $timeout ]; then
+    echo "ERROR: MySQL failed to start within $timeout seconds"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs mysql
+    exit 1
+fi
 
 # Миграции базы данных
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan migrate --force
