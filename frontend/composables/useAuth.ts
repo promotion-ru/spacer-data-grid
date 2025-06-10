@@ -45,7 +45,7 @@ export const useAuth = () => {
                 message: string
                 expires_at: string
             }>('/auth/login', {
-                baseURL: config.public.apiBase,
+                baseURL: config.public.apiBackend,
                 method: 'POST',
                 body: {
                     ...credentials,
