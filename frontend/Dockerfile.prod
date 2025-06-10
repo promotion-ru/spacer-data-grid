@@ -18,11 +18,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG NUXT_PUBLIC_API_URL
-ARG NUXT_PUBLIC_APP_URL
-ENV NUXT_PUBLIC_API_URL=$NUXT_PUBLIC_API_URL
-ENV NUXT_PUBLIC_APP_URL=$NUXT_PUBLIC_APP_URL
-
 # Убедимся что у нас есть все dev зависимости для build
 RUN npm ci --ignore-scripts
 
