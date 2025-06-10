@@ -4,29 +4,86 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
+      # Production данные на хосте
       - /var/lib/mysql_prod:/var/lib/mysql
+    # В production используем только внутреннюю сеть
+    ports: []
+
+  redis:
+    # Production конфигурация Redis
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - /var/lib/redis_prod:/data
+    ports: []
 
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile.prod
-    command: php-fpm
+      dockerfile: Dockerfile
+      args:
+        APP_ENV: production
+    # Убираем volume с кодом в production
+    volumes:
+      # Только персистентные данные
+      - /var/www/storage_prod:/var/www/storage
+      - /var/www/bootstrap_cache_prod:/var/www/bootstrap/cache
+      # Логи приложения
+      - /var/log/laravel:/var/www/storage/logs
     environment:
       APP_ENV: production
       APP_DEBUG: "false"
       APP_URL: https://grid.lk.cool
+
+      # База данных
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: "3306"
       DB_DATABASE: laravel_db
       DB_USERNAME: laravel_user
       DB_PASSWORD: ${MYSQL_PASSWORD}
-    volumes:
-      - ./backend/storage:/var/www/storage
+
+      # Кеширование и очереди
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+
+      # Почта (настройте под ваш SMTP)
+      MAIL_MAILER: smtp
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      MAIL_ENCRYPTION: tls
+
+      # Логирование
+      LOG_CHANNEL: stack
+      LOG_LEVEL: error
+
+      # Production оптимизации
+      OPCACHE_ENABLE: "1"
+      SESSION_SECURE_COOKIE: "true"
+
     depends_on:
-      - mysql
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php-fpm-healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
     networks:
       - app-network
+    # Ограничения ресурсов для production
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
   frontend:
     build:
@@ -36,18 +93,59 @@ services:
       NODE_ENV: production
       NITRO_HOST: 0.0.0.0
       NITRO_PORT: 3000
-      API_URL: https://grid.lk.cool
+      API_URL: https://grid.lk.cool/api
+      # Production оптимизации
+      NITRO_MINIFY: "true"
+      NITRO_PRESET: node-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/_health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - app-network
 
   nginx:
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-      - ./backend/public:/var/www/backend/public
+      # Production конфигурация
+      - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
+      # SSL сертификаты
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      # Статические файлы Laravel (только чтение)
+      - /var/www/backend_public_prod:/var/www/backend/public:ro
+      # Логи nginx
+      - /var/log/nginx:/var/log/nginx
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    networks:
+      - app-network
 
+  # Certbot для SSL сертификатов
   certbot:
     image: certbot/certbot
     container_name: project_certbot
@@ -55,3 +153,91 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - app-network
+
+  # Worker для обработки очередей Laravel
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        APP_ENV: production
+    container_name: project_worker
+    restart: unless-stopped
+    command: php artisan queue:work --verbose --tries=3 --timeout=60
+    volumes:
+      - /var/www/storage_prod:/var/www/storage
+      - /var/log/laravel:/var/www/storage/logs
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: laravel_db
+      DB_USERNAME: laravel_user
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      CACHE_DRIVER: redis
+      SESSION_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      REDIS_HOST: redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "artisan", "queue:monitor", "--max-jobs=1000"]
+      interval: 60s
+      timeout: 30s
+      retries: 3
+      start_period: 120s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - app-network
+
+  # Scheduler для Laravel cron задач
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        APP_ENV: production
+    container_name: project_scheduler
+    restart: unless-stopped
+    command: sh -c "while true; do php artisan schedule:run; sleep 60; done"
+    volumes:
+      - /var/www/storage_prod:/var/www/storage
+      - /var/log/laravel:/var/www/storage/logs
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: laravel_db
+      DB_USERNAME: laravel_user
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+      CACHE_DRIVER: redis
+      REDIS_HOST: redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    networks:
+      - app-network

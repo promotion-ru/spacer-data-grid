@@ -4,7 +4,7 @@ export default defineNuxtPlugin(() => {
     const { getAuthHeaders, logout } = useAuth()
 
     const api = $fetch.create({
-        baseURL: useRuntimeConfig().public.apiBase + '/api',
+        baseURL: useRuntimeConfig().public.apiBase,
 
         onRequest({ request, options }) {
             // Добавляем заголовки авторизации автоматически

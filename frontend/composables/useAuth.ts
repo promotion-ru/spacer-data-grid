@@ -44,7 +44,7 @@ export const useAuth = () => {
                 token: string
                 message: string
                 expires_at: string
-            }>('/api/auth/login', {
+            }>('/auth/login', {
                 baseURL: config.public.apiBase,
                 method: 'POST',
                 body: {
@@ -89,7 +89,7 @@ export const useAuth = () => {
                 token: string
                 message: string
                 expires_at: string
-            }>('/api/auth/register', {
+            }>('/auth/register', {
                 baseURL: config.public.apiBase,
                 method: 'POST',
                 body: {
@@ -123,7 +123,7 @@ export const useAuth = () => {
 
         if (token) {
             try {
-                await $fetch('/api/auth/logout', {
+                await $fetch('/auth/logout', {
                     baseURL: config.public.apiBase,
                     method: 'POST',
                     headers: getAuthHeaders()
@@ -140,7 +140,7 @@ export const useAuth = () => {
     // Логаут с других устройств
     const logoutOtherDevices = async () => {
         try {
-            const response = await $fetch<{ revoked_tokens_count: number }>('/api/auth/logout-other-devices', {
+            const response = await $fetch<{ revoked_tokens_count: number }>('/auth/logout-other-devices', {
                 baseURL: config.public.apiBase,
                 method: 'POST',
                 headers: getAuthHeaders()
@@ -163,7 +163,7 @@ export const useAuth = () => {
         }
 
         try {
-            const user = await $fetch<User>('/api/user', {
+            const user = await $fetch<User>('/user', {
                 baseURL: config.public.apiBase,
                 method: 'GET',
                 headers: getAuthHeaders()
@@ -181,7 +181,7 @@ export const useAuth = () => {
     // Получение активных токенов
     const getTokens = async () => {
         try {
-            const tokens = await $fetch<TokenInfo[]>('/api/tokens', {
+            const tokens = await $fetch<TokenInfo[]>('/tokens', {
                 baseURL: config.public.apiBase,
                 method: 'GET',
                 headers: getAuthHeaders()
@@ -198,7 +198,7 @@ export const useAuth = () => {
     // Отзыв конкретного токена
     const revokeToken = async (tokenId: number) => {
         try {
-            await $fetch(`/api/tokens/${tokenId}`, {
+            await $fetch(`/tokens/${tokenId}`, {
                 baseURL: config.public.apiBase,
                 method: 'DELETE',
                 headers: getAuthHeaders()
@@ -218,7 +218,7 @@ export const useAuth = () => {
             const response = await $fetch<{
                 token: string
                 expires_at: string
-            }>('/api/auth/refresh-token', {
+            }>('/auth/refresh-token', {
                 baseURL: config.public.apiBase,
                 method: 'POST',
                 headers: getAuthHeaders()
@@ -239,7 +239,7 @@ export const useAuth = () => {
                 valid: boolean
                 token_info: TokenInfo
                 user: User
-            }>('/api/auth/check-token', {
+            }>('/auth/check-token', {
                 baseURL: config.public.apiBase,
                 method: 'GET',
                 headers: getAuthHeaders()

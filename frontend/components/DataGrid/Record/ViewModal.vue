@@ -285,8 +285,10 @@ const downloadFile = async (attachment) => {
       throw new Error('Токен авторизации не найден')
     }
     
-    const baseUrl = `http://localhost:8000/api/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
+    const baseUrl = `${useRuntimeConfig().public.apiBase}/data-grid/${props.record.data_grid_id}/records/${props.record.id}/media/${attachment.id}/download`
     const downloadUrl = `${baseUrl}?token=${encodeURIComponent(token)}`
+    
+    console.log(downloadUrl)
     
     const link = document.createElement('a')
     link.href = downloadUrl
