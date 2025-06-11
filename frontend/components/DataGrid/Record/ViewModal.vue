@@ -101,13 +101,6 @@
         </div>
         
         <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
-          <div class="text-2xl font-bold text-gray-700">
-            {{ formattedDate }}
-          </div>
-          <div class="text-sm text-gray-500">Дней назад</div>
-        </div>
-        
-        <div class="bg-white p-4 rounded-lg border border-gray-200 text-center">
           <div class="text-2xl font-bold text-purple-600">
             {{ record?.updated_at !== record?.created_at ? '✓' : '—' }}
           </div>
@@ -221,7 +214,6 @@ const {
   getShortFileType,
   formatFileSize,
 } = useFileUtils()
-const { getRelativeTime } = useDate();
 
 // Реактивные данные
 const existingAttachments = ref([])
@@ -259,23 +251,6 @@ const formatAmount = (amount, operationTypeId) => {
   const prefix = operationTypeId === 1 ? '+' : operationTypeId === 2 ? '−' : ''
   return prefix + formatted
 }
-
-
-const formattedDate = computed(() => {
-  const relative = getRelativeTime(props.record.date);
-  if (relative.includes('секунд') || relative.includes('минут') || relative.includes('час')) {
-    return 'Сегодня';
-  }
-  if (relative === 'день назад') {
-    return '1';
-  }
-  
-  const match = relative.match(/(\d+)\s+д(ень|ня|ней)\s+назад/);
-  if (match && match[1]) {
-    return match[1];
-  }
-  return relative;
-});
 
 // Скачивание файлов
 const downloadFile = async (attachment) => {
