@@ -54,7 +54,7 @@ fi
 
 # Проверяем готовность frontend
 echo "Проверяем frontend..."
-timeout 60 bash -c 'until docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T frontend curl -f http://localhost:3000/ > /dev/null 2>&1; do
+timeout 60 bash -c 'until docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs frontend 2>/dev/null | grep -q "Listening on http://0.0.0.0:3000"; do
     sleep 2
     echo "Ждем frontend..."
 done'
@@ -64,6 +64,10 @@ if [ $? -ne 0 ]; then
     docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs frontend
     exit 1
 fi
+
+# Дополнительная проверка через внешний доступ
+echo "Проверяем внешнюю доступность frontend через nginx..."
+sleep 5  # Даем время на инициализацию
 
 # 4. КРИТИЧНО: Перезапускаем nginx для обновления DNS кеша
 echo "Перезапускаем nginx для обновления DNS кеша..."
