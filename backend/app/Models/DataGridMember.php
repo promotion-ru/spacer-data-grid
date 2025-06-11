@@ -6,6 +6,31 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * 
+ *
+ * @property int $id
+ * @property string $data_grid_id
+ * @property int $user_id
+ * @property int $invited_by
+ * @property array<array-key, mixed> $permissions
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\DataGrid $dataGrid
+ * @property-read \App\Models\User $invitedBy
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember whereDataGridId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember whereInvitedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember wherePermissions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridMember whereUserId($value)
+ * @mixin \Eloquent
+ */
 class DataGridMember extends Model
 {
     use HasFactory;

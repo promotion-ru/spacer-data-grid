@@ -2,6 +2,8 @@
 // app/Models/DataGrid.php
 namespace App\Models;
 
+use Eloquent;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,9 +29,35 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read string|null $image_url
+ * @property-read Collection<int, DataGridInvitation> $invitations
+ * @property-read int|null $invitations_count
+ * @property-read Collection<int, DataGridLog> $logs
+ * @property-read int|null $logs_count
  * @property-read MediaCollection<int, Media> $media
+ * @property-read int|null $media_count
+ * @property-read Collection<int, DataGridMember> $members
+ * @property-read int|null $members_count
+ * @property-read Collection<int, DataGridInvitation> $pendingInvitations
+ * @property-read int|null $pending_invitations_count
+ * @property-read Collection<int, DataGridRecordLog> $recordLogs
+ * @property-read int|null $record_logs_count
  * @property-read Collection<int, DataGridRecord> $records
+ * @property-read int|null $records_count
+ * @property-read Collection<int, DataGridType> $types
+ * @property-read int|null $types_count
  * @property-read User $user
+ * @method static Builder<static>|DataGrid newModelQuery()
+ * @method static Builder<static>|DataGrid newQuery()
+ * @method static Builder<static>|DataGrid query()
+ * @method static Builder<static>|DataGrid whereCreatedAt($value)
+ * @method static Builder<static>|DataGrid whereDescription($value)
+ * @method static Builder<static>|DataGrid whereId($value)
+ * @method static Builder<static>|DataGrid whereImageId($value)
+ * @method static Builder<static>|DataGrid whereIsActive($value)
+ * @method static Builder<static>|DataGrid whereName($value)
+ * @method static Builder<static>|DataGrid whereUpdatedAt($value)
+ * @method static Builder<static>|DataGrid whereUserId($value)
+ * @mixin Eloquent
  */
 class DataGrid extends Model implements HasMedia
 {
@@ -108,9 +136,9 @@ class DataGrid extends Model implements HasMedia
         return $this->hasMany(DataGridMember::class);
     }
 
-    public function type(): BelongsTo
+    public function types(): HasMany
     {
-        return $this->belongsTo(DataGridType::class, 'type_id');
+        return $this->hasMany(DataGridType::class, 'data_grid_id', 'id');
     }
 
     public function canUserPerform(User $user, string $action): bool

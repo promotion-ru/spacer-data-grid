@@ -7,6 +7,36 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
+/**
+ * 
+ *
+ * @property int $id
+ * @property string $data_grid_id
+ * @property int $invited_by
+ * @property int $user_id
+ * @property string $token
+ * @property array<array-key, mixed> $permissions
+ * @property string $status
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\DataGrid $dataGrid
+ * @property-read \App\Models\User $invitedBy
+ * @property-read \App\Models\User $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation pending()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereDataGridId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereInvitedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation wherePermissions($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridInvitation whereUserId($value)
+ * @mixin \Eloquent
+ */
 class DataGridInvitation extends Model
 {
     use HasFactory;

@@ -6,6 +6,41 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * 
+ *
+ * @property int $id
+ * @property string $data_grid_id
+ * @property string $action
+ * @property int|null $user_id
+ * @property int|null $target_user_id
+ * @property string $description
+ * @property array<array-key, mixed>|null $old_values
+ * @property array<array-key, mixed>|null $new_values
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\DataGrid $dataGrid
+ * @property-read array $action_badge
+ * @property-read array $formatted_changes
+ * @property-read \App\Models\User|null $target_user
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereAction($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereDataGridId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereNewValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereOldValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereTargetUserId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridLog whereUserId($value)
+ * @mixin \Eloquent
+ */
 class DataGridLog extends Model
 {
     use HasFactory;

@@ -10,15 +10,24 @@ use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property int $data_grid_record_id
  * @property int $media_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read DataGridRecord $dataGridRecord
+ * @property-read \App\Models\DataGridRecord $dataGridRecord
  * @property-read Media $media
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia whereDataGridRecordId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia whereMediaId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordMedia whereUpdatedAt($value)
+ * @mixin Eloquent
  */
 class DataGridRecordMedia extends Model
 {

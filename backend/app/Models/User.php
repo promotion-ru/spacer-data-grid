@@ -28,7 +28,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Traits\HasRoles;
 
 /**
- *
+ * 
  *
  * @property int $id
  * @property string $name
@@ -38,15 +38,51 @@ use Spatie\Permission\Traits\HasRoles;
  * @property string $password
  * @property string|null $remember_token
  * @property int|null $avatar_id
+ * @property bool $active
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property-read Collection<int, Activity> $activities
+ * @property-read int|null $activities_count
  * @property-read Media|null $avatar
  * @property-read mixed $avatar_url
+ * @property-read Collection<int, \App\Models\DataGrid> $dataGrids
+ * @property-read int|null $data_grids_count
+ * @property-read Collection<int, \App\Models\DataGridInvitation> $gridInvitations
+ * @property-read int|null $grid_invitations_count
  * @property-read MediaCollection<int, Media> $media
+ * @property-read int|null $media_count
  * @property-read DatabaseNotificationCollection<int, DatabaseNotification> $notifications
+ * @property-read int|null $notifications_count
+ * @property-read Collection<int, \App\Models\DataGridInvitation> $pendingInvitations
+ * @property-read int|null $pending_invitations_count
  * @property-read Collection<int, Permission> $permissions
+ * @property-read int|null $permissions_count
  * @property-read Collection<int, Role> $roles
+ * @property-read int|null $roles_count
+ * @property-read Collection<int, \App\Models\DataGrid> $sharedGrids
+ * @property-read int|null $shared_grids_count
  * @property-read Collection<int, PersonalAccessToken> $tokens
+ * @property-read int|null $tokens_count
+ * @method static \Database\Factories\UserFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User permission($permissions, $without = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User role($roles, $guard = null, $without = false)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereActive($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereAvatarId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereEmailVerifiedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User wherePassword($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereRememberToken($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereSurname($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutPermission($permissions)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|User withoutRole($roles, $guard = null)
+ * @mixin \Eloquent
  */
 class User extends Authenticatable implements HasMedia
 {

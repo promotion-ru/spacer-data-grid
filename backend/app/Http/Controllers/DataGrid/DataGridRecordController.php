@@ -29,15 +29,165 @@ class DataGridRecordController extends Controller
     {
         $this->authorize('viewAny', [DataGridRecord::class, $dataGrid]);
 
-        $records = $dataGrid->records()
-            ->with(['media', 'creator', 'attachments'])
-            ->latest()
-            ->get();
+        try {
+            $perPage = $request->get('per_page', 20);
+            $page = $request->get('page', 1);
 
-        return response()->json([
-            'success' => true,
-            'data'    => DataGridRecordResource::collection($records),
-        ]);
+            // Получаем фильтры
+            $search = $request->get('search');
+            $owner = $request->get('owner');
+            $operationTypeId = $request->get('operation_type_id');
+            $typeId = $request->get('type_id');
+            $withAttachments = $request->get('with_attachments');
+            $createdFrom = $request->get('created_from');
+            $createdTo = $request->get('created_to');
+            $operationDateFrom = $request->get('operation_date_from');
+            $operationDateTo = $request->get('operation_date_to');
+            $amountFrom = $request->get('amount_from');
+            $amountTo = $request->get('amount_to');
+            $currentUserId = $request->get('current_user_id');
+
+            // Сортировка
+            $sortBy = $request->get('sort_by', 'created_at');
+            $sortOrder = $request->get('sort_order', 'desc');
+
+            $query = $dataGrid->records()->with(['media', 'creator', 'attachments', 'type']);
+
+            // Применяем фильтры
+            $this->applyFilters($query, [
+                'search'              => $search,
+                'owner'               => $owner,
+                'operation_type_id'   => $operationTypeId,
+                'type_id'             => $typeId,
+                'with_attachments'    => $withAttachments,
+                'created_from'        => $createdFrom,
+                'created_to'          => $createdTo,
+                'operation_date_from' => $operationDateFrom,
+                'operation_date_to'   => $operationDateTo,
+                'amount_from'         => $amountFrom,
+                'amount_to'           => $amountTo,
+                'current_user_id'     => $currentUserId,
+            ]);
+
+            // Применяем сортировку
+            $this->applySorting($query, $sortBy, $sortOrder);
+
+            // Пагинация
+            $records = $query->paginate($perPage, ['*'], 'page', $page);
+
+            // Получаем дополнительные данные для фильтров
+            $recordTypes = $this->getRecordTypes($dataGrid);
+
+            return response()->json([
+                'success'         => true,
+                'data'            => DataGridRecordResource::collection($records->items()),
+                'pagination'      => [
+                    'current_page' => $records->currentPage(),
+                    'last_page'    => $records->lastPage(),
+                    'per_page'     => $records->perPage(),
+                    'total'        => $records->total(),
+                    'from'         => $records->firstItem(),
+                    'to'           => $records->lastItem(),
+                ],
+                'record_types'    => $recordTypes,
+            ]);
+        } catch (Exception $e) {
+            Log::error('DataGrid records fetch error: ' . $e->getMessage(), [
+                'grid_id' => $dataGrid->id,
+                'filters' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при загрузке записей'
+            ], 500);
+        }
+    }
+
+    /**
+     * Применяет фильтры к запросу
+     */
+    private function applyFilters($query, array $filters): void
+    {
+        // Поиск по названию, описанию, автору
+        if (!empty($filters['search'])) {
+            $query->search($filters['search']);
+        }
+
+        // Фильтр по владельцу (мои/не мои записи)
+        if (!empty($filters['owner']) && !empty($filters['current_user_id'])) {
+            $query->byOwner($filters['owner'], $filters['current_user_id']);
+        }
+
+        // Фильтр по типу операции
+        if (!empty($filters['operation_type_id'])) {
+            $query->byOperationType($filters['operation_type_id']);
+        }
+
+        // Фильтр по типу записи
+        if (!empty($filters['type_id'])) {
+            $query->byRecordType($filters['type_id']);
+        }
+
+        // Фильтр по наличию вложений
+        if (!empty($filters['with_attachments'])) {
+            $query->withAttachments($filters['with_attachments']);
+        }
+
+        // Фильтр по дате создания - только если оба значения заполнены
+        if (!empty($filters['created_from']) && !empty($filters['created_to'])) {
+            $query->createdBetween($filters['created_from'], $filters['created_to']);
+        }
+
+        // Фильтр по дате операции - только если оба значения заполнены
+        if (!empty($filters['operation_date_from']) && !empty($filters['operation_date_to'])) {
+            $query->operationDateBetween($filters['operation_date_from'], $filters['operation_date_to']);
+        }
+
+        // Фильтр по сумме - только если оба значения заполнены
+        if (!empty($filters['amount_from']) && !empty($filters['amount_to'])) {
+            $query->amountBetween($filters['amount_from'], $filters['amount_to']);
+        }
+    }
+
+    /**
+     * Применяет сортировку к запросу
+     */
+    private function applySorting($query, string $sortBy, string $sortOrder): void
+    {
+        $allowedSortFields = [
+            'created_at', 'updated_at', 'name', 'date', 'amount', 'operation_type_id'
+        ];
+
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'created_at';
+        }
+
+        if (!in_array(strtolower($sortOrder), ['asc', 'desc'])) {
+            $sortOrder = 'desc';
+        }
+
+        // Специальная обработка для сортировки по автору
+        if ($sortBy === 'creator') {
+            $query->join('users', 'data_grid_records.created_by', '=', 'users.id')
+                ->orderBy('users.name', $sortOrder)
+                ->select('data_grid_records.*'); // Чтобы избежать конфликтов полей
+        } else {
+            $query->orderBy($sortBy, $sortOrder);
+        }
+
+        // Добавляем дополнительную сортировку для стабильности результатов
+        if ($sortBy !== 'created_at') {
+            $query->orderBy('created_at', 'desc');
+        }
+    }
+
+    /**
+     * Получает типы записей для конкретного грида
+     */
+    private function getRecordTypes(DataGrid $dataGrid): array
+    {
+        return $dataGrid->types()->get(['id', 'name'])->toArray();
     }
 
     public function store(DataGridRecordRequest $request, DataGrid $dataGrid): JsonResponse
@@ -57,9 +207,9 @@ class DataGridRecordController extends Controller
             [],
             $record->only(['name', 'date', 'operation_type_id', 'type_id', 'description', 'amount']),
             [
-                'record_name' => $record->name ?? 'Без названия',
+                'record_name'    => $record->name ?? 'Без названия',
                 'operation_type' => $record->operation_type_id === 1 ? 'Доход' : 'Расход',
-                'amount' => $record->amount
+                'amount'         => $record->amount
             ]
         );
 
@@ -175,10 +325,10 @@ class DataGridRecordController extends Controller
                 $oldValues,
                 $newValues,
                 [
-                    'record_name' => $record->name ?? 'Без названия',
+                    'record_name'    => $record->name ?? 'Без названия',
                     'changed_fields' => array_keys($changes),
                     'operation_type' => $record->operation_type_id === 1 ? 'Доход' : 'Расход',
-                    'amount' => $record->amount
+                    'amount'         => $record->amount
                 ]
             );
         }
@@ -346,7 +496,7 @@ class DataGridRecordController extends Controller
                     ->orWhereHas('user', function ($q) use ($search) {
                         $q->where('name', 'LIKE', "%{$search}%")
                             ->orWhere('email', 'LIKE', "%{$search}%");
-                    });;
+                    });
             });
         }
 

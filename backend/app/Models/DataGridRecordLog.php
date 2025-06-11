@@ -7,6 +7,41 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * 
+ *
+ * @property int $id
+ * @property string $data_grid_id
+ * @property int|null $data_grid_record_id
+ * @property string $action
+ * @property int|null $user_id
+ * @property string $description
+ * @property array<array-key, mixed>|null $old_values
+ * @property array<array-key, mixed>|null $new_values
+ * @property array<array-key, mixed>|null $metadata
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\DataGrid $dataGrid
+ * @property-read \App\Models\DataGridRecord|null $dataGridRecord
+ * @property-read array $action_badge
+ * @property-read array $formatted_changes
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereAction($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereDataGridId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereDataGridRecordId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereDescription($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereMetadata($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereNewValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereOldValues($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridRecordLog whereUserId($value)
+ * @mixin \Eloquent
+ */
 class DataGridRecordLog extends Model
 {
     use HasFactory;

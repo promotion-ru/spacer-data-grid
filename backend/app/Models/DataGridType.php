@@ -7,6 +7,35 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * 
+ *
+ * @property int $id
+ * @property string $name
+ * @property string|null $data_grid_id
+ * @property bool $is_global
+ * @property int $created_by
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $creator
+ * @property-read \App\Models\DataGrid|null $dataGrid
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\DataGridRecord> $dataGridRecords
+ * @property-read int|null $data_grid_records_count
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType forDataGrid(string $dataGridId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType global()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType local()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType whereDataGridId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType whereIsGlobal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|DataGridType whereUpdatedAt($value)
+ * @mixin \Eloquent
+ */
 class DataGridType extends Model
 {
     use HasFactory;
