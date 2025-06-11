@@ -122,3 +122,18 @@ dist/
 # IDE files
 .vscode/
 .idea/
+
+node_modules
+.nuxt
+.output
+.git
+.gitignore
+README.md
+.env.local
+.env.*.local
+.cache
+.parcel-cache
+dist
+.tmp
+Dockerfile*
+docker-compose*.yml
