@@ -77,7 +77,7 @@ class DataGridController extends Controller
         ]);
     }
 
-    private function applyFilters($query, Request $request)
+    private function applyFilters($query, Request $request): void
     {
         // Поиск по названию и описанию
         if ($request->filled('search')) {
@@ -100,11 +100,11 @@ class DataGridController extends Controller
 
         // Фильтр по дате создания
         if ($request->filled('created_from')) {
-            $query->whereDate('created_at', '>=', $request->get('created_from'));
+            $query->where('data_grids.created_at', '>=', $request->get('created_from') . ' 00:00:00');
         }
 
         if ($request->filled('created_to')) {
-            $query->whereDate('created_at', '<=', $request->get('created_to'));
+            $query->where('data_grids.created_at', '<=',  $request->get('created_to') . ' 23:59:59');
         }
 
         // Базовая сортировка на уровне запроса (если не переопределена позже)

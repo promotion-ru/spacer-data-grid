@@ -57,10 +57,11 @@ class UserController extends Controller
 
             if ($createdFrom || $createdTo) {
                 if ($createdFrom) {
-                    $query->whereDate('created_at', '>=', $createdFrom);
+                    $query->where('created_at', '>=', $createdFrom . ' 00:00:00');
                 }
+
                 if ($createdTo) {
-                    $query->whereDate('created_at', '<=', $createdTo);
+                    $query->where('created_at', '<=',  $createdTo . ' 23:59:59');
                 }
             }
 

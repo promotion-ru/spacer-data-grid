@@ -54,24 +54,14 @@
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Зарегистрирован с</label>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Период регистрации</label>
               <DatePicker
-                v-model="createdFrom"
+                v-model="createdDateRange"
+                :manualInput="false"
                 class="w-full"
                 dateFormat="dd.mm.yy"
-                placeholder="Выберите дату"
-                showButtonBar
-                showIcon
-              />
-            </div>
-            
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Зарегистрирован до</label>
-              <DatePicker
-                v-model="createdTo"
-                class="w-full"
-                dateFormat="dd.mm.yy"
-                placeholder="Выберите дату"
+                placeholder="Выберите период"
+                selectionMode="range"
                 showButtonBar
                 showIcon
               />
@@ -182,8 +172,7 @@ const showFilters = ref(false)
 const searchQuery = ref('')
 const selectedActivityFilter = ref(null)
 const selectedSortFilter = ref('created_desc')
-const createdFrom = ref(null)
-const createdTo = ref(null)
+const createdDateRange = ref(null) // Заменяем createdFrom и createdTo на range
 
 // Специальные фильтры для быстрых кнопок
 const quickDateFilter = ref(null) // 'new_users' | 'last_week' | 'last_month' | 'recently_active' | null
@@ -208,14 +197,28 @@ const sortOptions = ref([
   {label: 'По дате обновления (старые)', value: 'updated_asc'}
 ])
 
+// Вычисляемые свойства для извлечения дат из range
+const createdFrom = computed(() => {
+  if (createdDateRange.value && Array.isArray(createdDateRange.value) && createdDateRange.value[0]) {
+    return createdDateRange.value[0]
+  }
+  return null
+})
+
+const createdTo = computed(() => {
+  if (createdDateRange.value && Array.isArray(createdDateRange.value) && createdDateRange.value[1]) {
+    return createdDateRange.value[1]
+  }
+  return null
+})
+
 // Вычисляемые свойства
 const hasActiveFilters = computed(() => {
   return !!(
     searchQuery.value ||
     selectedActivityFilter.value ||
     selectedSortFilter.value !== 'created_desc' ||
-    createdFrom.value ||
-    createdTo.value ||
+    createdDateRange.value ||
     quickDateFilter.value
   )
 })
@@ -242,12 +245,22 @@ const activeFilterTags = computed(() => {
     }
   }
   
-  if (createdFrom.value) {
-    tags.push({key: 'createdFrom', label: `Зарегистрирован с: ${formatDate(createdFrom.value)}`})
-  }
-  
-  if (createdTo.value) {
-    tags.push({key: 'createdTo', label: `Зарегистрирован до: ${formatDate(createdTo.value)}`})
+  // Объединенный тег для диапазона дат
+  if (createdDateRange.value && Array.isArray(createdDateRange.value)) {
+    const fromDate = createdDateRange.value[0]
+    const toDate = createdDateRange.value[1]
+    
+    if (fromDate && toDate) {
+      tags.push({
+        key: 'createdRange',
+        label: `Зарегистрирован: ${formatDate(fromDate)} - ${formatDate(toDate)}`
+      })
+    } else if (fromDate) {
+      tags.push({
+        key: 'createdRange',
+        label: `Зарегистрирован с: ${formatDate(fromDate)}`
+      })
+    }
   }
   
   if (quickDateFilter.value) {
@@ -278,42 +291,36 @@ const applyQuickFilter = (filterType) => {
     case 'new_users':
       if (quickDateFilter.value === 'new_users') {
         quickDateFilter.value = null
-        createdFrom.value = null
-        createdTo.value = null
+        createdDateRange.value = null
       } else {
         quickDateFilter.value = 'new_users'
         const threeDaysAgo = new Date()
         threeDaysAgo.setDate(threeDaysAgo.getDate() - 3)
-        createdFrom.value = threeDaysAgo
-        createdTo.value = new Date()
+        createdDateRange.value = [threeDaysAgo, new Date()]
       }
       break
     
     case 'last_week':
       if (quickDateFilter.value === 'last_week') {
         quickDateFilter.value = null
-        createdFrom.value = null
-        createdTo.value = null
+        createdDateRange.value = null
       } else {
         quickDateFilter.value = 'last_week'
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        createdFrom.value = weekAgo
-        createdTo.value = new Date()
+        createdDateRange.value = [weekAgo, new Date()]
       }
       break
     
     case 'last_month':
       if (quickDateFilter.value === 'last_month') {
         quickDateFilter.value = null
-        createdFrom.value = null
-        createdTo.value = null
+        createdDateRange.value = null
       } else {
         quickDateFilter.value = 'last_month'
         const monthAgo = new Date()
         monthAgo.setMonth(monthAgo.getMonth() - 1)
-        createdFrom.value = monthAgo
-        createdTo.value = new Date()
+        createdDateRange.value = [monthAgo, new Date()]
       }
       break
     
@@ -336,23 +343,16 @@ const removeFilter = (filterKey) => {
     case 'sort':
       selectedSortFilter.value = 'created_desc'
       break
-    case 'createdFrom':
-      createdFrom.value = null
-      if (quickDateFilter.value === 'new_users' || quickDateFilter.value === 'last_week' || quickDateFilter.value === 'last_month') {
-        quickDateFilter.value = null
-      }
-      break
-    case 'createdTo':
-      createdTo.value = null
-      if (quickDateFilter.value === 'new_users' || quickDateFilter.value === 'last_week' || quickDateFilter.value === 'last_month') {
+    case 'createdRange':
+      createdDateRange.value = null
+      if (['new_users', 'last_week', 'last_month'].includes(quickDateFilter.value)) {
         quickDateFilter.value = null
       }
       break
     case 'quickDate':
       quickDateFilter.value = null
-      if (quickDateFilter.value === 'new_users' || quickDateFilter.value === 'last_week' || quickDateFilter.value === 'last_month') {
-        createdFrom.value = null
-        createdTo.value = null
+      if (['new_users', 'last_week', 'last_month'].includes(quickDateFilter.value)) {
+        createdDateRange.value = null
       }
       break
   }
@@ -362,8 +362,7 @@ const resetFilters = () => {
   searchQuery.value = ''
   selectedActivityFilter.value = null
   selectedSortFilter.value = 'created_desc'
-  createdFrom.value = null
-  createdTo.value = null
+  createdDateRange.value = null
   quickDateFilter.value = null
   showFilters.value = false
   emitFilters()
@@ -393,6 +392,7 @@ const emitFilters = () => {
     active: selectedActivityFilter.value || null,
     sort_by: getSortField(selectedSortFilter.value),
     sort_order: getSortOrder(selectedSortFilter.value),
+    // Разбиваем range обратно на отдельные параметры для совместимости с backend
     created_from: createdFrom.value ? formatDateForAPI(createdFrom.value) : null,
     created_to: createdTo.value ? formatDateForAPI(createdTo.value) : null,
     recently_active: quickDateFilter.value === 'recently_active' || null
@@ -434,8 +434,7 @@ watch(searchQuery, () => {
 watch([
   selectedActivityFilter,
   selectedSortFilter,
-  createdFrom,
-  createdTo,
+  createdDateRange, // Заменяем createdFrom, createdTo на createdDateRange
   quickDateFilter
 ], () => {
   emitFilters()
@@ -450,5 +449,19 @@ defineExpose({
 <style scoped>
 :deep(.input-search) {
   padding-left: 30px;
+}
+
+/* Стили для range date picker */
+:deep(.p-datepicker-input-icon-container) {
+  right: 8px;
+}
+
+:deep(.p-datepicker-input) {
+  padding-right: 2.5rem;
+}
+
+/* Улучшаем внешний вид range picker */
+:deep(.p-datepicker-range .p-datepicker-input) {
+  text-align: center;
 }
 </style>

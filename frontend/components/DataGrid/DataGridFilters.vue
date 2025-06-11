@@ -54,24 +54,14 @@
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Создано с</label>
+              <label class="block text-xs font-medium text-gray-600 mb-1">Период создания</label>
               <DatePicker
-                v-model="createdFrom"
+                v-model="createdDateRange"
+                :manualInput="false"
                 class="w-full"
                 dateFormat="dd.mm.yy"
-                placeholder="Выберите дату"
-                showButtonBar
-                showIcon
-              />
-            </div>
-            
-            <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Создано до</label>
-              <DatePicker
-                v-model="createdTo"
-                class="w-full"
-                dateFormat="dd.mm.yy"
-                placeholder="Выберите дату"
+                placeholder="Выберите период"
+                selectionMode="range"
                 showButtonBar
                 showIcon
               />
@@ -88,7 +78,7 @@
                 placeholder="По дате создания"
               />
             </div>
-            
+          
           </div>
           
           <!-- Быстрые фильтры -->
@@ -176,7 +166,7 @@
 </template>
 
 <script setup>
-import { debounce } from 'lodash-es'
+import {debounce} from 'lodash-es'
 
 const props = defineProps({
   loading: {
@@ -196,8 +186,7 @@ const showFilters = ref(false)
 const searchQuery = ref('')
 const selectedActivityFilter = ref(null)
 const selectedSortFilter = ref('created_desc')
-const createdFrom = ref(null)
-const createdTo = ref(null)
+const createdDateRange = ref(null) // Заменяем createdFrom и createdTo на range
 
 // Специальные фильтры для быстрых кнопок
 const ownerFilter = ref(null) // 'own' | 'shared' | null
@@ -205,20 +194,35 @@ const quickDateFilter = ref(null) // 'last_week' | 'last_month_changes' | 'last_
 
 // Опции фильтров
 const activityOptions = ref([
-  { label: 'Только активные', value: 'active' },
-  { label: 'Только неактивные', value: 'inactive' }
+  {label: 'Только активные', value: 'active'},
+  {label: 'Только неактивные', value: 'inactive'}
 ])
 
 const sortOptions = ref([
-  { label: 'По дате создания (новые)', value: 'created_desc' },
-  { label: 'По дате создания (старые)', value: 'created_asc' },
-  { label: 'По дате обновления (новые)', value: 'updated_desc' },
-  { label: 'По дате обновления (старые)', value: 'updated_asc' },
-  { label: 'По названию (А-Я)', value: 'name_asc' },
-  { label: 'По названию (Я-А)', value: 'name_desc' },
-  { label: 'По количеству записей (больше)', value: 'records_desc' },
-  { label: 'По количеству записей (меньше)', value: 'records_asc' }
+  {label: 'По дате создания (новые)', value: 'created_desc'},
+  {label: 'По дате создания (старые)', value: 'created_asc'},
+  {label: 'По дате обновления (новые)', value: 'updated_desc'},
+  {label: 'По дате обновления (старые)', value: 'updated_asc'},
+  {label: 'По названию (А-Я)', value: 'name_asc'},
+  {label: 'По названию (Я-А)', value: 'name_desc'},
+  {label: 'По количеству записей (больше)', value: 'records_desc'},
+  {label: 'По количеству записей (меньше)', value: 'records_asc'}
 ])
+
+// Вычисляемые свойства для извлечения дат из range
+const createdFrom = computed(() => {
+  if (createdDateRange.value && Array.isArray(createdDateRange.value) && createdDateRange.value[0]) {
+    return createdDateRange.value[0]
+  }
+  return null
+})
+
+const createdTo = computed(() => {
+  if (createdDateRange.value && Array.isArray(createdDateRange.value) && createdDateRange.value[1]) {
+    return createdDateRange.value[1]
+  }
+  return null
+})
 
 // Вычисляемые свойства
 const hasActiveFilters = computed(() => {
@@ -226,8 +230,7 @@ const hasActiveFilters = computed(() => {
     searchQuery.value ||
     selectedActivityFilter.value ||
     selectedSortFilter.value !== 'created_desc' ||
-    createdFrom.value ||
-    createdTo.value ||
+    createdDateRange.value ||
     ownerFilter.value ||
     quickDateFilter.value
   )
@@ -246,28 +249,38 @@ const activeFilterTags = computed(() => {
   if (selectedActivityFilter.value) {
     const activity = activityOptions.value.find(a => a.value === selectedActivityFilter.value)
     if (activity) {
-      tags.push({ key: 'activity', label: activity.label })
+      tags.push({key: 'activity', label: activity.label})
     }
   }
   
   if (selectedSortFilter.value && selectedSortFilter.value !== 'created_desc') {
     const sort = sortOptions.value.find(s => s.value === selectedSortFilter.value)
     if (sort) {
-      tags.push({ key: 'sort', label: `Сортировка: ${sort.label}` })
+      tags.push({key: 'sort', label: `Сортировка: ${sort.label}`})
     }
   }
   
-  if (createdFrom.value) {
-    tags.push({ key: 'createdFrom', label: `Создано с: ${formatDate(createdFrom.value)}` })
-  }
-  
-  if (createdTo.value) {
-    tags.push({ key: 'createdTo', label: `Создано до: ${formatDate(createdTo.value)}` })
+  // Объединенный тег для диапазона дат
+  if (createdDateRange.value && Array.isArray(createdDateRange.value)) {
+    const fromDate = createdDateRange.value[0]
+    const toDate = createdDateRange.value[1]
+    
+    if (fromDate && toDate) {
+      tags.push({
+        key: 'createdRange',
+        label: `Создано: ${formatDate(fromDate)} - ${formatDate(toDate)}`
+      })
+    } else if (fromDate) {
+      tags.push({
+        key: 'createdRange',
+        label: `Создано с: ${formatDate(fromDate)}`
+      })
+    }
   }
   
   if (ownerFilter.value) {
-    const ownershipLabels = { own: 'Мои таблицы', shared: 'Общие таблицы' }
-    tags.push({ key: 'ownerQuick', label: ownershipLabels[ownerFilter.value] })
+    const ownershipLabels = {own: 'Мои таблицы', shared: 'Общие таблицы'}
+    tags.push({key: 'ownerQuick', label: ownershipLabels[ownerFilter.value]})
   }
   
   if (quickDateFilter.value) {
@@ -277,7 +290,7 @@ const activeFilterTags = computed(() => {
       last_week_changes: 'Изменения за неделю',
       last_day_changes: 'Изменения за день'
     }
-    tags.push({ key: 'quickDate', label: dateLabels[quickDateFilter.value] })
+    tags.push({key: 'quickDate', label: dateLabels[quickDateFilter.value]})
   }
   
   return tags
@@ -314,14 +327,12 @@ const applyQuickFilter = (filterType) => {
     case 'last_week':
       if (quickDateFilter.value === 'last_week') {
         quickDateFilter.value = null
-        createdFrom.value = null
-        createdTo.value = null
+        createdDateRange.value = null
       } else {
         quickDateFilter.value = 'last_week'
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        createdFrom.value = weekAgo
-        createdTo.value = new Date()
+        createdDateRange.value = [weekAgo, new Date()]
       }
       break
     
@@ -345,14 +356,8 @@ const removeFilter = (filterKey) => {
     case 'sort':
       selectedSortFilter.value = 'created_desc'
       break
-    case 'createdFrom':
-      createdFrom.value = null
-      if (quickDateFilter.value === 'last_week') {
-        quickDateFilter.value = null
-      }
-      break
-    case 'createdTo':
-      createdTo.value = null
+    case 'createdRange':
+      createdDateRange.value = null
       if (quickDateFilter.value === 'last_week') {
         quickDateFilter.value = null
       }
@@ -363,8 +368,7 @@ const removeFilter = (filterKey) => {
     case 'quickDate':
       quickDateFilter.value = null
       if (quickDateFilter.value === 'last_week') {
-        createdFrom.value = null
-        createdTo.value = null
+        createdDateRange.value = null
       }
       break
   }
@@ -374,8 +378,7 @@ const resetFilters = () => {
   searchQuery.value = ''
   selectedActivityFilter.value = null
   selectedSortFilter.value = 'created_desc'
-  createdFrom.value = null
-  createdTo.value = null
+  createdDateRange.value = null
   ownerFilter.value = null
   quickDateFilter.value = null
   showFilters.value = false
@@ -406,6 +409,7 @@ const emitFilters = () => {
     ownership: ownerFilter.value || null,
     activity: selectedActivityFilter.value || null,
     sort: selectedSortFilter.value === 'created_desc' ? null : selectedSortFilter.value,
+    // Разбиваем range обратно на отдельные параметры для совместимости с backend
     created_from: createdFrom.value ? formatDateForAPI(createdFrom.value) : null,
     created_to: createdTo.value ? formatDateForAPI(createdTo.value) : null
   }
@@ -421,8 +425,7 @@ watch(searchQuery, () => {
 watch([
   selectedActivityFilter,
   selectedSortFilter,
-  createdFrom,
-  createdTo,
+  createdDateRange, // Заменяем createdFrom, createdTo на createdDateRange
   ownerFilter,
   quickDateFilter
 ], () => {
@@ -438,5 +441,19 @@ defineExpose({
 <style scoped>
 :deep(.input-search) {
   padding-left: 30px;
+}
+
+/* Стили для range date picker */
+:deep(.p-datepicker-input-icon-container) {
+  right: 8px;
+}
+
+:deep(.p-datepicker-input) {
+  padding-right: 2.5rem;
+}
+
+/* Улучшаем внешний вид range picker */
+:deep(.p-datepicker-range .p-datepicker-input) {
+  text-align: center;
 }
 </style>

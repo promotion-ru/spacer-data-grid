@@ -55,13 +55,14 @@ class DataGridTypeController extends Controller
             }
 
             // Фильтр по дате создания "от"
-            if ($createdFrom) {
-                $query->whereDate('data_grid_types.created_at', '>=', $createdFrom);
-            }
+            if ($createdFrom || $createdTo) {
+                if ($createdFrom) {
+                    $query->where('data_grid_types.created_at', '>=', $createdFrom . ' 00:00:00');
+                }
 
-            // Фильтр по дате создания "до"
-            if ($createdTo) {
-                $query->whereDate('data_grid_types.created_at', '<=', $createdTo);
+                if ($createdTo) {
+                    $query->where('data_grid_types.created_at', '<=',  $createdTo . ' 23:59:59');
+                }
             }
 
             // Сортировка с поддержкой новых полей
