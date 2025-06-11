@@ -40,6 +40,10 @@ jobs:
           key: ${{ secrets.SPACER_DATA_GRID_PROD_SSH_KEY }}
           port: ${{ secrets.SPACER_DATA_GRID_PROD_PORT }}
           script: |
+            # Переходим в директорию проекта на сервере
             cd /home/spacer_data_grid/spacer-data-grid/
+            # Сбрасываем все локальные изменения и получаем последнюю версию из ветки main
+            git reset --hard
+            git pull origin main
             # Запускаем скрипт развертывания
             ./deploy.sh
