@@ -29,13 +29,13 @@
           label="Сбросить"
           @click="resetFilters"
         />
-        <Button
-          :loading="loading"
-          class="p-button-outlined"
-          icon="pi pi-refresh"
-          label="Обновить"
-          @click="$emit('refresh')"
-        />
+<!--        <Button-->
+<!--          :loading="loading"-->
+<!--          class="p-button-outlined"-->
+<!--          icon="pi pi-refresh"-->
+<!--          label="Обновить"-->
+<!--          @click="$emit('refresh')"-->
+<!--        />-->
       </div>
       
       <!-- Расширенные фильтры -->
