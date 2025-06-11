@@ -10,7 +10,7 @@
       <!-- Заголовок и кнопка создания -->
       <div class="flex justify-between items-center mb-8">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Мои таблицы данных test</h1>
+          <h1 class="text-3xl font-bold text-gray-900">Мои таблицы данных</h1>
           <p class="text-gray-600 mt-2">Управляйте своими данными в удобном формате</p>
         </div>
         <Button
