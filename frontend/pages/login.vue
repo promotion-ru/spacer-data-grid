@@ -18,7 +18,8 @@
         </template>
         <template #content>
           <form class="space-y-6" @submit.prevent="handleLogin">
-            <FloatLabel>
+            <div class="space-y-2">
+              <label class="block text-sm font-medium text-gray-300" for="email">Email</label>
               <IconField iconPosition="left">
                 <InputIcon class="pi pi-envelope"></InputIcon>
                 <InputText
@@ -30,10 +31,10 @@
                   type="email"
                 />
               </IconField>
-              <label for="email">Email</label>
-            </FloatLabel>
+            </div>
             
-            <FloatLabel class="mt-8">
+            <div class="space-y-2 mt-8">
+              <label class="block text-sm font-medium text-gray-300" for="password">Пароль</label>
               <IconField iconPosition="left">
                 <InputIcon class="pi pi-lock"></InputIcon>
                 <Password
@@ -41,22 +42,21 @@
                   v-model="form.password"
                   :disabled="loading"
                   :feedback="false"
+                  class="w-full"
                   inputClass="w-full"
                   required
                   toggleMask
-                  class="w-full"
                 />
               </IconField>
-              <label for="password">Пароль</label>
-            </FloatLabel>
+            </div>
             
             <Message v-if="errorMessage" :closable="false" severity="error">
               {{ errorMessage }}
             </Message>
             
             <Button
-              :loading="loading"
               :label="loading ? 'Выполняется вход...' : 'Войти в аккаунт'"
+              :loading="loading"
               class="w-full justify-center group relative flex py-3 px-4 border border-transparent text-sm font-semibold rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:ring-offset-gray-800 disabled:opacity-50 transform transition-all duration-200 hover:scale-[1.02] hover:shadow-xl shadow-lg"
               type="submit"
             />

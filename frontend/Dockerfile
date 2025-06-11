@@ -11,6 +11,12 @@ RUN npm install
 # Копирование остальных файлов
 COPY . .
 
+# Установка переменных окружения для Docker
+ENV HOST=0.0.0.0
+ENV PORT=3000
+ENV NITRO_HOST=0.0.0.0
+ENV NITRO_PORT=3000
+
 # Экспонирование порта
 EXPOSE 3000
 
