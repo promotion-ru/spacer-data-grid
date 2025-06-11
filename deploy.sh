@@ -46,8 +46,8 @@ fi
 # Миграции базы данных
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan migrate --force
 
-# Создание символической ссылки для storage
-docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan storage:link
+# Строка ниже убрана, так как storage:link теперь выполняется в Dockerfile
+# docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan storage:link
 
 # Очистка и оптимизация кеша
 docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec backend php artisan cache:clear
