@@ -418,6 +418,10 @@ const activeFilterTags = computed(() => {
     
     if (amountFrom.value !== null && amountTo.value !== null) {
       tags.push({key: 'amount', label: `Сумма: ${amountFrom.value} - ${amountTo.value}`})
+    } else if (amountFrom.value !== null) {
+      tags.push({key: 'amount', label: `Сумма от: ${amountFrom.value}`})
+    } else if (amountTo.value !== null) {
+      tags.push({key: 'amount', label: `Сумма до: ${amountTo.value}`})
     }
     
     if (quickDateFilter.value) {
@@ -665,9 +669,8 @@ const emitFilters = () => {
     created_to: isDateRangeComplete(createdDateRange.value) ? formatDateForAPI(createdDateRange.value[1]) : null,
     operation_date_from: isDateRangeComplete(operationDateRange.value) ? formatDateForAPI(operationDateRange.value[0]) : null,
     operation_date_to: isDateRangeComplete(operationDateRange.value) ? formatDateForAPI(operationDateRange.value[1]) : null,
-    // Фильтрация по сумме только если заполнены оба поля и они не null
-    amount_from: (amountFrom.value !== null && amountTo.value !== null) ? amountFrom.value : null,
-    amount_to: (amountFrom.value !== null && amountTo.value !== null) ? amountTo.value : null,
+    amount_from: amountFrom.value !== null ? amountFrom.value : null,
+    amount_to: amountTo.value !== null ? amountTo.value : null,
     current_user_id: props.currentUserId
   }
   

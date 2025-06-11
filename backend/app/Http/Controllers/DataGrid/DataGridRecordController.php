@@ -144,9 +144,13 @@ class DataGridRecordController extends Controller
             $query->operationDateBetween($filters['operation_date_from'], $filters['operation_date_to']);
         }
 
-        // Фильтр по сумме - только если оба значения заполнены
+        // Фильтр по сумме
         if (!empty($filters['amount_from']) && !empty($filters['amount_to'])) {
             $query->amountBetween($filters['amount_from'], $filters['amount_to']);
+        } elseif (!empty($filters['amount_from'])) {
+            $query->amountFrom($filters['amount_from']);
+        } elseif (!empty($filters['amount_to'])) {
+            $query->amountTo($filters['amount_to']);
         }
     }
 

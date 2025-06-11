@@ -255,6 +255,30 @@ class DataGridRecord extends Model implements HasMedia
     }
 
     /**
+     * Scope для фильтрации по от суммы
+     */
+    public function scopeAmountFrom($query, $from = null, )
+    {
+        if ($from !== null) {
+            $query->where('amount', '>=', $from);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Scope для фильтрации по до суммы
+     */
+    public function scopeAmountTo($query, $to = null)
+    {
+        if ($to !== null) {
+            $query->where('amount', '<=', $to);
+        }
+
+        return $query;
+    }
+
+    /**
      * Scope для записей, измененных за определенный период
      */
     public function scopeChangedInDays($query, $days = 1)

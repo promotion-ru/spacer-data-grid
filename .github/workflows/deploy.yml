@@ -1,0 +1,45 @@
+name: Deploy to Production Server
+
+# - push: запускать при каждом пуше в ветку 'main'
+# - workflow_dispatch: позволяет запускать вручную из интерфейса GitHub
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# Настройки параллелизма:
+# Эта секция гарантирует, что только одна сборка для группы 'production-deploy'
+# может выполняться одновременно.
+concurrency:
+  # Группа для объединения запусков. Все запуски с этой группой будут становиться в очередь.
+  group: 'production-deploy'
+  # Не отменять предыдущие запуски, если запущен новый.
+  # Вместо этого новый запуск будет ждать своей очереди.
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      # Шаг 1: Клонирование репозитория
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Шаг 2: Подключение по SSH и запуск скрипта развертывания
+      - name: SSH and Run Deploy Script
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SPACER_DATA_GRID_PROD_HOST }}
+          # Имя пользователя для SSH-подключения.
+          username: ${{ secrets.SPACER_DATA_GRID_PROD_USERNAME }}
+          # Приватный SSH-ключ для аутентификации.
+          key: ${{ secrets.SPACER_DATA_GRID_PROD_SSH_KEY }}
+          port: ${{ secrets.SPACER_DATA_GRID_PROD_PORT }}
+          script: |
+            cd /home/spacer_data_grid/spacer-data-grid/
+            # Запускаем скрипт развертывания
+            ./deploy.sh
