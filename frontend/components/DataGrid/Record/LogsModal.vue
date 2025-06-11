@@ -59,7 +59,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Конкретное действие</label>
-                <Dropdown
+                <Select
                   v-model="selectedActionFilter"
                   :options="actionFilterOptions"
                   class="w-full"
@@ -72,7 +72,7 @@
               
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Тип действий</label>
-                <Dropdown
+                <Select
                   v-model="selectedActionTypeFilter"
                   :options="actionTypeOptions"
                   class="w-full"
@@ -85,7 +85,7 @@
               
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Измененное поле</label>
-                <Dropdown
+                <Select
                   v-model="selectedFieldFilter"
                   :loading="loading"
                   :options="availableFields"
@@ -99,7 +99,7 @@
               
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Дата от</label>
-                <Calendar
+                <DatePicker
                   v-model="dateFrom"
                   class="w-full"
                   dateFormat="dd.mm.yy"
@@ -111,7 +111,7 @@
               
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Дата до</label>
-                <Calendar
+                <DatePicker
                   v-model="dateTo"
                   class="w-full"
                   dateFormat="dd.mm.yy"

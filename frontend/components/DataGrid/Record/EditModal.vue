@@ -42,7 +42,7 @@
           <label class="block text-sm font-medium text-gray-700 mb-2" for="date">
             Дата *
           </label>
-          <Calendar
+          <DatePicker
             id="date"
             v-model="form.date"
             :class="{ 'p-invalid': errors.date }"

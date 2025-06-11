@@ -14,7 +14,7 @@
     
     <div class="field">
       <label :for="`${mode}-data_grid_id`" class="font-medium">Таблица данных *</label>
-      <Dropdown
+      <Select
         :id="`${mode}-data_grid_id`"
         v-model="formData.data_grid_id"
         :options="dataGridOptions"

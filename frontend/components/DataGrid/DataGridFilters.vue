@@ -42,7 +42,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Статус активности</label>
-              <Dropdown
+              <Select
                 v-model="selectedActivityFilter"
                 :options="activityOptions"
                 class="w-full"
@@ -55,7 +55,7 @@
             
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Создано с</label>
-              <Calendar
+              <DatePicker
                 v-model="createdFrom"
                 class="w-full"
                 dateFormat="dd.mm.yy"
@@ -67,7 +67,7 @@
             
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Создано до</label>
-              <Calendar
+              <DatePicker
                 v-model="createdTo"
                 class="w-full"
                 dateFormat="dd.mm.yy"
@@ -79,7 +79,7 @@
             
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Сортировка</label>
-              <Dropdown
+              <Select
                 v-model="selectedSortFilter"
                 :options="sortOptions"
                 class="w-full"

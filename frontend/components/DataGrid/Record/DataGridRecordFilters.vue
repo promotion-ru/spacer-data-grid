@@ -50,7 +50,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Автор записи</label>
-              <Dropdown
+              <Select
                 v-model="selectedOwnerFilter"
                 :options="ownerOptions"
                 class="w-full"
@@ -63,7 +63,7 @@
             
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Тип операции</label>
-              <Dropdown
+              <Select
                 v-model="selectedOperationTypeFilter"
                 :options="operationTypeOptions"
                 class="w-full"
@@ -76,7 +76,7 @@
             
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Тип записи</label>
-              <Dropdown
+              <Select
                 v-model="selectedRecordTypeFilter"
                 :options="recordTypeOptions"
                 class="w-full"
@@ -89,7 +89,7 @@
             
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">С вложениями</label>
-              <Dropdown
+              <Select
                 v-model="selectedAttachmentsFilter"
                 :options="attachmentsOptions"
                 class="w-full"
@@ -105,7 +105,7 @@
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Период создания</label>
-              <Calendar
+              <DatePicker
                 v-model="createdDateRange"
                 class="w-full"
                 dateFormat="dd.mm.yy"
@@ -121,7 +121,7 @@
             
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Период операции</label>
-              <Calendar
+              <DatePicker
                 v-model="operationDateRange"
                 class="w-full"
                 dateFormat="dd.mm.yy"
@@ -159,7 +159,7 @@
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-medium text-gray-600 mb-1">Сортировка</label>
-              <Dropdown
+              <Select
                 v-model="selectedSortFilter"
                 :options="sortOptions"
                 class="w-full"
