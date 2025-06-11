@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen bg-red-50">
     <div class="container mx-auto px-4 py-8">
       <!-- Основной контент -->
       <div v-if="grid">
