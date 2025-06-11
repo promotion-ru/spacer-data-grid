@@ -84,8 +84,15 @@ Route::middleware(['auth:sanctum'])->group(function () {
             Route::get('/search', [DataGridTypeController::class, 'search'])->name('search');
             Route::post('/', [DataGridTypeController::class, 'store'])->name('store');
             Route::get('/{dataGridType}', [DataGridTypeController::class, 'show'])->name('show');
-            Route::delete('/{dataGridType}', [DataGridTypeController::class, 'destroy'])->name('destroy');
         });
+    });
+
+    Route::prefix('data-grid-types')->name('types.')->group(function () {
+        Route::get('/', [DataGridTypeController::class, 'index'])->name('data-grid-types.index');
+        Route::post('/', [DataGridTypeController::class, 'store'])->name('data-grid-types.store');
+        Route::get('{dataGridType}', [DataGridTypeController::class, 'show'])->name('data-grid-types.show');
+        Route::patch('{dataGridType}', [DataGridTypeController::class, 'update'])->name('data-grid-types.update');
+        Route::delete('{dataGridType}', [DataGridTypeController::class, 'destroy'])->name('data-grid-types.destroy');
     });
 
     // Получение приглашений для текущего пользователя

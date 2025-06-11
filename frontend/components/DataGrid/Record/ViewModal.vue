@@ -73,7 +73,7 @@
             <div>
               <span class="text-xs text-gray-500 uppercase tracking-wide">Тип записи</span>
               <p class="text-sm font-medium text-gray-900">
-                {{ record?.type_name || 'Не указан' }}
+                {{ record?.type?.name || 'Не указан' }}
                 <span v-if="record?.type?.is_global" class="ml-1 text-xs text-blue-600">(Глобальный)</span>
               </p>
             </div>

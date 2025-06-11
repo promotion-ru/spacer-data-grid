@@ -130,6 +130,11 @@ const favoritesMenu = ref([
       return isAdmin.value
     }
   },
+  {
+    label: 'Типы',
+    icon: 'pi pi-users',
+    route: '/types',
+  },
 ])
 
 const filteredFavoritesMenu = computed(() => {
