@@ -90,34 +90,9 @@ export default defineNuxtConfig({
             }
         },
         build: {
-            target: 'es2015',
-            minify: 'terser',
-
-            terserOptions: {
-                compress: {
-                    drop_console: true,
-                    drop_debugger: true,
-                    pure_funcs: ['console.log', 'console.info', 'console.debug']
-                }
-            },
             rollupOptions: {
                 treeshake: true,
-                output: {
-                    manualChunks: {
-                        'vendor': ['vue', 'pinia'],
-                        'primevue': ['primevue'],
-                        'utils': ['dayjs', '@vueuse/core']
-                    },
-                    // Настройка имен файлов для кеширования
-                    chunkFileNames: 'chunks/[name]-[hash].js',
-                    entryFileNames: 'entry/[name]-[hash].js',
-                    assetFileNames: 'assets/[name]-[hash].[ext]'
-                }
             },
-            // Размер чанков
-            chunkSizeWarningLimit: 1000,
-            // Включаем source maps только для stage окружения
-            sourcemap: process.env.NODE_ENV === 'development'
         },
     },
 
