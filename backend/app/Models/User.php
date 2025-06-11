@@ -59,6 +59,7 @@ class User extends Authenticatable implements HasMedia
         'email',
         'password',
         'avatar_id',
+        'active',
     ];
 
     protected $hidden = [
@@ -158,6 +159,7 @@ class User extends Authenticatable implements HasMedia
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
+            'active'            => 'boolean',
         ];
     }
 

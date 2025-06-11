@@ -14,6 +14,11 @@ class UserPolicy
         return $user->can('users.view') && $user->hasRole('administrator');
     }
 
+    public function show(User $user, User $modelUser): bool
+    {
+        return $user->can('users.view') && $user->hasRole('administrator');
+    }
+
     public function store(User $user): bool
     {
         return $user->can('users.create') && $user->hasRole('administrator');

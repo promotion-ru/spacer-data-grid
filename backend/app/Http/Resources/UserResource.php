@@ -19,6 +19,7 @@ class UserResource extends JsonResource
             'surname'         => $this->surname,
             'email'           => $this->email,
             'avatar_url'      => $this->getFirstMediaUrl('avatars'),
+            'active'          => (bool)$this->active,
             'roles'           => RoleResource::collection($this->whenLoaded('roles')),
             'permissions'     => PermissionResource::collection($this->whenLoaded('permissions')),
             'all_permissions' => $this->when($this->relationLoaded('roles'), function () {

@@ -9,7 +9,9 @@
         aria-describedby="name-error-message"
         placeholder="Введите имя"
       />
-      <small v-if="formErrorsComputed.name" :id="`name-error-message`" class="p-error">{{formErrorsComputed.name }}</small>
+      <small v-if="formErrorsComputed.name" :id="`name-error-message`" class="p-error">
+        {{ formErrorsComputed.name }}
+      </small>
     </div>
     
     <div class="field">
@@ -21,8 +23,9 @@
         aria-describedby="surname-error-message"
         placeholder="Введите фамилию"
       />
-      <small v-if="formErrorsComputed.surname" :id="`surname-error-message`"
-             class="p-error">{{ formErrorsComputed.surname }}</small>
+      <small v-if="formErrorsComputed.surname" :id="`surname-error-message`" class="p-error">
+        {{ formErrorsComputed.surname }}
+      </small>
     </div>
     
     <div class="field">
@@ -35,7 +38,9 @@
         placeholder="Введите email"
         type="email"
       />
-      <small v-if="formErrorsComputed.email" :id="`email-error-message`" class="p-error">{{formErrorsComputed.email }}</small>
+      <small v-if="formErrorsComputed.email" :id="`email-error-message`" class="p-error">
+        {{ formErrorsComputed.email }}
+      </small>
     </div>
     
     <div class="field">
@@ -79,6 +84,20 @@
     </div>
     
     <div class="field">
+      <div class="flex items-center">
+        <Checkbox
+          :id="`${mode}-active`"
+          v-model="formData.active"
+          :binary="true"
+          :class="{ 'p-invalid': formErrorsComputed.active }"
+        />
+        <label :for="`${mode}-active`" class="ml-2 font-medium">Активный пользователь</label>
+      </div>
+      <small v-if="formErrorsComputed.active" class="p-error">{{ formErrorsComputed.active }}</small>
+      <small class="text-gray-600">Неактивные пользователи не могут входить в систему</small>
+    </div>
+    
+    <div class="field">
       <div v-if="currentAvatarUrl && !formData.avatar && !formData.delete_avatar" class="mb-3">
         <div class="flex items-center gap-3">
           <Avatar
@@ -117,11 +136,11 @@
       <ImageUploader
         ref="imageUploader"
         v-model="formData.avatar"
-        label="Аватар"
         :error="formErrorsComputed.avatar"
+        label="Аватар"
+        @error="onImageError"
         @file-selected="onImageSelected"
         @file-removed="onImageRemoved"
-        @error="onImageError"
       />
     
     </div>
@@ -156,7 +175,8 @@ const getDefaultFormData = () => ({
   email: '',
   password: '',
   password_confirmation: '',
-  avatar: null,       // base64 строка для нового аватара
+  active: true,        // По умолчанию активный
+  avatar: null,        // base64 строка для нового аватара
   delete_avatar: false // Flag to delete existing avatar
 });
 
@@ -197,9 +217,48 @@ const fillForm = (data) => {
   formData.email = data.email || '';
   formData.password = '';
   formData.password_confirmation = '';
+  
+  // Максимально надежная обработка поля active
+  formData.active = parseActiveValue(data.active);
+  
   formData.avatar = null;
   formData.delete_avatar = false;
   currentAvatarUrl.value = data.avatar_url || null;
+  
+  // Отладочная информация
+  console.log('fillForm - обработка active:', {
+    original_value: data.active,
+    original_type: typeof data.active,
+    processed_value: formData.active,
+    processed_type: typeof formData.active
+  });
+};
+
+// Вспомогательная функция для надежного парсинга active
+const parseActiveValue = (value) => {
+  // Если undefined или null, возвращаем true по умолчанию
+  if (value === undefined || value === null) {
+    return true;
+  }
+  
+  // Если это уже boolean, возвращаем как есть
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  
+  // Если это число
+  if (typeof value === 'number') {
+    return value === 1;
+  }
+  
+  // Если это строка
+  if (typeof value === 'string') {
+    const lowerValue = value.toLowerCase().trim();
+    return lowerValue === 'true' || lowerValue === '1' || lowerValue === 'yes';
+  }
+  
+  // Во всех остальных случаях приводим к boolean
+  return Boolean(value);
 };
 
 // Методы для работы с ImageUploader
@@ -234,6 +293,13 @@ const onFormSubmitInternal = () => {
 };
 
 watch(() => props.initialData, (newData) => {
+  console.log('AccountForm - watch initialData изменился:', {
+    isEditing: isEditing.value,
+    hasData: newData && Object.keys(newData).length > 0,
+    active_value: newData?.active,
+    active_type: typeof newData?.active
+  });
+  
   if (isEditing.value && newData && Object.keys(newData).length) {
     fillForm(newData);
   } else if (!isEditing.value) {
@@ -244,6 +310,15 @@ watch(() => props.initialData, (newData) => {
 watch(() => props.errors, (newErrors) => {
   // Если ошибки приходят от родителя, они будут отображены через formErrorsComputed
 }, {deep: true});
+
+// Отладочный watch для поля active
+watch(() => formData.active, (newValue, oldValue) => {
+  console.log('AccountForm - active поле изменилось:', {
+    oldValue,
+    newValue,
+    type: typeof newValue
+  });
+});
 
 defineExpose({
   resetForm: resetFormInternal,

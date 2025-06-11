@@ -30,6 +30,7 @@ class UpdateUserRequest extends FormRequest
             'avatar.name'   => 'required_with:avatar|string',
             'avatar.type'   => 'required_with:avatar|string|in:image/jpeg,image/png,image/gif,image/webp',
             'delete_avatar' => 'nullable|boolean',
+            'active'        => 'nullable|boolean',
         ];
     }
 
@@ -50,6 +51,7 @@ class UpdateUserRequest extends FormRequest
             'avatar.type.required_with' => 'Поле тип аватара обязательно при загрузке аватара.',
             'avatar.type.string'        => 'Поле тип аватара должно быть строкой.',
             'avatar.type.in'            => 'Поле тип аватара должно быть одним из: image/jpeg, image/png, image/gif, image/webp.',
+            'active.boolean'            => 'Поле "Активный" должно быть логическим значением.',
         ];
     }
 }

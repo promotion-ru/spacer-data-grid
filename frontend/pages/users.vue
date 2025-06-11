@@ -3,67 +3,52 @@
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-3xl font-bold text-gray-900">Пользователи</h1>
       <Button
-        label="Добавить пользователя"
-        icon="pi pi-plus"
-        @click="openCreateModal"
         class="p-button-success"
+        icon="pi pi-plus"
+        label="Добавить пользователя"
+        @click="openCreateModal"
       />
     </div>
     
+    <!-- Компонент фильтров -->
+    <UsersDataFilters
+      ref="filtersRef"
+      :loading="isLoading"
+      :totalCount="totalRecords"
+      @filtersChanged="onFiltersChanged"
+    />
+    
     <Card>
       <template #content>
-        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <span class="p-input-icon-left w-full sm:w-80">
-                <i class="pi pi-search" />
-                <InputText
-                  v-model="searchQuery"
-                  placeholder="Поиск..."
-                  class="w-full"
-                  @input="debouncedLoadUsers"
-                />
-            </span>
-          </div>
-          <Dropdown
-            v-model="perPage"
-            :options="perPageOptions"
-            optionLabel="label"
-            optionValue="value"
-            @change="onPerPageChange"
-            placeholder="Элементов на странице"
-            class="w-full sm:w-auto"
-          />
-        </div>
-        
         <DataTable
-          :value="usersList"
           :loading="isLoading"
-          responsiveLayout="scroll"
-          stripedRows
-          class="p-datatable-sm"
-          paginator
           :rows="perPage"
-          :totalRecords="totalRecords"
           :rowsPerPageOptions="[10, 25, 50, 100]"
-          @page="onPageEvent"
-          @sort="onSortEvent"
           :sortField="currentSortField"
           :sortOrder="currentSortOrder"
+          :totalRecords="totalRecords"
+          :value="usersList"
+          class="p-datatable-sm"
           lazy
+          paginator
+          responsiveLayout="scroll"
+          stripedRows
+          @page="onPageEvent"
+          @sort="onSortEvent"
         >
-          <Column field="avatar_url" header="Аватар" class="w-20 text-center">
+          <Column class="w-20 text-center" field="avatar_url" header="Аватар">
             <template #body="slotProps">
               <Avatar
                 :image="slotProps.data.avatar_url || undefined"
                 :label="!slotProps.data.avatar_url && slotProps.data.name ? slotProps.data.name.charAt(0).toUpperCase() : undefined"
+                class="bg-primary-100 text-primary-700"
                 shape="circle"
                 size="large"
-                class="bg-primary-100 text-primary-700"
               />
             </template>
           </Column>
           
-          <Column field="name" header="Имя" sortable class="min-w-[10rem]">
+          <Column class="min-w-[10rem]" field="name" header="Имя" sortable>
             <template #body="slotProps">
               <div>
                 <div class="font-semibold">{{ slotProps.data.name }}</div>
@@ -74,34 +59,44 @@
             </template>
           </Column>
           
-          <Column field="email" header="Email" sortable class="min-w-[15rem]" />
+          <Column class="min-w-[15rem]" field="email" header="Email" sortable/>
           
-          <Column field="created_at" header="Создан" sortable class="min-w-[9rem]">
+          <Column class="min-w-[9rem]" field="created_at" header="Создан" sortable>
             <template #body="slotProps">
               {{ formatDate(slotProps.data.created_at) }}
             </template>
           </Column>
           
-          <Column header="Действия" class="w-32 text-center">
+          <Column class="min-w-[9rem]" field="updated_at" header="Обновлен" sortable>
+            <template #body="slotProps">
+              {{ formatDate(slotProps.data.updated_at) }}
+            </template>
+          </Column>
+          
+          <Column class="w-32 text-center" header="Действия">
             <template #body="slotProps">
               <div class="flex gap-2 justify-center">
                 <Button
-                  icon="pi pi-pencil"
-                  class="p-button-rounded p-button-text p-button-sm"
-                  @click="openEditModal(slotProps.data)"
                   v-tooltip.top="'Редактировать'"
+                  class="p-button-rounded p-button-text p-button-sm"
+                  icon="pi pi-pencil"
+                  @click="openEditModal(slotProps.data)"
                 />
                 <Button
-                  icon="pi pi-trash"
-                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
-                  @click="confirmDelete(slotProps.data)"
                   v-tooltip.top="'Удалить'"
+                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
+                  icon="pi pi-trash"
+                  @click="confirmDelete(slotProps.data)"
                 />
               </div>
             </template>
           </Column>
           <template #empty>
-            <div class="text-center p-4">Пользователи не найдены.</div>
+            <div class="text-center p-4">
+              {{
+                hasActiveFilters ? 'Пользователи не найдены. Попробуйте изменить параметры поиска.' : 'Пользователи не найдены.'
+              }}
+            </div>
           </template>
         </DataTable>
       </template>
@@ -128,32 +123,32 @@ definePageMeta({
   middleware: 'admin'
 });
 
-const { $api } = useNuxtApp();
+const {$api} = useNuxtApp();
 const confirm = useConfirm();
 const toast = useToast();
 
 const usersList = ref([]);
 const isLoading = ref(false);
-const searchQuery = ref('');
-const selectedUser = ref(null); // Для редактирования
+const selectedUser = ref(null);
 
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 
 // Pagination state for DataTable lazy loading
 const currentPage = ref(1);
-const perPage = ref(10); // Default rows per page
+const perPage = ref(10);
 const totalRecords = ref(0);
 const currentSortField = ref('created_at');
 const currentSortOrder = ref(-1);
-let debounceTimer = null;
 
-const perPageOptions = ref([
-  { label: '10 на странице', value: 10 },
-  { label: '25 на странице', value: 25 },
-  { label: '50 на странице', value: 50 },
-  { label: '100 на странице', value: 100 }
-]);
+// Filters state
+const currentFilters = ref({});
+const filtersRef = ref(null);
+
+// Computed
+const hasActiveFilters = computed(() => {
+  return Object.values(currentFilters.value).some(value => value !== null && value !== '' && value !== false)
+});
 
 const fetchUsers = async () => {
   isLoading.value = true;
@@ -161,16 +156,22 @@ const fetchUsers = async () => {
     const params = {
       page: currentPage.value,
       per_page: perPage.value,
-      search: searchQuery.value.trim() || undefined,
-      sort_by: currentSortField.value,
-      sort_order: currentSortOrder.value === 1 ? 'asc' : 'desc',
+      ...currentFilters.value
     };
-    const response = await $api('/users', { params });
-    usersList.value = response.data || []; // Предполагаем, что API возвращает { data: [], meta: { total: ... } }
+    
+    // Убираем null/false значения для чистоты запроса
+    Object.keys(params).forEach(key => {
+      if (params[key] === null || params[key] === false || params[key] === '') {
+        delete params[key];
+      }
+    });
+    
+    const response = await $api('/users', {params});
+    usersList.value = response.data || [];
     totalRecords.value = response.meta?.total || response.total || 0;
   } catch (error) {
     console.error('Error fetching users:', error);
-    toast.add({ severity: 'error', summary: 'Ошибка', detail: 'Не удалось загрузить пользователей.', life: 3000 });
+    toast.add({severity: 'error', summary: 'Ошибка', detail: 'Не удалось загрузить пользователей.', life: 3000});
     usersList.value = [];
     totalRecords.value = 0;
   } finally {
@@ -185,55 +186,73 @@ const formatDate = (dateString) => {
       day: '2-digit', month: '2-digit', year: 'numeric'
     });
   } catch (e) {
-    return dateString; // Return original if parsing fails
+    return dateString;
   }
 };
 
-const debouncedLoadUsers = () => {
-  clearTimeout(debounceTimer);
-  debounceTimer = setTimeout(() => {
-    currentPage.value = 1; // Reset to first page on new search
-    fetchUsers();
-  }, 500);
-};
-
-const onPageEvent = (event) => {
-  currentPage.value = event.page + 1; // PrimeVue's page is 0-indexed
-  perPage.value = event.rows;
+const onFiltersChanged = (filters) => {
+  currentFilters.value = filters;
+  currentPage.value = 1;
+  
+  // Обновляем сортировку из фильтров
+  if (filters.sort_by && filters.sort_order) {
+    currentSortField.value = filters.sort_by;
+    currentSortOrder.value = filters.sort_order === 'asc' ? 1 : -1;
+  }
+  
   fetchUsers();
 };
 
-const onPerPageChange = () => {
-  currentPage.value = 1; // Reset to first page
+const onPageEvent = (event) => {
+  currentPage.value = event.page + 1;
+  perPage.value = event.rows;
   fetchUsers();
 };
 
 const onSortEvent = (event) => {
   currentSortField.value = event.sortField;
   currentSortOrder.value = event.sortOrder;
-  currentPage.value = 1; // Сброс на первую страницу при смене сортировки
-  fetchUsers(); // Загружаем данные с новой сортировкой
+  currentPage.value = 1;
+  
+  // Обновляем фильтры с новой сортировкой
+  currentFilters.value = {
+    ...currentFilters.value,
+    sort_by: event.sortField,
+    sort_order: event.sortOrder === 1 ? 'asc' : 'desc'
+  };
+  
+  fetchUsers();
 };
 
 const openCreateModal = () => {
-  selectedUser.value = null; // Очищаем на всякий случай
+  selectedUser.value = null;
   showCreateModal.value = true;
 };
 
 const openEditModal = (userToEdit) => {
-  selectedUser.value = { ...userToEdit }; // Клонируем для избежания прямой мутации
+  selectedUser.value = {...userToEdit};
   showEditModal.value = true;
 };
 
 const onUserCreated = (createdUser) => {
-  // showCreateModal.value = false; // Закроется через v-model
-  fetchUsers(); // Обновить список
+  fetchUsers();
+  toast.add({
+    severity: 'success',
+    summary: 'Успешно',
+    detail: `Пользователь "${createdUser.name}" создан.`,
+    life: 3000
+  });
 };
 
 const onUserUpdated = (updatedUser) => {
-  // showEditModal.value = false; // Закроется через v-model
   selectedUser.value = null;
-  fetchUsers(); // Обновить список
+  fetchUsers();
+  toast.add({
+    severity: 'success',
+    summary: 'Успешно',
+    detail: `Пользователь "${updatedUser.name}" обновлен.`,
+    life: 3000
+  });
 };
 
 const confirmDelete = (userToDelete) => {
@@ -251,17 +270,32 @@ const confirmDelete = (userToDelete) => {
 
 const deleteUser = async (userId) => {
   try {
-    await $api(`/users/${userId}`, { method: 'DELETE' });
-    toast.add({ severity: 'success', summary: 'Успешно', detail: 'Пользователь удален.', life: 3000 });
-    // Обновить список, возможно, текущая страница стала пустой
+    await $api(`/users/${userId}`, {method: 'DELETE'});
+    toast.add({severity: 'success', summary: 'Успешно', detail: 'Пользователь удален.', life: 3000});
     if (usersList.value.length === 1 && currentPage.value > 1) {
       currentPage.value--;
     }
     fetchUsers();
   } catch (error) {
     console.error('Delete user error:', error);
-    toast.add({ severity: 'error', summary: 'Ошибка', detail: error.data?.message || 'Не удалось удалить пользователя.', life: 3000 });
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: error.data?.message || 'Не удалось удалить пользователя.',
+      life: 3000
+    });
   }
+};
+
+const resetFilters = () => {
+  if (filtersRef.value) {
+    filtersRef.value.resetFilters();
+  }
+  currentFilters.value = {};
+  currentPage.value = 1;
+  currentSortField.value = 'created_at';
+  currentSortOrder.value = -1;
+  fetchUsers();
 };
 
 onMounted(() => {

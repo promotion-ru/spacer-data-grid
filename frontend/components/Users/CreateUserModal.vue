@@ -89,6 +89,7 @@ const handleFormSubmit = async (formData) => {
     email: formData.email,
     password: formData.password,
     password_confirmation: formData.password_confirmation,
+    active: formData.active ? 1 : 0,
     avatar: formData.avatar,
     delete_avatar: formData.delete_avatar,
   };
