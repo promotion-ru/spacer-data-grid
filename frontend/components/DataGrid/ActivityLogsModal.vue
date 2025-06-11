@@ -16,7 +16,7 @@
               <InputText
                 v-model="searchQuery"
                 :loading="loading"
-                class="w-full pl-20 input-search"
+                class="w-full pl-10 input-search"
                 placeholder="Поиск по описанию, пользователю..."
               />
               <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
@@ -37,7 +37,7 @@
           />
         </div>
         
-        <!-- Сворачиваемые фильтры -->
+        <!-- Расширенные фильтры -->
         <div v-show="showFilters" class="filters-container">
           <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
             <div class="text-sm font-medium text-gray-700 mb-3 flex items-center">
@@ -46,7 +46,7 @@
             </div>
             
             <!-- Основные фильтры -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Конкретное действие</label>
                 <Select
@@ -88,54 +88,48 @@
               </div>
               
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Дата от</label>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Период изменений</label>
                 <DatePicker
-                  v-model="dateFrom"
+                  v-model="dateRange"
                   class="w-full"
                   dateFormat="dd.mm.yy"
-                  placeholder="Выберите дату"
+                  placeholder="Выберите период"
+                  selectionMode="range"
                   showButtonBar
                   showIcon
-                />
-              </div>
-              
-              <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Дата до</label>
-                <DatePicker
-                  v-model="dateTo"
-                  class="w-full"
-                  dateFormat="dd.mm.yy"
-                  placeholder="Выберите дату"
-                  showButtonBar
-                  showIcon
+                  :manualInput="false"
                 />
               </div>
             </div>
             
             <!-- Быстрые фильтры -->
-            <div class="border-t pt-3">
+            <div class="border-t pt-4">
               <div class="text-xs font-medium text-gray-600 mb-2">Быстрые фильтры:</div>
               <div class="flex flex-wrap gap-2">
                 <Button
                   :outlined="selectedActionTypeFilter !== 'grid'"
+                  :severity="selectedActionTypeFilter === 'grid' ? 'primary' : 'secondary'"
                   label="Только изменения таблицы"
                   size="small"
                   @click="applyQuickFilter('grid')"
                 />
                 <Button
                   :outlined="selectedActionTypeFilter !== 'members'"
+                  :severity="selectedActionTypeFilter === 'members' ? 'primary' : 'secondary'"
                   label="Действия с участниками"
                   size="small"
                   @click="applyQuickFilter('members')"
                 />
                 <Button
                   :outlined="selectedActionTypeFilter !== 'invitations'"
+                  :severity="selectedActionTypeFilter === 'invitations' ? 'primary' : 'secondary'"
                   label="Приглашения"
                   size="small"
                   @click="applyQuickFilter('invitations')"
                 />
                 <Button
                   :outlined="!isLastWeekFilter"
+                  :severity="isLastWeekFilter ? 'primary' : 'secondary'"
                   label="За последнюю неделю"
                   size="small"
                   @click="applyQuickFilter('last_week')"
@@ -351,8 +345,7 @@ const searchQuery = ref('')
 const selectedActionFilter = ref(null)
 const selectedActionTypeFilter = ref(null)
 const selectedFieldFilter = ref(null)
-const dateFrom = ref(null)
-const dateTo = ref(null)
+const dateRange = ref(null) // Заменяем dateFrom и dateTo на range
 const availableFields = ref([])
 const actionTypeOptions = ref([])
 const pagination = ref(null)
@@ -378,6 +371,21 @@ const actionFilterOptions = ref([
   {label: 'Приглашение отменено', value: 'invitation_cancelled'},
 ])
 
+// Вычисляемые свойства для извлечения дат из range
+const dateFrom = computed(() => {
+  if (dateRange.value && Array.isArray(dateRange.value) && dateRange.value[0]) {
+    return dateRange.value[0]
+  }
+  return null
+})
+
+const dateTo = computed(() => {
+  if (dateRange.value && Array.isArray(dateRange.value) && dateRange.value[1]) {
+    return dateRange.value[1]
+  }
+  return null
+})
+
 // Вычисляемые свойства
 const visible = computed({
   get: () => props.visible,
@@ -385,14 +393,14 @@ const visible = computed({
 })
 
 const hasActiveFilters = computed(() => {
-  return !!(searchQuery.value || selectedActionFilter.value || selectedActionTypeFilter.value || selectedFieldFilter.value || dateFrom.value || dateTo.value)
+  return !!(searchQuery.value || selectedActionFilter.value || selectedActionTypeFilter.value || selectedFieldFilter.value || dateRange.value)
 })
 
 const isLastWeekFilter = computed(() => {
-  if (!dateFrom.value) return false
+  if (!dateRange.value || !Array.isArray(dateRange.value) || !dateRange.value[0]) return false
   const weekAgo = new Date()
   weekAgo.setDate(weekAgo.getDate() - 7)
-  const fromDate = new Date(dateFrom.value)
+  const fromDate = new Date(dateRange.value[0])
   return Math.abs(fromDate.getTime() - weekAgo.getTime()) < 24 * 60 * 60 * 1000 // разница меньше суток
 })
 
@@ -420,12 +428,22 @@ const activeFilterTags = computed(() => {
     }
   }
   
-  if (dateFrom.value) {
-    tags.push({key: 'dateFrom', label: `С: ${formatDate(dateFrom.value)}`})
-  }
-  
-  if (dateTo.value) {
-    tags.push({key: 'dateTo', label: `До: ${formatDate(dateTo.value)}`})
+  // Объединенный тег для диапазона дат
+  if (dateRange.value && Array.isArray(dateRange.value)) {
+    const fromDate = dateRange.value[0]
+    const toDate = dateRange.value[1]
+    
+    if (fromDate && toDate) {
+      tags.push({
+        key: 'dateRange',
+        label: `Период: ${formatDate(fromDate)} - ${formatDate(toDate)}`
+      })
+    } else if (fromDate) {
+      tags.push({
+        key: 'dateRange',
+        label: `С: ${formatDate(fromDate)}`
+      })
+    }
   }
   
   return tags
@@ -559,13 +577,11 @@ const applyQuickFilter = (filterType) => {
       break
     case 'last_week':
       if (isLastWeekFilter.value) {
-        dateFrom.value = null
-        dateTo.value = null
+        dateRange.value = null
       } else {
         const weekAgo = new Date()
         weekAgo.setDate(weekAgo.getDate() - 7)
-        dateFrom.value = weekAgo
-        dateTo.value = new Date()
+        dateRange.value = [weekAgo, new Date()]
       }
       break
   }
@@ -592,11 +608,8 @@ const removeFilter = (filterKey) => {
     case 'field':
       selectedFieldFilter.value = null
       break
-    case 'dateFrom':
-      dateFrom.value = null
-      break
-    case 'dateTo':
-      dateTo.value = null
+    case 'dateRange':
+      dateRange.value = null
       break
   }
   
@@ -638,8 +651,7 @@ const resetFilters = () => {
   selectedActionFilter.value = null
   selectedActionTypeFilter.value = null
   selectedFieldFilter.value = null
-  dateFrom.value = null
-  dateTo.value = null
+  dateRange.value = null
   currentPage.value = 1
   
   // Включаем watchers и загружаем данные только если не в процессе инициализации
@@ -681,8 +693,7 @@ const initializeModal = async () => {
   selectedActionFilter.value = null
   selectedActionTypeFilter.value = null
   selectedFieldFilter.value = null
-  dateFrom.value = null
-  dateTo.value = null
+  dateRange.value = null
   currentPage.value = 1
   
   // Ждем следующий tick для завершения сброса
@@ -715,7 +726,7 @@ watch(searchQuery, () => {
   }
 })
 
-watch([selectedActionFilter, selectedActionTypeFilter, selectedFieldFilter, dateFrom, dateTo], () => {
+watch([selectedActionFilter, selectedActionTypeFilter, selectedFieldFilter, dateRange], () => {
   if (watchersEnabled.value && !isInitializing.value) {
     fetchLogsNormal()
   }
@@ -725,5 +736,19 @@ watch([selectedActionFilter, selectedActionTypeFilter, selectedFieldFilter, date
 <style scoped>
 :deep(.input-search) {
   padding-left: 30px;
+}
+
+/* Стили для range date picker */
+:deep(.p-datepicker-input-icon-container) {
+  right: 8px;
+}
+
+:deep(.p-datepicker-input) {
+  padding-right: 2.5rem;
+}
+
+/* Улучшаем внешний вид range picker */
+:deep(.p-datepicker-range .p-datepicker-input) {
+  text-align: center;
 }
 </style>
