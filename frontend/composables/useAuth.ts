@@ -59,11 +59,13 @@ export const useAuth = () => {
 
             setToken(response.token)
             authStore.setUser(response.user)
+            authStore.setInitialized(true)
 
             return { success: true, user: response.user }
         } catch (error: any) {
             console.error('Login error:', error)
             authStore.clearAuth()
+            authStore.setInitialized(true)
             return {
                 success: false,
                 error: error.data?.message || 'Ошибка авторизации'
@@ -104,10 +106,12 @@ export const useAuth = () => {
 
             setToken(response.token)
             authStore.setUser(response.user)
+            authStore.setInitialized(true)
 
             return { success: true, user: response.user }
         } catch (error: any) {
             console.error('Register error:', error)
+            authStore.setInitialized(true)
             return {
                 success: false,
                 error: error.data?.message || 'Ошибка регистрации'
@@ -134,6 +138,7 @@ export const useAuth = () => {
         }
 
         authStore.clearAuth()
+        authStore.setInitialized(true)
         await router.push('/login')
     }
 
@@ -159,6 +164,7 @@ export const useAuth = () => {
 
         if (!token) {
             authStore.clearAuth()
+            authStore.setInitialized(true)
             return null
         }
 
@@ -170,10 +176,12 @@ export const useAuth = () => {
             })
 
             authStore.setUser(user)
+            authStore.setInitialized(true)
             return user
         } catch (error) {
             console.error('Fetch user error:', error)
             authStore.clearAuth()
+            authStore.setInitialized(true)
             return null
         }
     }
@@ -264,6 +272,8 @@ export const useAuth = () => {
 
             if (token) {
                 await fetchUser()
+            } else {
+                authStore.setInitialized(true)
             }
         }
     }
@@ -275,6 +285,8 @@ export const useAuth = () => {
         loggedIn: computed(() => authStore.loggedIn),
         loading: computed(() => authStore.loading),
         tokens: computed(() => authStore.tokens),
+        initialized: computed(() => authStore.initialized),
+        hasToken: computed(() => authStore.hasToken),
 
         // Store getters
         isAuthenticated: computed(() => authStore.isAuthenticated),

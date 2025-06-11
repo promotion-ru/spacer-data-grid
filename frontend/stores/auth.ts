@@ -1,52 +1,33 @@
+// stores/auth.ts
 import { defineStore } from 'pinia'
-
-interface User {
-    id: number
-    name: string
-    email: string
-    email_verified_at: string | null
-}
-
-interface TokenInfo {
-    id: number
-    name: string
-    abilities: string[]
-    last_used_at: string | null
-    expires_at: string | null
-    created_at: string
-    is_current: boolean
-    is_expired: boolean
-}
-
-interface AuthState {
-    user: User | null
-    token: string | null
-    loggedIn: boolean
-    loading: boolean
-    tokens: TokenInfo[]
-}
+import type { User, TokenInfo } from '~/types/auth'
 
 export const useAuthStore = defineStore('auth', {
-    state: (): AuthState => ({
-        user: null,
-        token: null,
-        loggedIn: false,
+    state: () => ({
+        user: null as User | null,
+        token: null as string | null,
+        tokens: [] as TokenInfo[],
         loading: false,
-        tokens: []
+        initialized: false // Добавляем флаг инициализации
     }),
 
     getters: {
-        isAuthenticated: (state) => state.loggedIn && !!state.user,
+        loggedIn: (state) => !!state.user,
+        isAuthenticated: (state) => !!state.user && !!state.token,
         userName: (state) => state.user?.name || '',
         userEmail: (state) => state.user?.email || '',
-        hasValidToken: (state) => !!state.token,
-        activeTokensCount: (state) => state.tokens.length
+        hasToken: (state) => {
+            // Проверяем токен в store или localStorage
+            if (process.client) {
+                return !!state.token || !!localStorage.getItem('auth_token')
+            }
+            return !!state.token
+        }
     },
 
     actions: {
         setUser(user: User | null) {
             this.user = user
-            this.loggedIn = !!user
         },
 
         setToken(token: string | null) {
@@ -60,22 +41,16 @@ export const useAuthStore = defineStore('auth', {
             }
         },
 
-        setLoading(loading: boolean) {
-            this.loading = loading
-        },
-
         setTokens(tokens: TokenInfo[]) {
             this.tokens = tokens
         },
 
-        clearAuth() {
-            this.user = null
-            this.token = null
-            this.loggedIn = false
-            this.tokens = []
-            if (process.client) {
-                localStorage.removeItem('auth_token')
-            }
+        setLoading(loading: boolean) {
+            this.loading = loading
+        },
+
+        setInitialized(initialized: boolean) {
+            this.initialized = initialized
         },
 
         initTokenFromStorage() {
@@ -85,12 +60,15 @@ export const useAuthStore = defineStore('auth', {
                     this.token = token
                 }
             }
-        }
-    },
+        },
 
-    persist: {
-        key: 'auth-store',
-        storage: typeof window !== 'undefined' ? localStorage : undefined,
-        paths: ['user', 'loggedIn']
+        clearAuth() {
+            this.user = null
+            this.token = null
+            this.tokens = []
+            if (process.client) {
+                localStorage.removeItem('auth_token')
+            }
+        }
     }
 })
