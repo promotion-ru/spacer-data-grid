@@ -252,6 +252,9 @@ const props = defineProps({
 
 const {$api} = useNuxtApp()
 const toast = useToast()
+const {
+  formatDateForBackend,
+} = useDate()
 
 const emit = defineEmits(['update:visible', 'created'])
 
@@ -371,7 +374,7 @@ const handleSubmit = async () => {
     // Подготавливаем данные для отправки
     const jsonData = {
       name: form.value.name.trim(),
-      date: form.value.date,
+      date: formatDateForBackend(form.value.date), // Форматируем дату правильно
       operation_type_id: form.value.operation_type_id,
       type_id: form.value.type_id,
       description: form.value.description ? form.value.description.trim() : null,

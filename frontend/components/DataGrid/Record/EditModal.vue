@@ -377,7 +377,7 @@
             @click="closeModal"
           />
           <Button
-            :disabled="!hasChanges"
+            :disabled="!hasChanges || loading"
             :loading="loading"
             icon="pi pi-check"
             label="Сохранить изменения"
@@ -403,6 +403,11 @@ const {
   getFileTypeLabel,
   formatFileSize,
 } = useFileUtils()
+const {
+  formatDateForBackend,
+  parseDateFromBackend,
+  isValidDate,
+} = useDate()
 const toast = useToast()
 
 // Реактивные данные
@@ -452,8 +457,6 @@ const totalFilesAfterSave = computed(() => {
 const hasChanges = computed(() => {
   if (!currentRecord.value) return false
   
-  const originalDate = currentRecord.value.date ? parseDateFromBackend(currentRecord.value.date) : null
-  
   // Нормализуем значения для корректного сравнения
   const normalizeString = (value) => (value || '').toString().trim()
   const normalizeNumber = (value) => value || null
@@ -464,7 +467,7 @@ const hasChanges = computed(() => {
     form.value.operation_type_id !== currentRecord.value.operation_type_id ||
     form.value.type_id !== currentRecord.value.type_id ||
     normalizeNumber(form.value.amount) !== normalizeNumber(currentRecord.value.amount) ||
-    !datesEqual(form.value.date, originalDate)
+    formatDateForBackend(form.value.date) !== currentRecord.value.date // Сравниваем в том же формате
   
   const hasFileChanges = newAttachmentFiles.value.length > 0 || filesToRemove.value.length > 0
   
@@ -477,7 +480,7 @@ const hasChanges = computed(() => {
       operation_type_id: currentRecord.value.operation_type_id,
       type_id: currentRecord.value.type_id,
       amount: normalizeNumber(currentRecord.value.amount),
-      date: originalDate
+      date: currentRecord.value.date // Строка из бэкенда
     },
     currentValues: {
       name: normalizeString(form.value.name),
@@ -485,7 +488,7 @@ const hasChanges = computed(() => {
       operation_type_id: form.value.operation_type_id,
       type_id: form.value.type_id,
       amount: normalizeNumber(form.value.amount),
-      date: form.value.date
+      date: formatDateForBackend(form.value.date) // Отформатированная строка
     },
     newFiles: newAttachmentFiles.value.length,
     filesToRemove: filesToRemove.value.length
@@ -493,34 +496,6 @@ const hasChanges = computed(() => {
   
   return formChanged || hasFileChanges
 })
-
-// Утилиты для работы с датами
-const parseDateFromBackend = (dateString) => {
-  if (!dateString) return null
-  
-  // Предполагаем, что с бэкенда приходит дата в формате 'dd.mm.yyyy'
-  const parts = dateString.split('.')
-  if (parts.length === 3) {
-    const day = parseInt(parts[0], 10)
-    const month = parseInt(parts[1], 10) - 1 // месяц в JS начинается с 0
-    const year = parseInt(parts[2], 10)
-    return new Date(year, month, day)
-  }
-  
-  return null
-}
-
-// Улучшенная функция сравнения дат
-const datesEqual = (date1, date2) => {
-  if (!date1 && !date2) return true
-  if (!date1 || !date2) return false
-  
-  // Сравниваем только год, месяц и день (игнорируем время)
-  const d1 = new Date(date1.getFullYear(), date1.getMonth(), date1.getDate())
-  const d2 = new Date(date2.getFullYear(), date2.getMonth(), date2.getDate())
-  
-  return d1.getTime() === d2.getTime()
-}
 
 const getImagePreview = (fileObj) => {
   if (fileObj.data && fileObj.type.startsWith('image/')) {
@@ -700,6 +675,8 @@ const validateForm = () => {
   
   if (!form.value.date) {
     errors.value.date = 'Дата обязательна'
+  } else if (!isValidDate(form.value.date)) {
+    errors.value.date = 'Некорректная дата'
   }
   
   if (!form.value.operation_type_id) {
@@ -727,6 +704,7 @@ const validateForm = () => {
       name: form.value.name,
       nameLength: form.value.name?.length,
       date: form.value.date,
+      dateFormatted: formatDateForBackend(form.value.date),
       operation_type_id: form.value.operation_type_id,
       type_id: form.value.type_id,
       amount: form.value.amount,
@@ -737,9 +715,16 @@ const validateForm = () => {
   return isValid
 }
 
-// Улучшенная функция отправки с отладкой
+// Улучшенная функция отправки с защитой от двойного клика
 const handleSubmit = async () => {
   console.log('handleSubmit called')
+  
+  // Проверяем, не идет ли уже отправка
+  if (loading.value) {
+    console.log('Already loading, preventing double submit')
+    return
+  }
+  
   console.log('hasChanges:', hasChanges.value)
   console.log('validateForm result:', validateForm())
   
@@ -754,7 +739,7 @@ const handleSubmit = async () => {
     // Подготавливаем JSON данные
     const jsonData = {
       name: form.value.name.trim(),
-      date: form.value.date,
+      date: formatDateForBackend(form.value.date), // Форматируем дату правильно
       operation_type_id: form.value.operation_type_id,
       type_id: form.value.type_id,
       description: form.value.description ? form.value.description.trim() : null,
@@ -765,7 +750,7 @@ const handleSubmit = async () => {
     
     console.log('Отправляем обновления:', {
       name: jsonData.name,
-      date: jsonData.date,
+      date: jsonData.date, // Теперь это строка в формате dd.mm.yyyy
       operation_type_id: jsonData.operation_type_id,
       type_id: jsonData.type_id,
       amount: jsonData.amount,
@@ -791,8 +776,6 @@ const handleSubmit = async () => {
     }
     
     emit('updated', response.data)
-    // Затем закрываем модальное окно
-    closeModal()
     
     toast.add({
       severity: 'success',
@@ -800,6 +783,10 @@ const handleSubmit = async () => {
       detail: 'Запись обновлена',
       life: 3000
     })
+    
+    // Закрываем модальное окно только после успешного сохранения
+    closeModal()
+    
   } catch (error) {
     let errorMessage = 'Ошибка при обновлении записи'
     if (error.response?.status === 422) {
