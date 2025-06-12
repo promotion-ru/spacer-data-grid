@@ -1,97 +1,115 @@
 #!/bin/bash
 
-# --- НАСТРОЙКИ ---
-# Укажите здесь пути к вашим docker-compose файлам
-COMPOSE_FILES="-f docker-compose.yml -f docker-compose.prod.yml"
-
-# Имя файла с переменными окружения
-ENV_FILE=".env"
-# -----------------
-
-# Немедленно выходить, если команда завершилась с ошибкой
-set -e
-
-echo "🚀 Начинаем процесс развертывания..."
-
-# 1. ПРОВЕРКИ ПЕРЕД ЗАПУСКОМ
-# Проверяем наличие файла с переменными окружения
-if [ ! -f "$ENV_FILE" ]; then
-    echo "❌ Ошибка: Файл окружения '$ENV_FILE' не найден!"
-    exit 1
-fi
-
-# Проверяем, что Docker демон запущен и работает
-if ! docker info > /dev/null 2>&1; then
-    echo "❌ Ошибка: Docker демон не запущен. Запустите Docker и попробуйте снова."
-    exit 1
-fi
-
-# Загружаем переменные окружения для использования в скрипте
+# Загрузка переменных окружения
 set -a
-source $ENV_FILE
+source .env
 set +a
 
-echo "✅ Проверки пройдены."
+# Проверка переменных
+if [ -z "$MYSQL_ROOT_PASSWORD" ] || [ -z "$MYSQL_PASSWORD" ]; then
+    echo "ERROR: MYSQL_ROOT_PASSWORD and MYSQL_PASSWORD must be set in .env"
+    exit 1
+fi
 
-# 2. ОБНОВЛЕНИЕ БАЗОВЫХ ОБРАЗОВ
-echo "🔄 Обновляем базовые образы (mysql, redis, php, etc)..."
-docker-compose $COMPOSE_FILES pull
+# Проверка состояния MySQL тома
+if ! docker volume inspect spacer-data-grid_mysql_prod_data >/dev/null 2>&1; then
+    echo "Creating new MySQL volume..."
+    docker volume create spacer-data-grid_mysql_prod_data
+fi
 
-# 3. СБОРКА НОВЫХ ОБРАЗОВ ПРИЛОЖЕНИЯ
-echo "🛠️  Собираем новые образы для backend и frontend..."
-docker-compose $COMPOSE_FILES build --parallel backend frontend
+echo "Начинаем развертывание с минимальным downtime..."
 
-# 4. РАЗВЕРТЫВАНИЕ КОНТЕЙНЕРОВ
-echo "🚢 Запускаем обновленные контейнеры..."
-# Используем --force-recreate, чтобы пересоздать контейнеры, чьи образы обновились.
-# --no-deps предотвращает пересоздание зависимостей (например, БД), если они не изменились.
-# -d запускает контейнеры в фоновом режиме.
-docker-compose $COMPOSE_FILES up -d --force-recreate --no-deps backend frontend scheduler nginx
+# 1. Сборка новых образов БЕЗ остановки контейнеров
+echo "Собираем новые образы..."
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml build --parallel backend frontend
 
-echo "✅ Контейнеры запущены. Ожидаем их готовности..."
+# 2. Быстрая замена контейнеров (минимальный downtime)
+echo "Быстро заменяем контейнеры..."
 
-# 5. ПРОВЕРКА ГОТОВНОСТИ СЕРВИСОВ
-# Даем контейнерам несколько секунд на первоначальный запуск
+# Останавливаем только приложение, оставляем БД, Redis и nginx
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml stop frontend backend scheduler
+
+# Удаляем старые контейнеры приложения
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml rm -f frontend backend scheduler
+
+# Запускаем новые контейнеры
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d backend frontend scheduler
+
+# 3. Ждем готовности контейнеров
+echo "Ожидаем готовности контейнеров..."
+sleep 10
+
+# Проверяем готовность backend
+echo "Проверяем backend..."
+timeout 60 bash -c 'until docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php -v > /dev/null 2>&1; do
+    sleep 2
+    echo "Ждем backend..."
+done'
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Backend не готов"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs backend
+    exit 1
+fi
+
+# Проверяем готовность frontend
+echo "Проверяем frontend..."
+timeout 60 bash -c 'until docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs frontend 2>/dev/null | grep -q "Listening on http://0.0.0.0:3000"; do
+    sleep 2
+    echo "Ждем frontend..."
+done'
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: Frontend не готов"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs frontend
+    exit 1
+fi
+
+# Дополнительная проверка через внешний доступ
+echo "Проверяем внешнюю доступность frontend через nginx..."
+sleep 5  # Даем время на инициализацию
+
+# 4. КРИТИЧНО: Перезапускаем nginx для обновления DNS кеша
+echo "Перезапускаем nginx для обновления DNS кеша..."
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
+
+# Даем nginx время на старт
 sleep 5
 
-# Проверяем готовность backend (простой проверкой, что PHP доступен)
-echo "⏳ Проверяем готовность backend..."
-timeout 120s bash -c 'until docker-compose '"$COMPOSE_FILES"' exec -T backend php -v > /dev/null 2>&1; do echo "   ...ожидаем backend..."; sleep 3; done'
-if [ $? -ne 0 ]; then
-    echo "❌ Ошибка: Backend не запустился вовремя. Проверьте логи:"
-    docker-compose $COMPOSE_FILES logs --tail=50 backend
+# 5. Выполняем миграции
+echo "Выполняем миграции..."
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan migrate --force
+
+# 6. Очистка и оптимизация кеша
+echo "Очищаем кеш..."
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan cache:clear
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan config:cache
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan route:cache
+docker-compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan view:cache
+
+# 7. Финальная проверка доступности
+echo "Финальная проверка доступности..."
+timeout 30 bash -c 'until curl -f http://localhost/ > /dev/null 2>&1; do
+    sleep 2
+    echo "Проверяем доступность сайта..."
+done'
+
+if [ $? -eq 0 ]; then
+    echo "✅ Развертывание завершено успешно!"
+    echo "Сайт доступен!"
+
+    # Показываем статус всех контейнеров
+    echo "Статус контейнеров:"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml ps
+else
+    echo "❌ Сайт недоступен после развертывания!"
+    echo "Логи nginx:"
+    docker-compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=10 nginx
     exit 1
 fi
-echo "👍 Backend готов."
 
-# Проверяем готовность frontend (ищем сообщение о том, что сервер слушает порт)
-echo "⏳ Проверяем готовность frontend..."
-timeout 120s bash -c 'until docker-compose '"$COMPOSE_FILES"' logs frontend 2>/dev/null | grep -q -i "listening"; do echo "   ...ожидаем frontend..."; sleep 3; done'
-if [ $? -ne 0 ]; then
-    echo "❌ Ошибка: Frontend не запустился вовремя. Проверьте логи:"
-    docker-compose $COMPOSE_FILES logs --tail=50 frontend
-    exit 1
-fi
-echo "👍 Frontend готов."
-
-# 6. ЗАДАЧИ ПОСЛЕ РАЗВЕРТЫВАНИЯ
-echo "⚙️  Выполняем задачи после развертывания..."
-
-echo "   - Запускаем миграции базы данных..."
-docker-compose $COMPOSE_FILES exec -T backend php artisan migrate --force
-
-echo "   - Очищаем и кешируем конфигурацию и маршруты..."
-docker-compose $COMPOSE_FILES exec -T backend php artisan cache:clear
-docker-compose $COMPOSE_FILES exec -T backend php artisan config:cache
-docker-compose $COMPOSE_FILES exec -T backend php artisan route:cache
-docker-compose $COMPOSE_FILES exec -T backend php artisan view:cache
-
-echo "✅ Задачи выполнены."
-
-# 7. ОЧИСТКА
-echo "🧹 Очищаем старые неиспользуемые образы..."
+# 8. Очистка старых образов
+echo "Очищаем старые образы..."
 docker image prune -f
 
-echo "🎉 Развертывание успешно завершено!"
-echo "Текущий статус контейнеров:"
-docker-compose $COMPOSE_FILES ps
+echo "✅ Развертывание завершено!"
