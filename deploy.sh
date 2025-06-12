@@ -1,91 +1,76 @@
 #!/bin/bash
 
-# Загрузка переменных окружения
+# -----------------------------------------------------------------------------
+# Скрипт для безопасного развертывания приложения на боевом сервере
+# Версия с универсальной проверкой готовности backend.
+# -----------------------------------------------------------------------------
+
+set -e
+
+# --- 1. ПОДГОТОВКА ---
+echo "▶️  Начинаем развертывание..."
+
 set -a
-source .env
+if [ -f .env ]; then
+    source .env
+else
+    echo "❌ ERROR: Файл .env не найден!"
+    exit 1
+fi
 set +a
 
-# Проверка переменных
 if [ -z "$MYSQL_ROOT_PASSWORD" ] || [ -z "$MYSQL_PASSWORD" ]; then
-    echo "ERROR: MYSQL_ROOT_PASSWORD and MYSQL_PASSWORD must be set in .env"
+    echo "❌ ERROR: MYSQL_ROOT_PASSWORD и MYSQL_PASSWORD должны быть установлены в .env"
     exit 1
 fi
 
-# Проверка состояния MySQL тома
-if ! docker volume inspect spacer-data-grid_mysql_prod_data >/dev/null 2>&1; then
-    echo "Creating new MySQL volume..."
-    docker volume create spacer-data-grid_mysql_prod_data
-fi
+echo "🔄  Обновляем базовые образы Docker..."
+docker compose -f docker-compose.yml -f docker-compose.prod.yml pull
 
-echo "Начинаем развертывание с минимальным downtime..."
+# --- 2. ЭТАП СБОРКИ ---
+echo "🛠️  Пытаемся собрать новые образы..."
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build --parallel backend frontend scheduler
+echo "✅ Сборка образов прошла успешно. Начинаем развертывание."
 
-# 1. Сборка новых образов БЕЗ остановки контейнеров
-echo "Собираем новые образы..."
-docker compose -f docker-compose.yml -f docker-compose.prod.yml build --parallel backend frontend
+# --- 3. ЭТАП РАЗВЕРТЫВАНИЯ ---
+echo "🚀  Обновляем сервисы до новых версий..."
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --remove-orphans backend frontend scheduler
 
-# 2. Быстрая замена контейнеров (минимальный downtime)
-echo "Быстро заменяем контейнеры..."
-
-# Останавливаем только приложение, оставляем БД, Redis и nginx
-docker compose -f docker-compose.yml -f docker-compose.prod.yml stop frontend backend scheduler
-
-# Удаляем старые контейнеры приложения
-docker compose -f docker-compose.yml -f docker-compose.prod.yml rm -f frontend backend scheduler
-
-# Запускаем новые контейнеры
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d backend frontend scheduler
-
-# 3. Ждем готовности контейнеров
-echo "Ожидаем готовности контейнеров..."
-sleep 10
-
-# Проверяем готовность backend
+# --- 4. ПРОВЕРКА ГОТОВНОСТИ СЕРВИСОВ ---
+echo "⌛  Ожидаем готовности новых контейнеров..."
 echo "Проверяем backend..."
-timeout 60 bash -c 'until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php -v > /dev/null 2>&1; do
-    sleep 2
-    echo "Ждем backend..."
-done'
+# Используем curl для проверки главной страницы. Это надежно тестирует всю цепочку.
+timeout 120s bash -c '
+  until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend curl -sf http://localhost/ > /dev/null 2>&1; do
+    echo "Ждем, пока backend ответит на http://localhost/..."
+    sleep 3
+  done
+' || {
+  echo "❌ ERROR: Backend не готов после 120 секунд. Проверьте логи."
+  docker compose -f docker-compose.yml -f docker-compose.prod.yml logs --tail=50 backend
+  exit 1
+}
+echo "✅ Backend готов!"
 
-if [ $? -ne 0 ]; then
-    echo "ERROR: Backend не готов"
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml logs backend
-    exit 1
-fi
+# --- 5. МИГРАЦИИ И КЕШИРОВАНИЕ ---
+echo "🛠️  Включаем режим обслуживания..."
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan down || true
 
-# Проверяем готовность frontend
-echo "Проверяем frontend..."
-timeout 60 bash -c 'until docker compose -f docker-compose.yml -f docker-compose.prod.yml logs frontend 2>/dev/null | grep -q "Listening on http://0.0.0.0:3000"; do
-    sleep 2
-    echo "Ждем frontend..."
-done'
-
-if [ $? -ne 0 ]; then
-    echo "ERROR: Frontend не готов"
-    docker compose -f docker-compose.yml -f docker-compose.prod.yml logs frontend
-    exit 1
-fi
-
-# Дополнительная проверка через внешний доступ
-echo "Проверяем внешнюю доступность frontend через nginx..."
-sleep 5  # Даем время на инициализацию
-
-# 4. КРИТИЧНО: Перезапускаем nginx для обновления DNS кеша
-echo "Перезапускаем nginx для обновления DNS кеша..."
-docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
-
-# Даем nginx время на старт
-sleep 5
-
-# 5. Выполняем миграции
-echo "Выполняем миграции..."
+echo "Выполняем миграции базы данных..."
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan migrate --force
 
-# 6. Очистка и оптимизация кеша
-echo "Очищаем кеш..."
-docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan cache:clear
+echo "Очищаем и обновляем кеш приложения..."
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan optimize:clear
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan config:cache
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan route:cache
 docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan view:cache
+
+echo "Выключаем режим обслуживания..."
+docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php artisan up
+
+# --- 6. ФИНАЛЬНЫЕ ШАГИ ---
+echo "🔄  Перезапускаем Nginx для обновления внутреннего DNS кеша..."
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
 
 # 7. Финальная проверка доступности
 echo "Финальная проверка доступности..."
