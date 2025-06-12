@@ -1,6 +1,6 @@
 // composables/useAuth.ts
-import { useAuthStore } from '~/stores/auth'
-import type { User, TokenInfo } from '~/types/auth'
+import {useAuthStore} from '~/stores/auth'
+import type {TokenInfo, User} from '~/types/auth'
 
 export const useAuth = () => {
     const config = useRuntimeConfig()
@@ -26,7 +26,7 @@ export const useAuth = () => {
         return {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
-            ...(token && { 'Authorization': `Bearer ${token}` })
+            ...(token && {'Authorization': `Bearer ${token}`})
         }
     }
 
@@ -61,7 +61,7 @@ export const useAuth = () => {
             authStore.setUser(response.user)
             authStore.setInitialized(true)
 
-            return { success: true, user: response.user }
+            return {success: true, user: response.user}
         } catch (error: any) {
             console.error('Login error:', error)
             authStore.clearAuth()
@@ -108,7 +108,7 @@ export const useAuth = () => {
             authStore.setUser(response.user)
             authStore.setInitialized(true)
 
-            return { success: true, user: response.user }
+            return {success: true, user: response.user}
         } catch (error: any) {
             console.error('Register error:', error)
             authStore.setInitialized(true)
@@ -151,10 +151,10 @@ export const useAuth = () => {
                 headers: getAuthHeaders()
             })
 
-            return { success: true, count: response.revoked_tokens_count }
+            return {success: true, count: response.revoked_tokens_count}
         } catch (error: any) {
             console.error('Logout other devices error:', error)
-            return { success: false, error: 'Ошибка выхода с других устройств' }
+            return {success: false, error: 'Ошибка выхода с других устройств'}
         }
     }
 
@@ -180,9 +180,30 @@ export const useAuth = () => {
             return user
         } catch (error) {
             console.error('Fetch user error:', error)
-            authStore.clearAuth()
-            authStore.setInitialized(true)
-            return null
+            // Проверяем тип ошибки
+            if (error.response) {
+                // Сервер ответил с ошибкой (401, 403, 500 и т.д.)
+                const statusCode = error.response.status
+
+                if (statusCode === 401 || statusCode === 403) {
+                    // Ошибки авторизации - разлогиниваем
+                    authStore.clearAuth()
+                    authStore.setInitialized(true)
+                    return null
+                } else {
+                    // Другие серверные ошибки (500, 502, 503 и т.д.) - не разлогиниваем
+                    authStore.setInitialized(true)
+                    throw new Error(`Ошибка сервера: ${statusCode}. Попробуйте позже.`)
+                }
+            } else if (error.request) {
+                // Сетевая ошибка - сервер недоступен, не разлогиниваем
+                authStore.setInitialized(true)
+                throw new Error('Сервер недоступен. Проверьте подключение к интернету и попробуйте позже.')
+            } else {
+                // Другие ошибки (настройки запроса и т.д.)
+                authStore.setInitialized(true)
+                throw new Error('Произошла непредвиденная ошибка. Попробуйте позже.')
+            }
         }
     }
 
@@ -213,10 +234,10 @@ export const useAuth = () => {
             })
 
             await getTokens()
-            return { success: true }
+            return {success: true}
         } catch (error: any) {
             console.error('Revoke token error:', error)
-            return { success: false, error: 'Ошибка отзыва токена' }
+            return {success: false, error: 'Ошибка отзыва токена'}
         }
     }
 
@@ -233,10 +254,10 @@ export const useAuth = () => {
             })
 
             setToken(response.token)
-            return { success: true, token: response.token }
+            return {success: true, token: response.token}
         } catch (error: any) {
             console.error('Refresh token error:', error)
-            return { success: false, error: 'Ошибка обновления токена' }
+            return {success: false, error: 'Ошибка обновления токена'}
         }
     }
 
@@ -260,7 +281,7 @@ export const useAuth = () => {
             return response
         } catch (error) {
             console.error('Check token error:', error)
-            return { valid: false }
+            return {valid: false}
         }
     }
 
