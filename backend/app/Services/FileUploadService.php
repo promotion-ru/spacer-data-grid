@@ -115,6 +115,7 @@ class FileUploadService
             'application/vnd.openxmlformats-officedocument.presentationml.presentation' => 'pptx',
             'text/plain'                                                                => 'txt',
             'text/csv'                                                                  => 'csv',
+            'text/html'                                                                 => 'html',
             'application/json'                                                          => 'json',
             'text/xml'                                                                  => 'xml',
             'application/xml'                                                           => 'xml',

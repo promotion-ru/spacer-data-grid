@@ -137,6 +137,7 @@ class DataGridRecord extends Model implements HasMedia
                 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
                 'text/plain',
                 'text/csv',
+                'text/html',
                 'application/json',
                 'text/xml',
                 'application/xml',
