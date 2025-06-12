@@ -25,8 +25,6 @@ class ProfileController extends Controller
         try {
             $user = Auth::user();
 
-            TelegramDump::dump($user->toArray());
-
             return response()->json([
                 'success' => true,
                 'data'    => new ProfileResource($user),
