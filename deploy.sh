@@ -308,7 +308,7 @@ send_notification() {
     local status="$1"
     local message="$2"
 
-    # Telegram (если настроен)
+    # Telegram
     if [ ! -z "$TELEGRAM_BOT_TOKEN" ] && [ ! -z "$TELEGRAM_CHAT_ID" ]; then
         curl -s "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
             -d "chat_id=$TELEGRAM_CHAT_ID" \
