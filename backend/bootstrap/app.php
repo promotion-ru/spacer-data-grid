@@ -23,6 +23,12 @@ return Application::configure(basePath: dirname(__DIR__))
             'sanctum.query' => SanctumTokenFromQuery::class,
         ]);
     })
+    ->withSchedule(function (Schedule $schedule) {
+        $schedule->command('test:minute')
+            ->everyMinute()
+            ->withoutOverlapping()
+            ->runInBackground();
+    })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->renderable(function (AuthenticationException $e, Request $request) {
             if ($request->expectsJson() || $request->is('api/*')) {
