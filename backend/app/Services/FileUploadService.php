@@ -32,6 +32,7 @@ class FileUploadService
         // Text files
         'text/plain'                                                                => 'txt',
         'text/csv'                                                                  => 'csv',
+        'text/html'                                                                 => 'html',
         'application/json'                                                          => 'json',
         'text/xml'                                                                  => 'xml',
         'application/xml'                                                           => 'xml',
@@ -229,11 +230,11 @@ class FileUploadService
             // Определение расширения
             $extension = $this->allowedMimeTypes[$mimeType] ?? 'bin';
 
-            // Генерация имени файла
-            $filename = $this->generateFilename($fileData, $extension, $options);
+            // Генерация уникального имени файла
+            $uniqueFilename = $this->generateUniqueFilename($extension, $options);
 
             // Используем временный файл по умолчанию (как в оригинале)
-            $media = $this->uploadViaTempFile($model, $binaryData, $filename, $fileData, $collection, $options);
+            $media = $this->uploadViaTempFile($model, $binaryData, $uniqueFilename, $fileData, $collection, $options);
 
             if (!$media) {
                 throw new Exception('Не удалось создать медиа файл');
@@ -300,55 +301,49 @@ class FileUploadService
         return 'application/octet-stream';
     }
 
-    private function generateFilename(array $fileData, string $extension, array $options): string
+    /**
+     * Генерирует уникальное имя файла (всегда уникальное, независимо от оригинального имени)
+     */
+    private function generateUniqueFilename(string $extension, array $options): string
     {
-        // Если передано конкретное имя файла
-        if (isset($fileData['name']) && !empty($fileData['name'])) {
-            // Получаем переданное имя без расширения
-            $baseName = pathinfo($fileData['name'], PATHINFO_FILENAME);
-
-            // Добавляем уникальный идентификатор для избежания конфликтов
-            $uniqueId = time() . '_' . Str::random(8);
-
-            return $baseName . '_' . $uniqueId . '.' . $extension;
-        }
-
         // Если передан префикс для имени файла
         $prefix = $options['filename_prefix'] ?? '';
 
         // Если передан суффикс для имени файла
         $suffix = $options['filename_suffix'] ?? '';
 
-        // Генерируем имя файла как в оригинале: prefix + time + suffix + extension
+        // Генерируем уникальный идентификатор
+        $uniqueId = time() . '_' . Str::random(16);
+
+        // Формируем полное уникальное имя файла
         if (!empty($prefix)) {
-            $randomName = $prefix . time() . $suffix . '.' . $extension;
-        } else {
-            $randomName = Str::random(20) . $suffix . '.' . $extension;
+            return $prefix . '_' . $uniqueId . $suffix . '.' . $extension;
         }
 
-        return $randomName;
+        return $uniqueId . $suffix . '.' . $extension;
     }
 
     private function uploadViaTempFile(
         HasMedia $model,
         string   $binaryData,
-        string   $filename,
+        string   $uniqueFilename,
         array    $fileData,
         string   $collection,
         array    $options
     ): Media
     {
-        $extension = pathinfo($filename, PATHINFO_EXTENSION);
+        $extension = pathinfo($uniqueFilename, PATHINFO_EXTENSION);
         $tempPath = sys_get_temp_dir() . '/' . uniqid() . '.' . $extension;
 
         file_put_contents($tempPath, $binaryData);
 
         try {
-            $mediaAdder = $model->addMedia($tempPath)->usingFileName($filename);
+            $mediaAdder = $model->addMedia($tempPath)->usingFileName($uniqueFilename);
 
-            // Устанавливаем имя если передано
-            if (isset($fileData['name']) && !empty($fileData['name'])) {
-                $mediaAdder->usingName($fileData['name']);
+            // Устанавливаем оригинальное имя для отображения пользователю
+            $displayName = $this->getDisplayName($fileData);
+            if ($displayName) {
+                $mediaAdder->usingName($displayName);
             }
 
             // Добавляем дополнительные метаданные
@@ -365,6 +360,27 @@ class FileUploadService
                 unlink($tempPath);
             }
         }
+    }
+
+    /**
+     * Получает оригинальное имя файла для отображения пользователю
+     */
+    private function getDisplayName(array $fileData): ?string
+    {
+        if (isset($fileData['name']) && !empty($fileData['name'])) {
+            // Очищаем имя от потенциально опасных символов
+            $originalName = $fileData['name'];
+
+            // Удаляем пути и оставляем только имя файла
+            $cleanName = basename($originalName);
+
+            // Дополнительная очистка от опасных символов
+            $cleanName = preg_replace('/[^a-zA-Z0-9._\-а-яёА-ЯЁ\s]/u', '', $cleanName);
+
+            return !empty($cleanName) ? $cleanName : null;
+        }
+
+        return null;
     }
 
     public function deleteFilesByCollection(HasMedia $model, string $collection): void
@@ -466,6 +482,7 @@ class FileUploadService
             // Text files
             'text/plain'                                                                => 'txt',
             'text/csv'                                                                  => 'csv',
+            'text/html'                                                                 => 'html',
             'application/json'                                                          => 'json',
             'text/xml'                                                                  => 'xml',
             'application/xml'                                                           => 'xml',
@@ -506,17 +523,18 @@ class FileUploadService
     private function uploadDirectly(
         HasMedia $model,
         string   $binaryData,
-        string   $filename,
+        string   $uniqueFilename,
         array    $fileData,
         string   $collection,
         array    $options
     ): Media
     {
-        $mediaAdder = $model->addMediaFromBase64($binaryData)->usingFileName($filename);
+        $mediaAdder = $model->addMediaFromBase64($binaryData)->usingFileName($uniqueFilename);
 
-        // Устанавливаем имя если передано
-        if (isset($fileData['name']) && !empty($fileData['name'])) {
-            $mediaAdder->usingName($fileData['name']);
+        // Устанавливаем оригинальное имя для отображения пользователю
+        $displayName = $this->getDisplayName($fileData);
+        if ($displayName) {
+            $mediaAdder->usingName($displayName);
         }
 
         // Добавляем дополнительные метаданные
