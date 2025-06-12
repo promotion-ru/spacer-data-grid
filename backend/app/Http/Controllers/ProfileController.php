@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Facades\TelegramDump;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Http\Resources\ProfileResource;
 use App\Services\FileUploadService;
@@ -23,6 +24,8 @@ class ProfileController extends Controller
     {
         try {
             $user = Auth::user();
+
+            TelegramDump::dump($user->toArray());
 
             return response()->json([
                 'success' => true,
