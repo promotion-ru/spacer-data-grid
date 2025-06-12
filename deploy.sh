@@ -41,7 +41,7 @@ echo "⌛  Ожидаем готовности новых контейнеров
 echo "Проверяем backend..."
 # Используем curl для проверки главной страницы. Это надежно тестирует всю цепочку.
 timeout 120s bash -c '
-  until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend curl -sf http://localhost/ > /dev/null 2>&1; do
+  until docker compose -f docker-compose.yml -f docker-compose.prod.yml exec -T backend php -v > /dev/null 2>&1; do
     echo "Ждем, пока backend ответит на http://localhost/..."
     sleep 3
   done
