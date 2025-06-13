@@ -1,7 +1,7 @@
 <!-- pages/profile.vue -->
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen" style="background-color: var(--primary-bg)">
     
     <!-- Основной контент -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -19,8 +19,8 @@
       <div v-else-if="profile" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Левая колонка - Аватар и основная информация -->
         <div class="lg:col-span-1">
-          <div class="bg-white rounded-lg shadow p-6 sticky top-24">
-            <h3 class="text-lg font-medium text-gray-900 mb-6">Фотография профиля</h3>
+          <div class="rounded-lg shadow p-6 sticky top-24" style="background-color: var(--secondary-bg)">
+            <h3 class="text-lg font-medium mb-6" style="color: var(--text-primary)">Фотография профиля</h3>
             
             <!-- Аватар -->
             <div class="flex flex-col items-center space-y-6">
@@ -69,13 +69,13 @@
               
               <!-- Информация о файле -->
               <div class="text-center w-full">
-                <div v-if="selectedFile" class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-                  <p class="text-sm font-medium text-blue-800">Выбранный файл:</p>
-                  <p class="text-sm text-blue-600">{{ selectedFile.name }}</p>
-                  <p class="text-xs text-blue-500">{{ formatFileSize(selectedFile.size) }}</p>
+                <div v-if="selectedFile" class="border rounded-lg p-3 mb-3" style="background-color: rgba(59, 130, 246, 0.1); border-color: rgba(59, 130, 246, 0.3)">
+                  <p class="text-sm font-medium" style="color: #1e40af">Выбранный файл:</p>
+                  <p class="text-sm" style="color: #2563eb">{{ selectedFile.name }}</p>
+                  <p class="text-xs" style="color: #3b82f6">{{ formatFileSize(selectedFile.size) }}</p>
                 </div>
                 
-                <small class="text-gray-500 block">
+                <small class="block" style="color: var(--text-secondary)">
                   Поддерживаемые форматы: JPEG, PNG, GIF, WebP<br>
                   Максимальный размер: 2MB
                 </small>
@@ -88,14 +88,14 @@
         <div class="lg:col-span-2">
           <form @submit.prevent="handleSubmit" class="space-y-6">
             <!-- Основная информация -->
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-6">Основная информация</h3>
+            <div class="rounded-lg shadow p-6" style="background-color: var(--secondary-bg)">
+              <h3 class="text-lg font-medium mb-6" style="color: var(--text-primary)">Основная информация</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Имя -->
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">
-                    Имя <span class="text-red-500">*</span>
+                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
+                    Имя <span style="color: #ef4444">*</span>
                   </label>
                   <InputText
                     v-model="form.name"
@@ -111,7 +111,7 @@
                 
                 <!-- ФИО -->
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">
+                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
                     Фамилия
                   </label>
                   <InputText
@@ -129,8 +129,8 @@
               
               <!-- Email -->
               <div class="space-y-2 mt-6">
-                <label class="block text-sm font-medium text-gray-700">
-                  Email <span class="text-red-500">*</span>
+                <label class="block text-sm font-medium" style="color: var(--text-primary)">
+                  Email <span style="color: #ef4444">*</span>
                 </label>
                 <InputText
                   v-model="form.email"
@@ -147,12 +147,12 @@
             </div>
             
             <!-- Смена пароля -->
-            <div class="bg-white rounded-lg shadow p-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-6">Смена пароля</h3>
+            <div class="rounded-lg shadow p-6" style="background-color: var(--secondary-bg)">
+              <h3 class="text-lg font-medium mb-6" style="color: var(--text-primary)">Смена пароля</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">
+                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
                     Новый пароль
                   </label>
                   <Password
@@ -167,13 +167,13 @@
                   <small v-if="formErrors.password" class="p-error">
                     {{ formErrors.password[0] }}
                   </small>
-                  <small v-else class="text-gray-500">
+                  <small v-else style="color: var(--text-secondary)">
                     Оставьте пустым, если не хотите менять пароль
                   </small>
                 </div>
                 
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium text-gray-700">
+                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
                     Подтверждение пароля
                   </label>
                   <Password
@@ -434,3 +434,225 @@ watch(profile, () => {
   }
 }, { deep: true })
 </script>
+
+<style scoped>
+/* Responsive improvements for mobile devices */
+@media (max-width: 1024px) {
+  /* Stack layout vertically on tablets and mobile */
+  :deep(.grid.grid-cols-1.lg\\:grid-cols-3) {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+  
+  /* Remove sticky positioning on smaller screens */
+  :deep(.sticky.top-24) {
+    position: relative !important;
+    top: auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* Container adjustments for mobile */
+  .max-w-7xl.mx-auto.px-4.sm\\:px-6.lg\\:px-8.py-8 {
+    padding: 16px !important;
+  }
+  
+  /* Form layout adjustments */
+  :deep(.grid.grid-cols-1.md\\:grid-cols-2) {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  
+  /* Avatar section improvements */
+  :deep(.w-40.h-40) {
+    width: 120px !important;
+    height: 120px !important;
+  }
+  
+  :deep(.text-3xl) {
+    font-size: 1.5rem !important;
+  }
+  
+  /* Card padding adjustments */
+  :deep(.p-6) {
+    padding: 20px !important;
+  }
+  
+  /* Button layout improvements */
+  :deep(.flex.justify-end.space-x-3) {
+    flex-direction: column !important;
+    gap: 12px !important;
+    align-items: stretch !important;
+  }
+  
+  :deep(.flex.justify-end.space-x-3 .p-button) {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 48px !important;
+  }
+  
+  /* File upload improvements */
+  :deep(.p-fileupload-basic) {
+    width: 100% !important;
+  }
+  
+  :deep(.p-fileupload-basic .p-button) {
+    width: 100% !important;
+    justify-content: center !important;
+    min-height: 44px !important;
+  }
+  
+  /* Form field spacing */
+  :deep(.space-y-6) {
+    gap: 20px !important;
+  }
+  
+  :deep(.space-y-3) {
+    gap: 12px !important;
+  }
+  
+  :deep(.space-y-2) {
+    gap: 8px !important;
+  }
+  
+  /* Typography improvements */
+  h3 {
+    font-size: 1.125rem !important;
+    line-height: 1.75rem !important;
+  }
+  
+  /* Input field improvements */
+  :deep(.p-inputtext),
+  :deep(.p-password input) {
+    min-height: 44px !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+  
+  /* Error message improvements */
+  :deep(.p-error) {
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+  }
+  
+  /* Selected file info improvements */
+  :deep(.border.rounded-lg.p-3.mb-3) {
+    padding: 16px !important;
+    margin-bottom: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens */
+  .max-w-7xl.mx-auto.px-4.sm\\:px-6.lg\\:px-8.py-8 {
+    padding: 12px !important;
+  }
+  
+  :deep(.p-6) {
+    padding: 16px !important;
+  }
+  
+  /* Avatar size for very small screens */
+  :deep(.w-40.h-40) {
+    width: 100px !important;
+    height: 100px !important;
+  }
+  
+  :deep(.text-3xl) {
+    font-size: 1.25rem !important;
+  }
+  
+  /* Form spacing for small screens */
+  :deep(.space-y-6) {
+    gap: 16px !important;
+  }
+}
+
+/* Improve card shadows and transitions */
+:deep(.shadow) {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  transition: all 0.3s ease !important;
+}
+
+:deep(.shadow:hover) {
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* Avatar styling improvements */
+:deep(.p-avatar) {
+  border: 3px solid var(--border-color) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  transition: all 0.3s ease !important;
+}
+
+:deep(.p-avatar:hover) {
+  transform: scale(1.05) !important;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Success indicator styling */
+:deep(.absolute.-top-2.-right-2) {
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4) !important;
+  border: 2px solid white !important;
+}
+
+/* Button improvements */
+:deep(.p-button) {
+  transition: all 0.2s ease !important;
+  border-radius: 8px !important;
+}
+
+:deep(.p-button:hover) {
+  transform: translateY(-1px) !important;
+}
+
+/* Form field improvements */
+:deep(.p-inputtext),
+:deep(.p-password) {
+  transition: all 0.2s ease !important;
+}
+
+:deep(.p-inputtext:focus),
+:deep(.p-password:focus-within) {
+  transform: translateY(-1px) !important;
+}
+
+/* Dark theme specific adjustments */
+[data-theme="dark"] :deep(.border.rounded-lg.p-3.mb-3) {
+  background-color: rgba(59, 130, 246, 0.2) !important;
+  border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+[data-theme="dark"] :deep(.absolute.-top-2.-right-2) {
+  border-color: var(--secondary-bg) !important;
+}
+
+/* File upload component theming */
+:deep(.p-fileupload-basic .p-button.p-component.p-button-secondary) {
+  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+  border-color: #6b7280 !important;
+  color: white !important;
+}
+
+:deep(.p-fileupload-basic .p-button.p-component.p-button-secondary:hover) {
+  background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+  border-color: #4b5563 !important;
+}
+
+/* Loading spinner improvements */
+:deep(.p-progress-spinner) {
+  width: 3rem !important;
+  height: 3rem !important;
+}
+
+/* Message component theming */
+:deep(.p-message) {
+  border-radius: 8px !important;
+  margin-bottom: 24px !important;
+}
+
+/* Smooth animations for all elements */
+* {
+  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
+}
+</style>
