@@ -297,10 +297,6 @@
 }
 
 /* Statistics card */
-.stats-card {
-  background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface-0) 100%);
-  border: 1px solid var(--primary-200);
-}
 
 .stats-icon {
   color: var(--primary-color);

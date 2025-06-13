@@ -14,7 +14,7 @@
       <!-- Основная информация -->
       <div class="xl:col-span-2 space-y-6">
         <!-- Заголовок и основная инфо -->
-        <Card class="shadow-lg" style="background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface-0) 100%); border: 1px solid var(--primary-200)">
+        <Card class="shadow-lg">
           <template #content>
             <div class="space-y-4">
               <!-- Заголовок -->
@@ -68,7 +68,7 @@
               </div>
               
               <!-- Описание -->
-              <div v-if="record?.description" class="p-4 rounded-lg" style="background-color: var(--surface-100); border-left: 4px solid var(--primary-color)">
+              <div v-if="record?.description" class="p-4 rounded-lg" style="background-color: var(--surface-100)">
                 <div class="text-xs uppercase tracking-wide mb-2 modal-label">Описание</div>
                 <p class="text-base leading-relaxed modal-content">{{ record.description }}</p>
               </div>
@@ -155,7 +155,6 @@
             </div>
           </template>
         </Card>
-        
         <!-- Пустое состояние вложений -->
         <Card v-else class="shadow-lg">
           <template #content>

@@ -146,7 +146,7 @@
       </div>
       
       <!-- Статистика файлов -->
-      <Card class="shadow-sm stats-card">
+      <Card class="shadow-sm">
         <template #content>
           <div class="flex items-center justify-between mb-4">
             <h4 class="text-lg font-semibold flex items-center gap-2 text-primary">
