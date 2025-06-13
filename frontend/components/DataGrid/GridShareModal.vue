@@ -92,7 +92,7 @@
       <div class="flex justify-end space-x-3">
         <Button
           :disabled="loading"
-          class="p-button-outlined"
+          outlined
           label="Отмена"
           @click="closeModal"
         />

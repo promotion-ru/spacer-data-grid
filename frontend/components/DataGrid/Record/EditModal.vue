@@ -6,15 +6,15 @@
     :dismissableMask="true"
     :draggable="false"
     :modal="true"
-    class="w-full max-w-2xl"
+    class="w-full max-w-4xl"
     header="Редактировать запись"
     @hide="onDialogHide"
   >
     <!-- Индикатор загрузки данных записи -->
     <div v-if="loadingRecord" class="flex items-center justify-center p-8">
       <div class="flex flex-col items-center space-y-3">
-        <i class="pi pi-spin pi-spinner text-4xl text-blue-500"></i>
-        <span class="text-gray-600">Загружаем актуальные данные записи...</span>
+        <i class="pi pi-spin pi-spinner text-4xl" style="color: var(--primary-color)"></i>
+        <span style="color: var(--text-secondary)">Загружаем актуальные данные записи...</span>
       </div>
     </div>
     
@@ -24,7 +24,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Название записи -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2" for="name">
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="name">
             Название записи *
           </label>
           <InputText
@@ -39,7 +39,7 @@
         
         <!-- Дата -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2" for="date">
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="date">
             Дата *
           </label>
           <DatePicker
@@ -59,7 +59,7 @@
       
       <!-- Тип операции (радиокнопки) -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-3">
+        <label class="block text-sm font-medium mb-3" style="color: var(--text-primary)">
           Тип операции *
         </label>
         <div class="flex space-x-6">
@@ -71,7 +71,7 @@
               :value="1"
               name="operation_type_edit"
             />
-            <label class="ml-2 text-sm text-gray-700" for="income_edit">Доход</label>
+            <label class="ml-2 text-sm" style="color: var(--text-primary)" for="income_edit">Доход</label>
           </div>
           <div class="flex items-center">
             <RadioButton
@@ -81,7 +81,7 @@
               :value="2"
               name="operation_type_edit"
             />
-            <label class="ml-2 text-sm text-gray-700" for="expense_edit">Расход</label>
+            <label class="ml-2 text-sm" style="color: var(--text-primary)" for="expense_edit">Расход</label>
           </div>
         </div>
         <small v-if="errors.operation_type_id" class="p-error">{{ errors.operation_type_id }}</small>
@@ -90,7 +90,7 @@
       <div class="grid grid-cols-1">
         <!-- Тип записи -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)">
             Тип записи *
           </label>
           <DataGridTypeAutocomplete
@@ -108,7 +108,7 @@
       <div class="grid grid-cols-1">
         <!-- Сумма -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2" for="amount">
+          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="amount">
             Сумма *
           </label>
           <InputNumber
@@ -131,7 +131,7 @@
       
       <!-- Описание -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="description">
+        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="description">
           Описание
         </label>
         <Textarea
@@ -146,70 +146,112 @@
       </div>
       
       <!-- Статистика файлов -->
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <h4 class="font-semibold text-gray-700 mb-2">Статистика вложений</h4>
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-          <div>
-            <span class="text-gray-600">Текущих:</span>
-            <span class="ml-2 font-medium">{{ currentAttachmentsCount }}</span>
+      <Card class="shadow-sm" style="background: linear-gradient(135deg, var(--primary-50) 0%, var(--surface-0) 100%); border: 1px solid var(--primary-200)">
+        <template #content>
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-semibold flex items-center gap-2" style="color: var(--text-primary)">
+              <i class="pi pi-chart-bar" style="color: var(--primary-color)"></i>
+              Статистика вложений
+            </h4>
+            <div v-if="hasChanges" class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style="background-color: var(--orange-100); color: var(--orange-700)">
+              <i class="pi pi-exclamation-circle"></i>
+              Есть изменения
+            </div>
           </div>
-          <div>
-            <span class="text-gray-600">Новых:</span>
-            <span class="ml-2 font-medium text-blue-600">{{ newAttachmentFiles.length }}</span>
+          
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center p-3 rounded-lg" style="background-color: var(--surface-card); border: 1px solid var(--border-color)">
+              <div class="text-2xl font-bold mb-1" style="color: var(--text-primary)">{{ currentAttachmentsCount }}</div>
+              <div class="text-xs" style="color: var(--text-secondary)">Текущих файлов</div>
+            </div>
+            <div class="text-center p-3 rounded-lg" style="background-color: var(--primary-50); border: 1px solid var(--primary-200)">
+              <div class="text-2xl font-bold mb-1" style="color: var(--primary-color)">{{ newAttachmentFiles.length }}</div>
+              <div class="text-xs" style="color: var(--primary-color)">Новых файлов</div>
+            </div>
+            <div class="text-center p-3 rounded-lg" style="background-color: var(--red-50); border: 1px solid var(--red-200)">
+              <div class="text-2xl font-bold mb-1" style="color: var(--red-500)">{{ filesToRemove.length }}</div>
+              <div class="text-xs" style="color: var(--red-500)">К удалению</div>
+            </div>
+            <div class="text-center p-3 rounded-lg" style="background-color: var(--green-50); border: 1px solid var(--green-200)">
+              <div class="text-2xl font-bold mb-1" style="color: var(--green-600)">{{ totalFilesAfterSave }}</div>
+              <div class="text-xs" style="color: var(--green-600)">Итого будет</div>
+            </div>
           </div>
-          <div>
-            <span class="text-gray-600">К удалению:</span>
-            <span class="ml-2 font-medium text-red-600">{{ filesToRemove.length }}</span>
-          </div>
-          <div>
-            <span class="text-gray-600">Итого:</span>
-            <span class="ml-2 font-medium text-green-600">{{ totalFilesAfterSave }}</span>
-          </div>
-        </div>
-      </div>
+        </template>
+      </Card>
       
       <!-- Существующие вложения -->
       <div v-if="existingAttachments.length > 0">
-        <label class="block text-sm font-medium text-gray-700 mb-3">
-          Текущие вложения ({{ existingAttachments.length }})
-        </label>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <Card class="shadow-sm" style="background-color: var(--surface-card); border: 1px solid var(--border-color)">
+          <template #content>
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="text-lg font-semibold flex items-center gap-2" style="color: var(--text-primary)">
+                <i class="pi pi-folder" style="color: var(--primary-color)"></i>
+                Текущие вложения
+                <Tag :value="existingAttachments.length" severity="info" class="ml-2"/>
+              </h4>
+              <div v-if="filesToRemove.length > 0" class="text-sm" style="color: var(--red-600)">
+                {{ filesToRemove.length }} помечено к удалению
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
           <div
             v-for="attachment in existingAttachments"
             :key="attachment.id"
             :class="{
               'border-red-300 bg-red-50': isMarkedForRemoval(attachment.id),
-              'border-gray-200': !isMarkedForRemoval(attachment.id)
             }"
-            class="group relative bg-white border rounded-lg p-4 hover:shadow-md transition-shadow"
+            :style="!isMarkedForRemoval(attachment.id) ? {
+              'background-color': 'var(--surface-0)',
+              'border': '1px solid var(--surface-border)'
+            } : {
+              'background-color': 'var(--red-50)',
+              'border': '1px solid var(--red-300)'
+            }"
+            class="group relative rounded-lg p-4 hover:shadow-md transition-shadow"
           >
             <!-- Превью для изображений -->
             <div v-if="attachment.mime_type && attachment.mime_type.startsWith('image/')"
-                 class="mb-3 rounded-md overflow-hidden">
-              <Image
-                :alt="attachment.name || attachment.file_name"
-                :src="attachment.url || attachment.original_url"
-                preview
-                width="250"
-              />
+                 class="mb-3 rounded-lg overflow-hidden shadow-sm" style="border: 2px solid var(--border-color)">
+              <div class="relative group">
+                <Image
+                  :alt="attachment.name || attachment.file_name"
+                  :src="attachment.url || attachment.original_url"
+                  preview
+                  width="250"
+                  class="w-full h-32 object-cover transition-transform group-hover:scale-105"
+                />
+                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div class="px-2 py-1 rounded text-xs font-medium" style="background-color: rgba(0,0,0,0.7); color: white">
+                    {{ getFileTypeLabel(attachment.mime_type) }}
+                  </div>
+                </div>
+              </div>
             </div>
             
             <!-- Иконка для других файлов -->
-            <div v-else class="mb-3 flex justify-center">
-              <i
-                :class="getFileIcon(attachment.mime_type)"
-                class="text-4xl text-gray-500"
-              ></i>
+            <div v-else class="mb-3 flex justify-center items-center h-32 rounded-lg" style="background-color: var(--surface-100); border: 2px dashed var(--border-color)">
+              <div class="text-center">
+                <i
+                  :class="getFileIcon(attachment.mime_type)"
+                  class="text-5xl mb-2"
+                  style="color: var(--primary-color)"
+                ></i>
+                <div class="text-xs font-medium px-2 py-1 rounded" style="background-color: var(--primary-100); color: var(--primary-700)">
+                  {{ getFileTypeLabel(attachment.mime_type) }}
+                </div>
+              </div>
             </div>
             
             <!-- Информация о файле -->
             <div class="space-y-2">
               <h4 :title="attachment.name || attachment.file_name"
-                  class="text-sm font-medium text-gray-900 truncate text-wrap">
+                  class="text-sm font-medium truncate text-wrap"
+                  style="color: var(--text-primary)">
                 {{ attachment.name || attachment.file_name }}
               </h4>
-              <div class="flex justify-between items-center text-xs text-gray-500">
+              <div class="flex justify-between items-center text-xs" style="color: var(--text-secondary)">
                 <span>{{ attachment.human_readable_size || formatFileSize(attachment.size) }}</span>
                 <span>{{ getFileTypeLabel(attachment.mime_type) }}</span>
               </div>
@@ -219,8 +261,10 @@
             <div class="mt-3 flex justify-between">
               <Button
                 v-tooltip.top="'Скачать'"
-                class="p-button-rounded p-button-sm p-button-outlined"
                 icon="pi pi-download"
+                outlined
+                rounded
+                size="small"
                 type="button"
                 @click="downloadFile(attachment)"
               />
@@ -228,8 +272,11 @@
               <Button
                 v-if="!isMarkedForRemoval(attachment.id)"
                 v-tooltip.top="'Удалить'"
-                class="p-button-rounded p-button-sm p-button-outlined p-button-danger"
                 icon="pi pi-trash"
+                outlined
+                rounded
+                severity="danger"
+                size="small"
                 type="button"
                 @click="markForRemoval(attachment.id)"
               />
@@ -237,8 +284,11 @@
               <Button
                 v-else
                 v-tooltip.top="'Отменить удаление'"
-                class="p-button-rounded p-button-sm p-button-outlined p-button-success"
                 icon="pi pi-undo"
+                outlined
+                rounded
+                severity="success"
+                size="small"
                 type="button"
                 @click="unmarkForRemoval(attachment.id)"
               />
@@ -247,18 +297,30 @@
             <!-- Индикатор удаления -->
             <div
               v-if="isMarkedForRemoval(attachment.id)"
-              class="absolute inset-0 bg-red-500 bg-opacity-20 rounded-lg flex items-center justify-center"
+              class="absolute inset-0 rounded-lg flex items-center justify-center"
+              style="background-color: rgba(239, 68, 68, 0.2)"
             >
-              <div class="bg-red-600 text-white px-3 py-1 rounded text-sm font-medium">
+              <div class="px-3 py-1 rounded text-sm font-medium"
+                   style="background-color: var(--red-600); color: white;">
                 Будет удален
               </div>
             </div>
-          </div>
-        </div>
+            </div>
+          </template>
+        </Card>
       </div>
       
       <!-- Добавление новых вложений -->
-      <div>
+      <Card class="shadow-sm" style="background-color: var(--surface-card); border: 1px solid var(--border-color)">
+        <template #content>
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-lg font-semibold flex items-center gap-2" style="color: var(--text-primary)">
+              <i class="pi pi-plus-circle" style="color: var(--primary-color)"></i>
+              Добавить новые файлы
+              <Tag v-if="newAttachmentFiles.length > 0" :value="newAttachmentFiles.length" severity="success" class="ml-2"/>
+            </h4>
+          </div>
+          
         <MultiFileUpload
           ref="fileUploadRef"
           v-model="newAttachmentFiles"
@@ -277,9 +339,9 @@
         >
           <template #empty>
             <div class="flex flex-col items-center justify-center space-y-2 p-6">
-              <i class="pi pi-cloud-upload text-4xl text-blue-400"></i>
-              <span class="text-gray-600 font-medium">Добавьте файлы к записи</span>
-              <p class="text-xs text-gray-500 text-center">
+              <i class="pi pi-cloud-upload text-4xl" style="color: var(--primary-color)"></i>
+              <span class="font-medium" style="color: var(--text-secondary)">Добавьте файлы к записи</span>
+              <p class="text-xs text-center" style="color: var(--text-muted)">
                 Перетащите файлы сюда или нажмите для выбора<br>
                 Максимум 10 файлов по 10MB каждый
               </p>
@@ -287,52 +349,74 @@
           </template>
           <template #content="{ files, removeFile, formatFileSize, getFileIcon }">
             <div v-if="files.length > 0">
-              <h5 class="text-sm font-medium text-gray-700 mb-3">Выбранные файлы ({{ files.length }})</h5>
-              <div class="max-h-64 overflow-y-auto space-y-3">
+              <div class="mb-4 p-3 rounded-lg" style="background-color: var(--primary-50); border: 1px solid var(--primary-200)">
+                <div class="flex items-center gap-2">
+                  <i class="pi pi-info-circle" style="color: var(--primary-color)"></i>
+                  <span class="text-sm font-medium" style="color: var(--primary-700)">Выбрано {{ files.length }} новых файлов</span>
+                </div>
+              </div>
+              <div class="max-h-80 overflow-y-auto space-y-3 pr-2" style="scrollbar-width: thin">
                 <div
                   v-for="(fileObj, index) of files"
                   :key="fileObj.id"
-                  :class="{
-                  'bg-green-50 border-green-200': fileObj.data,
-                  'bg-orange-50 border-orange-200': !fileObj.data
-                }"
-                  class="flex items-center justify-between p-3 rounded border"
+                  :style="{
+                    'background-color': fileObj.data ? 'var(--green-50)' : 'var(--orange-50)',
+                    'border': fileObj.data ? '1px solid var(--green-200)' : '1px solid var(--orange-200)'
+                  }"
+                  class="flex items-center justify-between p-3 rounded"
                 >
                   <div class="flex items-center space-x-3">
                     <!-- Превью для изображений -->
                     <div v-if="fileObj.type.startsWith('image/') && fileObj.data" class="flex-shrink-0">
-                      <img
-                        :alt="fileObj.name"
-                        :src="getImagePreview(fileObj)"
-                        class="w-12 h-12 object-cover rounded border"
-                      />
+                      <div class="relative">
+                        <img
+                          :alt="fileObj.name"
+                          :src="getImagePreview(fileObj)"
+                          class="w-16 h-16 object-cover rounded-lg border-2 shadow-sm" 
+                          style="border-color: var(--primary-200)"
+                        />
+                        <div class="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style="background-color: var(--green-500)">
+                          <i class="pi pi-check text-xs text-white"></i>
+                        </div>
+                      </div>
                     </div>
                     <!-- Иконка для других файлов -->
                     <div v-else class="flex-shrink-0">
-                      <i
-                        :class="getFileIcon(fileObj.type)"
-                        class="text-2xl"
-                      ></i>
+                      <div class="w-16 h-16 rounded-lg flex items-center justify-center relative" style="background-color: var(--surface-100); border: 2px dashed var(--border-color)">
+                        <i
+                          :class="getFileIcon(fileObj.type)"
+                          class="text-3xl"
+                          style="color: var(--primary-color)"
+                        ></i>
+                        <div v-if="fileObj.data" class="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style="background-color: var(--green-500)">
+                          <i class="pi pi-check text-xs text-white"></i>
+                        </div>
+                        <div v-else class="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center" style="background-color: var(--orange-500)">
+                          <i class="pi pi-clock text-xs text-white"></i>
+                        </div>
+                      </div>
                     </div>
                     
                     <div class="min-w-0 flex-1">
-                      <p class="text-sm font-medium text-gray-900 truncate text-wrap">{{ fileObj.name }}</p>
-                      <p class="text-xs text-gray-500">{{ formatFileSize(fileObj.size) }}</p>
+                      <p class="text-sm font-medium truncate text-wrap" style="color: var(--text-primary)">{{ fileObj.name }}</p>
+                      <p class="text-xs" style="color: var(--text-secondary)">{{ formatFileSize(fileObj.size) }}</p>
                       
                       <!-- Статус файла -->
                       <div class="flex items-center mt-1">
                         <i
                           :class="{
-                          'pi pi-check text-green-500': fileObj.data,
-                          'pi pi-clock text-orange-500': !fileObj.data
+                          'pi pi-check': fileObj.data,
+                          'pi pi-clock': !fileObj.data
                         }"
+                          :style="{
+                            color: fileObj.data ? 'var(--green-500)' : 'var(--orange-500)'
+                          }"
                           class="mr-1 text-xs"
                         ></i>
                         <span
-                          :class="{
-                          'text-green-600': fileObj.data,
-                          'text-orange-600': !fileObj.data
-                        }"
+                          :style="{
+                            color: fileObj.data ? 'var(--green-600)' : 'var(--orange-600)'
+                          }"
                           class="text-xs"
                         >
                         {{ fileObj.data ? 'Готов к отправке' : 'Обрабатывается...' }}
@@ -342,8 +426,11 @@
                   </div>
                   
                   <Button
-                    class="p-button-rounded p-button-sm p-button-text p-button-danger"
                     icon="pi pi-times"
+                    rounded
+                    severity="danger"
+                    size="small"
+                    text
                     type="button"
                     @click="removeFile(index)"
                   />
@@ -352,18 +439,19 @@
             </div>
           </template>
         </MultiFileUpload>
-      </div>
+        </template>
+      </Card>
     </form>
     
     <template #footer>
       <div v-if="!loadingRecord" class="flex justify-between items-center">
         <!-- Информация об изменениях -->
-        <div v-if="hasChanges" class="text-sm text-gray-600 mr-2">
-          <span v-if="newAttachmentFiles.length > 0" class="text-blue-600">
+        <div v-if="hasChanges" class="text-sm mr-2" style="color: var(--text-secondary)">
+          <span v-if="newAttachmentFiles.length > 0" style="color: var(--primary-color)">
             +{{ newAttachmentFiles.length }} новых
           </span>
           <span v-if="newAttachmentFiles.length > 0 && filesToRemove.length > 0"> | </span>
-          <span v-if="filesToRemove.length > 0" class="text-red-600">
+          <span v-if="filesToRemove.length > 0" style="color: var(--red-600)">
             -{{ filesToRemove.length }} удалено
           </span>
         </div>
@@ -372,8 +460,8 @@
         <div class="flex space-x-3">
           <Button
             :disabled="loading"
-            class="p-button-outlined"
             label="Отмена"
+            outlined
             @click="closeModal"
           />
           <Button

@@ -13,18 +13,19 @@
               placeholder="Поиск по названию записи, описанию, автору..."
               @input="onSearchInput"
             />
-            <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2" style="color: var(--text-secondary)"></i>
           </div>
         </div>
         <Button
           :icon="showFilters ? 'pi pi-filter-slash' : 'pi pi-filter'"
           :severity="hasActiveFilters ? 'info' : 'secondary'"
-          class="p-button-outlined"
+          outlined
           @click="toggleFilters"
         />
         <Button
           v-if="hasActiveFilters"
-          class="p-button-outlined p-button-danger"
+          outlined
+          severity="danger"
           icon="pi pi-times"
           label="Сбросить"
           @click="resetFilters"
@@ -40,8 +41,8 @@
       
       <!-- Расширенные фильтры -->
       <div v-show="showFilters" class="filters-container">
-        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-4">
-          <div class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+        <div class="p-4 space-y-4 rounded-lg" style="background-color: var(--surface-50); border: 1px solid var(--border-color)">
+          <div class="text-sm font-medium mb-3 flex items-center" style="color: var(--text-primary)">
             <i class="pi pi-sliders-h mr-2"></i>
             Дополнительные фильтры
           </div>
@@ -49,7 +50,7 @@
           <!-- Основные фильтры -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Автор записи</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Автор записи</label>
               <Select
                 v-model="selectedOwnerFilter"
                 :options="ownerOptions"
@@ -62,7 +63,7 @@
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Тип операции</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Тип операции</label>
               <Select
                 v-model="selectedOperationTypeFilter"
                 :options="operationTypeOptions"
@@ -75,7 +76,7 @@
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Тип записи</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Тип записи</label>
               <Select
                 v-model="selectedRecordTypeFilter"
                 :options="recordTypeOptions"
@@ -88,7 +89,7 @@
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">С вложениями</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">С вложениями</label>
               <Select
                 v-model="selectedAttachmentsFilter"
                 :options="attachmentsOptions"
@@ -104,7 +105,7 @@
           <!-- Фильтры по датам и суммам -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Период создания</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Период создания</label>
               <DatePicker
                 v-model="createdDateRange"
                 class="w-full"
@@ -114,13 +115,13 @@
                 showButtonBar
                 showIcon
               />
-              <div v-if="isDateRangePartial(createdDateRange)" class="text-xs text-amber-600 mt-1">
+              <div v-if="isDateRangePartial(createdDateRange)" class="text-xs mt-1" style="color: var(--yellow-600)">
                 Выберите конечную дату для применения фильтра
               </div>
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Период операции</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Период операции</label>
               <DatePicker
                 v-model="operationDateRange"
                 class="w-full"
@@ -130,13 +131,13 @@
                 showButtonBar
                 showIcon
               />
-              <div v-if="isDateRangePartial(operationDateRange)" class="text-xs text-amber-600 mt-1">
+              <div v-if="isDateRangePartial(operationDateRange)" class="text-xs mt-1" style="color: var(--yellow-600)">
                 Выберите конечную дату для применения фильтра
               </div>
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Диапазон сумм</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Диапазон сумм</label>
               <div class="flex gap-2 items-center">
                 <InputNumber
                   v-model="amountFrom"
@@ -144,7 +145,7 @@
                   class="flex-1"
                   placeholder="От"
                 />
-                <span class="text-gray-400">—</span>
+                <span style="color: var(--text-secondary)">—</span>
                 <InputNumber
                   v-model="amountTo"
                   :useGrouping="false"
@@ -158,7 +159,7 @@
           <!-- Сортировка -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Сортировка</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Сортировка</label>
               <Select
                 v-model="selectedSortFilter"
                 :options="sortOptions"
@@ -172,7 +173,7 @@
           
           <!-- Быстрые фильтры -->
           <div class="border-t pt-4">
-            <div class="text-xs font-medium text-gray-600 mb-2">Быстрые фильтры:</div>
+            <div class="text-xs font-medium mb-2" style="color: var(--text-secondary)">Быстрые фильтры:</div>
             <div class="flex flex-wrap gap-2">
               <Button
                 :outlined="!isMyRecordsFilter"
@@ -216,7 +217,7 @@
       
       <!-- Активные фильтры -->
       <div v-if="activeFilterTags.length" class="flex flex-wrap gap-2 items-center">
-        <span class="text-xs font-medium text-gray-600">Активные фильтры:</span>
+        <span class="text-xs font-medium" style="color: var(--text-secondary)">Активные фильтры:</span>
         <Tag
           v-for="tag in activeFilterTags"
           :key="tag.key"
@@ -227,18 +228,21 @@
           <template #default>
             <span class="mr-1">{{ tag.label }}</span>
             <i
-              class="pi pi-times cursor-pointer hover:text-red-600"
+              class="pi pi-times cursor-pointer"
+              style="color: var(--text-secondary); transition: color 0.2s;"
               @click="removeFilter(tag.key)"
+              @mouseover="$event.target.style.color = 'var(--red-500)'"
+              @mouseout="$event.target.style.color = 'var(--text-secondary)'"
             ></i>
           </template>
         </Tag>
       </div>
       
       <!-- Статистика -->
-      <div v-if="totalRecords !== null" class="text-sm text-gray-600 flex items-center justify-between">
+      <div v-if="totalRecords !== null" class="text-sm flex items-center justify-between" style="color: var(--text-secondary)">
         <span>
           Найдено {{ totalRecords }} {{ getRecordsWord(totalRecords) }}
-          <span v-if="hasActiveFilters" class="ml-2 text-blue-600">
+          <span v-if="hasActiveFilters" class="ml-2" style="color: var(--primary-color)">
             (применены фильтры)
           </span>
         </span>

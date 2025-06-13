@@ -8,12 +8,12 @@
   >
     <div class="record-logs-modal">
       <!-- Информация о записи -->
-      <div v-if="record" class="mb-4 p-4 bg-gray-50 rounded-lg">
+      <div v-if="record" class="mb-4 p-4 rounded-lg" style="background: var(--surface-100); border: 1px solid var(--surface-200);">
         <div class="flex items-center space-x-3">
-          <i class="pi pi-file-edit text-blue-600 text-xl"></i>
+          <i class="pi pi-file-edit text-xl" style="color: var(--primary-500);"></i>
           <div>
-            <h3 class="font-semibold text-gray-900">{{ record.name || 'Без названия' }}</h3>
-            <p v-if="record.description" class="text-sm text-gray-600">{{ record.description }}</p>
+            <h3 class="font-semibold" style="color: var(--text-primary);">{{ record.name || 'Без названия' }}</h3>
+            <p v-if="record.description" class="text-sm" style="color: var(--text-secondary);">{{ record.description }}</p>
           </div>
         </div>
       </div>
@@ -30,18 +30,19 @@
                 class="w-full pl-10 input-search"
                 placeholder="Поиск по описанию, пользователю..."
               />
-              <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+              <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2" style="color: var(--text-secondary);"></i>
             </div>
           </div>
           <Button
             :icon="showFilters ? 'pi pi-filter-slash' : 'pi pi-filter'"
             :severity="hasActiveFilters ? 'info' : 'secondary'"
-            class="p-button-outlined"
+            outlined
             @click="toggleFilters"
           />
           <Button
             v-if="hasActiveFilters"
-            class="p-button-outlined p-button-danger"
+            severity="danger"
+            outlined
             icon="pi pi-times"
             label="Сбросить"
             @click="resetFilters"
@@ -50,8 +51,8 @@
         
         <!-- Расширенные фильтры -->
         <div v-show="showFilters" class="filters-container">
-          <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-            <div class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+          <div class="rounded-lg p-4 space-y-3" style="background: var(--surface-100); border: 1px solid var(--surface-200);">
+            <div class="text-sm font-medium mb-3 flex items-center" style="color: var(--text-primary);">
               <i class="pi pi-sliders-h mr-2"></i>
               Дополнительные фильтры
             </div>
@@ -59,7 +60,7 @@
             <!-- Основные фильтры -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Конкретное действие</label>
+                <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary);">Конкретное действие</label>
                 <Select
                   v-model="selectedActionFilter"
                   :options="actionFilterOptions"
@@ -72,7 +73,7 @@
               </div>
               
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Тип действий</label>
+                <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary);">Тип действий</label>
                 <Select
                   v-model="selectedActionTypeFilter"
                   :options="actionTypeOptions"
@@ -85,7 +86,7 @@
               </div>
               
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Измененное поле</label>
+                <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary);">Измененное поле</label>
                 <Select
                   v-model="selectedFieldFilter"
                   :loading="loading"
@@ -99,7 +100,7 @@
               </div>
               
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Период изменений</label>
+                <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary);">Период изменений</label>
                 <DatePicker
                   v-model="dateRange"
                   :manualInput="false"
@@ -114,8 +115,8 @@
             </div>
             
             <!-- Быстрые фильтры -->
-            <div class="border-t pt-4">
-              <div class="text-xs font-medium text-gray-600 mb-2">Быстрые фильтры:</div>
+            <div class="pt-4" style="border-top: 1px solid var(--surface-200);">
+              <div class="text-xs font-medium mb-2" style="color: var(--text-secondary);">Быстрые фильтры:</div>
               <div class="flex flex-wrap gap-2">
                 <Button
                   :outlined="selectedActionTypeFilter !== 'record_changes'"
@@ -152,7 +153,7 @@
         
         <!-- Активные фильтры -->
         <div v-if="activeFilterTags.length" class="flex flex-wrap gap-2 items-center">
-          <span class="text-xs font-medium text-gray-600">Активные фильтры:</span>
+          <span class="text-xs font-medium" style="color: var(--text-secondary);">Активные фильтры:</span>
           <Tag
             v-for="tag in activeFilterTags"
             :key="tag.key"
@@ -163,7 +164,8 @@
             <template #default>
               <span class="mr-1">{{ tag.label }}</span>
               <i
-                class="pi pi-times cursor-pointer hover:text-red-600"
+                class="pi pi-times cursor-pointer"
+                style="color: var(--text-secondary);"
                 @click="removeFilter(tag.key)"
               ></i>
             </template>
@@ -171,17 +173,17 @@
         </div>
         
         <!-- Статистика -->
-        <div v-if="pagination" class="text-sm text-gray-600 flex items-center justify-between">
+        <div v-if="pagination" class="text-sm flex items-center justify-between" style="color: var(--text-secondary);">
           <span>
             Показано {{ logs.length }} из {{ pagination.total }} записей
-            <span v-if="hasActiveFilters" class="ml-2 text-blue-600">
+            <span v-if="hasActiveFilters" class="ml-2" style="color: var(--primary-500);">
               (применены фильтры)
             </span>
           </span>
           <Button
             v-if="pagination.total > pagination.per_page"
             :label="`Показать по ${pagination.per_page === 50 ? '100' : '50'}`"
-            class="p-button-text"
+            text
             size="small"
             @click="togglePerPage"
           />
@@ -200,7 +202,10 @@
           <div
             v-for="log in logs"
             :key="log.id"
-            class="border border-gray-200 rounded-lg p-4 bg-white hover:bg-gray-50 transition-colors"
+            class="rounded-lg p-4 transition-colors"
+            style="border: 1px solid var(--surface-200); background: var(--surface-0);"
+            @mouseenter="$event.target.style.background = 'var(--surface-50)'"
+            @mouseleave="$event.target.style.background = 'var(--surface-0)'"
           >
             <!-- Заголовок лога -->
             <div class="flex items-center justify-between mb-3">
@@ -209,16 +214,16 @@
                   :severity="log.action_badge.severity"
                   :value="log.action_badge.text"
                 />
-                <span class="font-medium text-gray-900">{{ log.description }}</span>
+                <span class="font-medium" style="color: var(--text-primary);">{{ log.description }}</span>
               </div>
-              <div class="text-sm text-gray-500">
+              <div class="text-sm" style="color: var(--text-secondary);">
                 {{ log.created_at }}
               </div>
             </div>
             
             <!-- Информация о пользователе -->
             <div class="mb-3">
-              <div class="text-sm text-gray-600">
+              <div class="text-sm" style="color: var(--text-secondary);">
                 <i class="pi pi-user mr-1"></i>
                 Пользователь: <span class="font-medium">{{ log.user_name }}</span>
               </div>
@@ -226,27 +231,29 @@
             
             <!-- Изменения -->
             <div v-if="log.changes?.length" class="space-y-2">
-              <h4 class="text-sm font-medium text-gray-700 mb-2">Изменения:</h4>
-              <div class="bg-gray-50 rounded-md p-3 space-y-2">
+              <h4 class="text-sm font-medium mb-2" style="color: var(--text-primary);">Изменения:</h4>
+              <div class="rounded-md p-3 space-y-2" style="background: var(--surface-50);">
                 <div
                   v-for="change in log.changes"
                   :key="change.field"
                   class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-sm"
                 >
                   <span
-                    :class="{ 'text-blue-600': selectedFieldFilter && change.field.toLowerCase().includes(getFieldKeyByValue(selectedFieldFilter)?.toLowerCase()) }"
-                    class="font-medium text-gray-700"
+                    class="font-medium"
+                    :style="selectedFieldFilter && change.field.toLowerCase().includes(getFieldKeyByValue(selectedFieldFilter)?.toLowerCase()) ? 'color: var(--primary-500);' : 'color: var(--text-primary);'"
                   >
                     {{ change.field }}:
                   </span>
                   <div class="flex items-center space-x-2 mt-1 sm:mt-0">
                     <span :title="change.old_value"
-                          class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs max-w-32 truncate">
+                          class="px-2 py-1 rounded text-xs max-w-32 truncate"
+                          style="background: var(--red-100); color: var(--red-700);">
                       {{ change.old_value }}
                     </span>
-                    <i class="pi pi-arrow-right text-gray-400 text-xs"></i>
+                    <i class="pi pi-arrow-right text-xs" style="color: var(--text-secondary);"></i>
                     <span :title="change.new_value"
-                          class="px-2 py-1 bg-green-100 text-green-700 rounded text-xs max-w-32 truncate">
+                          class="px-2 py-1 rounded text-xs max-w-32 truncate"
+                          style="background: var(--green-100); color: var(--green-700);">
                       {{ change.new_value }}
                     </span>
                   </div>
@@ -256,7 +263,7 @@
             
             <!-- Метаданные для вложений -->
             <div v-if="log.metadata?.files_names" class="mt-3">
-              <h4 class="text-sm font-medium text-gray-700 mb-2">Файлы:</h4>
+              <h4 class="text-sm font-medium mb-2" style="color: var(--text-primary);">Файлы:</h4>
               <div class="flex flex-wrap gap-2">
                 <Tag
                   v-for="fileName in log.metadata.files_names"
@@ -271,10 +278,10 @@
             <!-- Дополнительные метаданные -->
             <div v-if="log.metadata && Object.keys(log.metadata).length > 0 && !log.metadata.files_names" class="mt-3">
               <details class="text-sm">
-                <summary class="cursor-pointer text-gray-600 hover:text-gray-800">
+                <summary class="cursor-pointer" style="color: var(--text-secondary);">
                   Дополнительная информация
                 </summary>
-                <div class="mt-2 bg-gray-50 rounded p-2 text-xs">
+                <div class="mt-2 rounded p-2 text-xs" style="background: var(--surface-50);">
                   <pre class="whitespace-pre-wrap">{{ JSON.stringify(log.metadata, null, 2) }}</pre>
                 </div>
               </details>
@@ -300,11 +307,11 @@
       
       <!-- Пустое состояние -->
       <div v-else class="text-center py-8">
-        <i class="pi pi-history text-4xl text-gray-300 mb-3"></i>
-        <h3 class="text-lg font-medium text-gray-700 mb-1">
+        <i class="pi pi-history text-4xl mb-3" style="color: var(--surface-300);"></i>
+        <h3 class="text-lg font-medium mb-1" style="color: var(--text-primary);">
           {{ hasActiveFilters ? 'Нет записей' : 'История пуста' }}
         </h3>
-        <p class="text-gray-500">
+        <p style="color: var(--text-secondary);">
           {{
             hasActiveFilters
               ? 'Не найдено записей с выбранными фильтрами'
@@ -313,7 +320,8 @@
         </p>
         <Button
           v-if="hasActiveFilters"
-          class="p-button-text mt-3"
+          text
+          class="mt-3"
           icon="pi pi-times"
           label="Сбросить фильтры"
           @click="resetFilters"
@@ -323,11 +331,11 @@
     
     <template #footer>
       <div class="flex justify-between items-center">
-        <div class="text-sm text-gray-500">
+        <div class="text-sm" style="color: var(--text-secondary);">
           {{ logs.length }} записей загружено
         </div>
         <Button
-          class="p-button-text"
+          text
           icon="pi pi-times"
           label="Закрыть"
           @click="closeModal"

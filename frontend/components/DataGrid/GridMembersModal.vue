@@ -31,8 +31,8 @@
           >
             <!-- Информация о пользователе -->
             <div class="flex items-center space-x-3 min-w-0 flex-1">
-              <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span class="text-white font-medium text-sm sm:text-base">
+              <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center flex-shrink-0" style="background-color: var(--primary-color)">
+                <span class="font-medium text-sm sm:text-base" style="color: var(--white)">
                   {{ member.user.name.charAt(0).toUpperCase() }}
                 </span>
               </div>
@@ -66,16 +66,19 @@
               <div class="flex space-x-2 justify-end sm:justify-start">
                 <Button
                   v-tooltip.top="'Изменить права'"
-                  class="p-button-sm p-button-outlined flex-shrink-0 flex-1"
+                  outlined
+                  size="small"
+                  class="flex-shrink-0 flex-1 p-2"
                   icon="pi pi-pencil"
-                  :class="{ 'p-2': true }"
                   @click="editMember(member)"
                 />
                 <Button
                   v-tooltip.top="'Удалить'"
-                  class="p-button-sm p-button-outlined p-button-danger flex-shrink-0 flex-1"
+                  outlined
+                  severity="danger"
+                  size="small"
+                  class="flex-shrink-0 flex-1 p-2"
                   icon="pi pi-trash"
-                  :class="{ 'p-2': true }"
                   @click="confirmRemoveMember(member)"
                 />
               </div>
@@ -84,7 +87,7 @@
         </div>
         
         <div v-else class="text-center py-6 sm:py-8">
-          <i class="pi pi-users text-3xl sm:text-4xl text-gray-300 mb-2"></i>
+          <i class="pi pi-users text-3xl sm:text-4xl mb-2" style="color: var(--text-muted)"></i>
           <p class="text-sm sm:text-base" style="color: var(--text-secondary)">Участников пока нет</p>
         </div>
       </div>
@@ -99,7 +102,8 @@
           <div
             v-for="invitation in pendingInvitations"
             :key="invitation.id"
-            class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 bg-yellow-50 rounded-lg border border-yellow-200 space-y-3 sm:space-y-0"
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg border space-y-3 sm:space-y-0"
+            style="background-color: var(--warning-light); border-color: var(--warning-border)"
           >
             <!-- Информация о приглашении -->
             <div class="min-w-0 flex-1">
@@ -123,9 +127,11 @@
               <Button
                 v-tooltip.top="'Отменить'"
                 :loading="processing === `cancel-${invitation.id}`"
-                class="p-button-sm p-button-outlined p-button-danger flex-1"
+                outlined
+                severity="danger"
+                size="small"
+                class="flex-1 p-2"
                 icon="pi pi-times"
-                :class="{ 'p-2': true }"
                 @click="cancelInvitation(invitation)"
               />
             </div>
@@ -137,7 +143,8 @@
     <template #footer>
       <div class="flex justify-end pt-3 sm:pt-0">
         <Button
-          class="p-button-outlined w-full sm:w-auto px-4 py-2 sm:px-6"
+          outlined
+          class="w-full sm:w-auto px-4 py-2 sm:px-6"
           label="Закрыть"
           @click="closeModal"
         />
@@ -156,14 +163,14 @@
   >
     <div v-if="editingMember" class="space-y-4 sm:space-y-6">
       <!-- Информация о пользователе -->
-      <div class="text-center p-3 sm:p-4 bg-gray-50 rounded-lg">
-        <div class="w-12 h-12 sm:w-16 sm:h-16 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-3">
-          <span class="text-white font-medium text-base sm:text-lg">
+      <div class="text-center p-3 sm:p-4 rounded-lg" style="background-color: var(--tertiary-bg)">
+        <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full flex items-center justify-center mx-auto mb-3" style="background-color: var(--primary-color)">
+          <span class="font-medium text-base sm:text-lg" style="color: var(--white)">
             {{ editingMember.user.name.charAt(0).toUpperCase() }}
           </span>
         </div>
-        <p class="font-medium text-sm sm:text-base text-gray-900">{{ editingMember.user.name }}</p>
-        <p class="text-xs sm:text-sm text-gray-500 break-all">{{ editingMember.user.email }}</p>
+        <p class="font-medium text-sm sm:text-base" style="color: var(--text-primary)">{{ editingMember.user.name }}</p>
+        <p class="text-xs sm:text-sm break-all" style="color: var(--text-secondary)">{{ editingMember.user.email }}</p>
       </div>
       
       <!-- Права доступа -->
@@ -227,7 +234,8 @@
     <template #footer>
       <div class="flex flex-col flex-row justify-end space-y-2 sm:space-x-3 pt-3 sm:pt-0">
         <Button
-          class="p-button-outlined w-full mb-0 mr-2"
+          outlined
+          class="w-full mb-0 mr-2"
           label="Отмена"
           @click="showEditMemberModal = false"
         />

@@ -1,49 +1,49 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen" style="background-color: var(--surface-ground)">
     <div class="container mx-auto px-4 py-8">
       <!-- Основной контент -->
       <div v-if="grid">
         <!-- Заголовок -->
-        <div class="flex items-center justify-between mb-8">
-          <div class="flex items-center space-x-4">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+          <div class="flex items-center gap-4">
             <Button
-              class="p-button-outlined"
+              outlined
               icon="pi pi-arrow-left"
               @click="$router.push('/')"
             />
             <div>
-              <div class="flex items-center space-x-2">
-                <h1 class="text-3xl font-bold text-gray-900">{{ grid.name }}</h1>
-                <Tag v-if="!grid.is_owner" severity="warning" value="Общая"/>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 class="text-2xl lg:text-3xl font-bold" style="color: var(--text-primary)">{{ grid.name }}</h1>
+                <Tag v-if="!grid.is_owner" severity="warn" value="Общая"/>
               </div>
-              <p v-if="grid.description" class="text-gray-600 mt-1">{{ grid.description }}</p>
-              <p v-if="!grid.is_owner && grid.owner_name" class="text-sm text-gray-500 mt-1">
+              <p v-if="grid.description" class="mt-1 text-sm lg:text-base" style="color: var(--text-secondary)">{{ grid.description }}</p>
+              <p v-if="!grid.is_owner && grid.owner_name" class="text-sm mt-1" style="color: var(--text-secondary)">
                 Владелец: {{ grid.owner_name }}
               </p>
             </div>
           </div>
           
-          <div class="flex space-x-3">
+          <div class="flex flex-wrap gap-3">
             <!-- Кнопка добавления записи (только если есть права) -->
             <Button
               v-if="hasPermission('create')"
               icon="pi pi-plus"
-              label="Добавить запись"
+              :label="isMobile ? '' : 'Добавить запись'"
               @click="showCreateRecordModal = true"
             />
             
             <!-- Кнопки управления для владельца -->
             <template v-if="grid.is_owner">
               <Button
-                class="p-button-outlined"
+                outlined
                 icon="pi pi-share-alt"
-                label="Поделиться"
+                :label="isMobile ? '' : 'Поделиться'"
                 @click="showShareModal = true"
               />
               <Button
-                class="p-button-outlined"
+                outlined
                 icon="pi pi-cog"
-                label="Настройка таблицы"
+                :label="isMobile ? '' : 'Настройка таблицы'"
                 @click="showMembersModal = true"
               />
             </template>
@@ -51,9 +51,10 @@
             <!-- Кнопка покинуть таблицу для участников -->
             <Button
               v-else
-              class="p-button-outlined p-button-danger"
+              outlined
+              severity="danger"
               icon="pi pi-sign-out"
-              label="Покинуть таблицу"
+              :label="isMobile ? '' : 'Покинуть таблицу'"
               @click="confirmLeaveGrid"
             />
           </div>
@@ -61,13 +62,13 @@
         
         <!-- Права доступа для участников -->
         <div v-if="!grid.is_owner && grid.permissions" class="mb-6">
-          <Card class="border-l-4 border-l-blue-500 bg-blue-50">
+          <Card class="border-l-4" style="border-left-color: var(--primary-color); background-color: var(--primary-50)">
             <template #content>
-              <div class="flex items-center space-x-4">
-                <i class="pi pi-shield text-blue-600 text-xl"></i>
-                <div>
-                  <h3 class="font-semibold text-blue-900">Ваши права в этой таблице:</h3>
-                  <div class="flex flex-wrap gap-2 mt-2">
+              <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <i class="pi pi-shield text-xl" style="color: var(--primary-color)"></i>
+                <div class="flex-1">
+                  <h3 class="font-semibold mb-2" style="color: var(--text-primary)">Ваши права в этой таблице:</h3>
+                  <div class="flex flex-wrap gap-2">
                     <Tag
                       v-for="permission in grid.permissions"
                       :key="permission"
@@ -95,7 +96,7 @@
         />
         
         <!-- Таблица записей -->
-        <Card class="shadow-sm">
+        <Card style="background-color: var(--surface-card); border: 1px solid var(--border-color)">
           <template #content>
             <DataTable
               :loading="recordsLoading"
@@ -111,19 +112,19 @@
             >
               <template #header>
                 <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-semibold">Записи ({{ totalRecords }})</h3>
+                  <h3 class="text-lg font-semibold" style="color: var(--text-primary)">Записи ({{ totalRecords }})</h3>
                 </div>
               </template>
               
               <template #empty>
                 <div class="text-center py-8">
-                  <i class="pi pi-inbox text-4xl text-gray-300 mb-4"></i>
-                  <p class="text-gray-500">
+                  <i class="pi pi-inbox text-4xl mb-4" style="color: var(--text-secondary)"></i>
+                  <p class="mb-4" style="color: var(--text-secondary)">
                     {{ hasActiveFilters ? 'По заданным фильтрам записи не найдены' : 'В таблице пока нет записей' }}
                   </p>
                   <Button
                     v-if="hasPermission('create') && !hasActiveFilters"
-                    class="p-button-outlined mt-4"
+                    outlined
                     icon="pi pi-plus"
                     label="Добавить первую запись"
                     @click="showCreateRecordModal = true"
@@ -133,8 +134,8 @@
               
               <Column field="name" header="Название" sortable>
                 <template #body="{ data }">
-                  <div class="font-medium">{{ data.name }}</div>
-                  <div v-if="data.description" class="text-sm text-gray-500 mt-1 line-clamp-2">
+                  <div class="font-medium" style="color: var(--text-primary)">{{ data.name }}</div>
+                  <div v-if="data.description" class="text-sm mt-1 line-clamp-2" style="color: var(--text-secondary)">
                     {{ data.description }}
                   </div>
                 </template>
@@ -142,7 +143,7 @@
               
               <Column field="date" header="Дата операции" sortable class="w-32">
                 <template #body="{ data }">
-                  <div class="text-sm">{{ data.date }}</div>
+                  <div class="text-sm" style="color: var(--text-primary)">{{ data.date }}</div>
                 </template>
               </Column>
               
@@ -158,7 +159,7 @@
               
               <Column field="amount" header="Сумма" sortable class="w-28">
                 <template #body="{ data }">
-                  <div class="text-sm font-medium">{{ formatAmount(data.amount) }}</div>
+                  <div class="text-sm font-medium" style="color: var(--text-primary)">{{ formatAmount(data.amount) }}</div>
                 </template>
               </Column>
               
@@ -170,7 +171,7 @@
                     class="text-xs"
                     severity="info"
                   />
-                  <span v-else class="text-gray-400 text-sm">—</span>
+                  <span v-else class="text-sm" style="color: var(--text-secondary)">—</span>
                 </template>
               </Column>
               
@@ -191,50 +192,57 @@
                       severity="secondary"
                     />
                   </div>
-                  <span v-else class="text-gray-400 text-sm">—</span>
+                  <span v-else class="text-sm" style="color: var(--text-secondary)">—</span>
                 </template>
               </Column>
               
               <Column class="w-36" field="creator.name" header="Автор" sortable>
                 <template #body="{ data }">
-                  <div class="text-sm">{{ data.creator.name }}</div>
+                  <div class="text-sm" style="color: var(--text-primary)">{{ data.creator.name }}</div>
                 </template>
               </Column>
               
               <Column class="w-32" field="created_at" header="Создано" sortable>
                 <template #body="{ data }">
-                  <div class="text-sm text-gray-500">{{ data.created_at }}</div>
+                  <div class="text-sm" style="color: var(--text-secondary)">{{ data.created_at }}</div>
                 </template>
               </Column>
               
               <!-- Действия с учетом прав -->
               <Column class="w-24" header="Действия">
                 <template #body="{ data }">
-                  <div class="flex space-x-2">
+                  <div class="flex gap-1 flex-wrap">
                     <Button
                       v-tooltip.top="'Просмотр'"
-                      class="p-button-outlined p-button-sm p-button-info"
+                      outlined
+                      size="small"
+                      severity="info"
                       icon="pi pi-eye"
                       @click="viewRecord(data)"
                     />
                     <Button
                       v-if="hasPermission('update')"
                       v-tooltip.top="'Редактировать'"
-                      class="p-button-outlined p-button-sm"
+                      outlined
+                      size="small"
                       icon="pi pi-pencil"
                       @click="editRecord(data)"
                     />
                     <Button
                       v-if="hasPermission('view')"
                       v-tooltip.top="'История изменений'"
-                      class="p-button-outlined p-button-sm p-button-secondary"
+                      outlined
+                      size="small"
+                      severity="secondary"
                       icon="pi pi-history"
                       @click="viewRecordLogs(data)"
                     />
                     <Button
                       v-if="hasPermission('delete')"
                       v-tooltip.top="'Удалить'"
-                      class="p-button-outlined p-button-sm p-button-danger"
+                      outlined
+                      size="small"
+                      severity="danger"
                       icon="pi pi-trash"
                       @click="confirmDeleteRecord(data)"
                     />
@@ -248,9 +256,9 @@
       
       <!-- Ошибка 404 -->
       <div v-else class="text-center py-12">
-        <i class="pi pi-exclamation-triangle text-6xl text-red-300 mb-4"></i>
-        <h3 class="text-xl font-semibold text-gray-700 mb-2">Таблица не найдена</h3>
-        <p class="text-gray-500 mb-6">Возможно, таблица была удалена или у вас нет доступа к ней</p>
+        <i class="pi pi-exclamation-triangle text-6xl mb-4" style="color: var(--red-300)"></i>
+        <h3 class="text-xl font-semibold mb-2" style="color: var(--text-primary)">Таблица не найдена</h3>
+        <p class="mb-6" style="color: var(--text-secondary)">Возможно, таблица была удалена или у вас нет доступа к ней</p>
         <Button
           icon="pi pi-home"
           label="Вернуться на главную"
@@ -318,6 +326,7 @@ const {$api} = useNuxtApp()
 const confirm = useConfirm()
 const toast = useToast()
 const { user } = useAuth()
+const { isMobile } = useDevice()
 
 // Реактивные данные
 const recordsLoading = ref(false)

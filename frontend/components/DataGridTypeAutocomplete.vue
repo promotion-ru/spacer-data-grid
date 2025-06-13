@@ -1,72 +1,115 @@
 <template>
   <div class="w-full">
-    <AutoComplete
-      v-model="selectedType"
-      :loading="loading"
-      :placeholder="placeholder"
-      :suggestions="suggestions"
-      class="w-full"
-      complete-on-focus
-      dropdown
-      force-selection
-      input-class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-      option-label="label"
-      panel-class="bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-60 overflow-auto"
-      @complete="searchTypes"
-      @input="onInput"
-      @item-select="onTypeSelect"
-    >
-      <template #option="{ option }">
-        <div class="flex items-center justify-between p-2 hover:bg-gray-50">
-          <span class="text-gray-900">{{ option.name }}</span>
-          <div class="flex items-center space-x-2">
-            <Badge
-              v-if="option.is_global"
-              severity="info"
+    <div class="relative">
+      <AutoComplete
+        v-model="selectedType"
+        :loading="loading"
+        :placeholder="placeholder"
+        :suggestions="suggestions"
+        :pt="{
+          root: { style: 'width: 100%' },
+          input: { style: 'background-color: var(--surface-0); border-color: var(--border-color); color: var(--text-primary)' },
+          panel: { style: 'background-color: var(--surface-0); border-color: var(--border-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1)' },
+          list: { style: 'padding: 0.5rem' },
+          item: { style: 'border-radius: 6px; margin-bottom: 2px' }
+        }"
+        class="w-full"
+        complete-on-focus
+        dropdown
+        force-selection
+        option-label="label"
+        @complete="searchTypes"
+        @input="onInput"
+        @item-select="onTypeSelect"
+      >
+        <!-- Кнопка быстрого создания рядом с поиском -->
+        <template #loader>
+          <div class="absolute right-12 top-1/2 transform -translate-y-1/2 z-10">
+            <Button
+              v-if="canCreateNew && searchQuery.length >= 2"
+              :loading="creating"
+              icon="pi pi-plus"
               size="small"
-              value="Глобальный"
+              severity="success"
+              rounded
+              outlined
+              v-tooltip.top="`Создать тип '${searchQuery}'`"
+              @click="createNewType"
             />
           </div>
-        </div>
-      </template>
+        </template>
+        <template #option="{ option }">
+          <div class="flex items-center justify-between p-3 transition-colors duration-200" style="border-radius: 6px" 
+               @mouseenter="$event.currentTarget.style.backgroundColor = 'var(--primary-50)'"
+               @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'">
+            <div class="flex items-center gap-2 flex-1">
+              <i class="pi pi-tag" style="color: var(--primary-color)"></i>
+              <span class="font-medium" style="color: var(--text-primary)">{{ option.name }}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <Tag
+                v-if="option.is_global"
+                value="Глобальный"
+                severity="info"
+                size="small"
+                class="text-xs"
+              />
+              <i class="pi pi-arrow-right text-xs" style="color: var(--text-secondary)"></i>
+            </div>
+          </div>
+        </template>
       
-      <template #empty>
-        <div class="p-4 text-center">
-          <p class="text-gray-500 mb-2">Тип не найден</p>
-          <Button
-            v-if="canCreateNew"
-            :loading="creating"
-            icon="pi pi-plus"
-            label="Создать новый тип"
-            outlined
-            size="small"
-            @click="createNewType"
-          />
-        </div>
-      </template>
+        <template #empty>
+          <div class="p-6 text-center" style="background-color: var(--surface-50); border-radius: 8px; margin: 8px">
+            <i class="pi pi-search text-3xl mb-3" style="color: var(--text-secondary)"></i>
+            <p class="mb-3 font-medium" style="color: var(--text-secondary)">Тип не найден</p>
+            <Button
+              v-if="canCreateNew"
+              :loading="creating"
+              :label="`Создать '${searchQuery}'`"
+              icon="pi pi-plus"
+              severity="success"
+              size="small"
+              class="w-full"
+              @click="createNewType"
+            />
+            <p v-else class="text-xs mt-2" style="color: var(--text-secondary)">Введите минимум 2 символа для создания</p>
+          </div>
+        </template>
       
-      <!-- Добавляем footer для кнопки создания когда есть результаты -->
-      <template #footer>
-        <div v-if="canCreateNew && suggestions.length > 0" class="p-2 border-t border-gray-200">
-          <Button
-            :label="`Создать тип ${searchQuery}`"
-            :loading="creating"
-            class="w-full"
-            icon="pi pi-plus"
-            outlined
-            size="small"
-            @click="createNewType"
-          />
-        </div>
-      </template>
-    </AutoComplete>
+        <!-- Footer для кнопки создания когда есть результаты -->
+        <template #footer>
+          <div v-if="canCreateNew && suggestions.length > 0" class="p-3" style="border-top: 1px solid var(--border-color); background-color: var(--surface-100)">
+            <Button
+              :label="`Создать тип '${searchQuery}'`"
+              :loading="creating"
+              class="w-full"
+              icon="pi pi-plus"
+              severity="success"
+              outlined
+              size="small"
+              @click="createNewType"
+            />
+          </div>
+        </template>
+      </AutoComplete>
+    </div>
     
     <!-- Дополнительная информация о выбранном типе -->
-    <div v-if="selectedTypeInfo" class="mt-2 text-sm text-gray-600">
-      <span v-if="selectedTypeInfo.is_global" class="inline-flex items-center">
-        <i class="pi pi-globe mr-1"></i>
-        Глобальный тип
-      </span>
+    <div v-if="selectedTypeInfo" class="mt-3">
+      <div class="flex items-center gap-2 p-2 rounded-lg" style="background-color: var(--primary-50); border: 1px solid var(--primary-200)">
+        <i class="pi pi-info-circle" style="color: var(--primary-color)"></i>
+        <div class="flex-1">
+          <div class="text-sm font-medium" style="color: var(--primary-700)">Выбранный тип: {{ selectedTypeInfo.name }}</div>
+          <div v-if="selectedTypeInfo.is_global" class="text-xs flex items-center gap-1 mt-1" style="color: var(--primary-600)">
+            <i class="pi pi-globe"></i>
+            <span>Глобальный тип (доступен во всех таблицах)</span>
+          </div>
+          <div v-else class="text-xs mt-1" style="color: var(--primary-600)">
+            Локальный тип (только в этой таблице)
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
