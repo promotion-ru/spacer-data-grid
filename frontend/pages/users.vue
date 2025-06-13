@@ -1,261 +1,274 @@
 <template>
   <div class="min-h-screen" style="background-color: var(--primary-bg)">
     <div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold" style="color: var(--text-primary)">Пользователи</h1>
-      <Button
-        class="p-button-success"
-        icon="pi pi-plus"
-        label="Добавить пользователя"
-        @click="openCreateModal"
-      />
-    </div>
-    
-    <!-- Компонент фильтров -->
-    <UsersDataFilters
-      ref="filtersRef"
-      :loading="isLoading"
-      :totalCount="totalRecords"
-      @filtersChanged="onFiltersChanged"
-    />
-    
-    <Card>
-      <template #content>
-        <DataTable
-          :loading="isLoading"
-          :rows="perPage"
-          :rowsPerPageOptions="[10, 25, 50, 100]"
-          :sortField="currentSortField"
-          :sortOrder="currentSortOrder"
-          :totalRecords="totalRecords"
-          :value="usersList"
-          class="p-datatable-sm users-table mobile-responsive-table"
-          lazy
-          paginator
-          responsiveLayout="scroll"
-          stripedRows
-          @page="onPageEvent"
-          @sort="onSortEvent"
-        >
-          <Column class="w-20 text-center" field="avatar_url" header="Аватар">
-            <template #body="slotProps">
-              <Avatar
-                :image="slotProps.data.avatar_url || undefined"
-                :label="!slotProps.data.avatar_url && slotProps.data.name ? slotProps.data.name.charAt(0).toUpperCase() : undefined"
-                class="bg-primary-100 text-primary-700"
-                shape="circle"
-                size="large"
-              />
-            </template>
-          </Column>
-          
-          <Column class="min-w-[10rem]" field="name" header="Имя" sortable>
-            <template #body="slotProps">
-              <div>
-                <div class="font-semibold">{{ slotProps.data.name }}</div>
-                <div v-if="slotProps.data.surname" class="text-sm" style="color: var(--text-secondary)">
-                  {{ slotProps.data.surname }}
-                </div>
-              </div>
-            </template>
-          </Column>
-          
-          <Column class="min-w-[15rem]" field="email" header="Email" sortable/>
-          
-          <Column class="min-w-[9rem]" field="created_at" header="Создан" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.created_at) }}
-            </template>
-          </Column>
-          
-          <Column class="min-w-[9rem]" field="updated_at" header="Обновлен" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.updated_at) }}
-            </template>
-          </Column>
-          
-          <Column class="w-32 text-center" header="Действия">
-            <template #body="slotProps">
-              <div class="flex gap-2 justify-center">
-                <Button
-                  v-tooltip.top="'Редактировать'"
-                  class="p-button-rounded p-button-text p-button-sm"
-                  icon="pi pi-pencil"
-                  @click="openEditModal(slotProps.data)"
-                />
-                <Button
-                  v-tooltip.top="'Удалить'"
-                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
-                  icon="pi pi-trash"
-                  @click="confirmDelete(slotProps.data)"
-                />
-              </div>
-            </template>
-          </Column>
-          <template #empty>
-            <div class="text-center p-4" style="color: var(--text-secondary)">
-              {{
-                hasActiveFilters ? 'Пользователи не найдены. Попробуйте изменить параметры поиска.' : 'Пользователи не найдены.'
-              }}
+      <UniversalDataTable
+        ref="dataTableRef"
+        :data="usersList"
+        :loading="isLoading"
+        :totalRecords="totalRecords"
+        :columns="columns"
+        :actions="actions"
+        title="Пользователи"
+        addButtonLabel="Добавить пользователя"
+        emptyFilteredMessage="Пользователи не найдены. Попробуйте изменить параметры поиска."
+        emptyMessage="Пользователи не найдены."
+        @add-clicked="openCreateModal"
+        @action-clicked="handleActionClick"
+        @page-changed="handlePageChange"
+        @sort-changed="handleSortChange"
+        @filters-changed="handleFiltersChange"
+      >
+        <!-- Слот для фильтров -->
+        <template #filters="{ loading, totalCount, onFiltersChanged }">
+          <UsersDataFilters
+            ref="filtersRef"
+            :loading="loading"
+            :totalCount="totalCount"
+            @filtersChanged="onFiltersChanged"
+          />
+        </template>
+        
+        <!-- Слот для колонки аватара -->
+        <template #column-avatar_url="{ data, column }">
+          <div :data-label="column.header" class="flex justify-center">
+            <Avatar
+              :image="data.avatar_url || undefined"
+              :label="!data.avatar_url && data.name ? data.name.charAt(0).toUpperCase() : undefined"
+              class="bg-primary-100 text-primary-700"
+              shape="circle"
+              size="large"
+            />
+          </div>
+        </template>
+        
+        <!-- Слот для колонки имени -->
+        <template #column-name="{ data, column }">
+          <div :data-label="column.header">
+            <div class="font-semibold">{{ data.name }}</div>
+            <div v-if="data.surname" class="text-sm" style="color: var(--text-secondary)">
+              {{ data.surname }}
             </div>
-          </template>
-        </DataTable>
-      </template>
-    </Card>
-    
-    <UsersCreateUserModal
-      v-model:visible="showCreateModal"
-      @user-created="onUserCreated"
-    />
-    
-    <UsersEditUserModal
-      v-model:visible="showEditModal"
-      :user="selectedUser"
-      @user-updated="onUserUpdated"
-    />
-    
-    <ConfirmDialog group="userDeletionConfirmation"></ConfirmDialog>
+          </div>
+        </template>
+        
+        <!-- Слот для кастомных действий -->
+        <template #actions="{ data, defaultActions }">
+          <div data-label="Действия" class="flex gap-2 justify-center">
+            <Button
+              v-tooltip.top="'Редактировать'"
+              class="p-button-rounded p-button-text p-button-sm"
+              icon="pi pi-pencil"
+              @click="defaultActions.edit"
+            />
+            <Button
+              v-tooltip.top="'Удалить'"
+              class="p-button-rounded p-button-text p-button-sm p-button-danger"
+              icon="pi pi-trash"
+              @click="defaultActions.delete"
+            />
+          </div>
+        </template>
+      </UniversalDataTable>
+      
+      <!-- Модальные окна -->
+      <UsersCreateUserModal
+        v-model:visible="showCreateModal"
+        @user-created="onUserCreated"
+      />
+      
+      <UsersEditUserModal
+        v-model:visible="showEditModal"
+        :user="selectedUser"
+        @user-updated="onUserUpdated"
+      />
+      
+      <ConfirmDialog group="userDeletionConfirmation"></ConfirmDialog>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue'
+import UniversalDataTable from '~/components/UniversalDataTable.vue'
+
 definePageMeta({
   title: 'Управление пользователями',
   middleware: 'admin'
-});
+})
 
-const {$api} = useNuxtApp();
-const confirm = useConfirm();
-const toast = useToast();
+const { $api } = useNuxtApp()
+const confirm = useConfirm()
+const toast = useToast()
 
-const usersList = ref([]);
-const isLoading = ref(false);
-const selectedUser = ref(null);
+// Reactive data
+const usersList = ref([])
+const isLoading = ref(false)
+const selectedUser = ref(null)
+const totalRecords = ref(0)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const dataTableRef = ref(null)
+const filtersRef = ref(null)
 
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
+// Конфигурация колонок
+const columns = ref([
+  {
+    field: 'avatar_url',
+    header: 'Аватар',
+    class: 'w-20 text-center',
+    sortable: false
+  },
+  {
+    field: 'name',
+    header: 'Имя',
+    class: 'min-w-[10rem]',
+    sortable: true
+  },
+  {
+    field: 'email',
+    header: 'Email',
+    class: 'min-w-[15rem]',
+    sortable: true
+  },
+  {
+    field: 'created_at',
+    header: 'Создан',
+    class: 'min-w-[9rem]',
+    sortable: true,
+    type: 'date'
+  },
+  {
+    field: 'updated_at',
+    header: 'Обновлен',
+    class: 'min-w-[9rem]',
+    sortable: true,
+    type: 'date'
+  }
+])
 
-// Pagination state for DataTable lazy loading
-const currentPage = ref(1);
-const perPage = ref(10);
-const totalRecords = ref(0);
-const currentSortField = ref('created_at');
-const currentSortOrder = ref(-1);
-
-// Filters state
-const currentFilters = ref({});
-const filtersRef = ref(null);
+// Конфигурация действий
+const actions = ref([
+  {
+    key: 'edit',
+    icon: 'pi pi-pencil',
+    tooltip: 'Редактировать',
+    class: 'p-button-rounded p-button-text p-button-sm'
+  },
+  {
+    key: 'delete',
+    icon: 'pi pi-trash',
+    tooltip: 'Удалить',
+    class: 'p-button-rounded p-button-text p-button-sm p-button-danger'
+  }
+])
 
 // Computed
 const hasActiveFilters = computed(() => {
-  return Object.values(currentFilters.value).some(value => value !== null && value !== '' && value !== false)
-});
+  if (!filtersRef.value) return false
+  const filters = filtersRef.value.currentFilters || {}
+  return Object.values(filters).some(value => value !== null && value !== '' && value !== false)
+})
 
-const fetchUsers = async () => {
-  isLoading.value = true;
+// Methods
+const fetchUsers = async (params = {}) => {
+  isLoading.value = true
   try {
-    const params = {
-      page: currentPage.value,
-      per_page: perPage.value,
-      ...currentFilters.value
-    };
+    const requestParams = {
+      page: params.page || 1,
+      per_page: params.perPage || 10,
+      ...params.filters
+    }
     
     // Убираем null/false значения для чистоты запроса
-    Object.keys(params).forEach(key => {
-      if (params[key] === null || params[key] === false || params[key] === '') {
-        delete params[key];
+    Object.keys(requestParams).forEach(key => {
+      if (requestParams[key] === null || requestParams[key] === false || requestParams[key] === '') {
+        delete requestParams[key]
       }
-    });
+    })
     
-    const response = await $api('/users', {params});
-    usersList.value = response.data || [];
-    totalRecords.value = response.meta?.total || response.total || 0;
+    const response = await $api('/users', { params: requestParams })
+    usersList.value = response.data || []
+    totalRecords.value = response.meta?.total || response.total || 0
   } catch (error) {
-    console.error('Error fetching users:', error);
-    toast.add({severity: 'error', summary: 'Ошибка', detail: 'Не удалось загрузить пользователей.', life: 3000});
-    usersList.value = [];
-    totalRecords.value = 0;
+    console.error('Error fetching users:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: 'Не удалось загрузить пользователей.',
+      life: 3000
+    })
+    usersList.value = []
+    totalRecords.value = 0
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  try {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      day: '2-digit', month: '2-digit', year: 'numeric'
-    });
-  } catch (e) {
-    return dateString;
+const handlePageChange = (event) => {
+  fetchUsers(event)
+}
+
+const handleSortChange = (event) => {
+  fetchUsers(event)
+}
+
+const handleFiltersChange = (event) => {
+  fetchUsers(event)
+}
+
+const handleActionClick = ({ action, data }) => {
+  switch (action) {
+    case 'edit':
+      openEditModal(data)
+      break
+    case 'delete':
+      confirmDelete(data)
+      break
+    default:
+      console.log('Unknown action:', action, data)
   }
-};
-
-const onFiltersChanged = (filters) => {
-  currentFilters.value = filters;
-  currentPage.value = 1;
-  
-  // Обновляем сортировку из фильтров
-  if (filters.sort_by && filters.sort_order) {
-    currentSortField.value = filters.sort_by;
-    currentSortOrder.value = filters.sort_order === 'asc' ? 1 : -1;
-  }
-  
-  fetchUsers();
-};
-
-const onPageEvent = (event) => {
-  currentPage.value = event.page + 1;
-  perPage.value = event.rows;
-  fetchUsers();
-};
-
-const onSortEvent = (event) => {
-  currentSortField.value = event.sortField;
-  currentSortOrder.value = event.sortOrder;
-  currentPage.value = 1;
-  
-  // Обновляем фильтры с новой сортировкой
-  currentFilters.value = {
-    ...currentFilters.value,
-    sort_by: event.sortField,
-    sort_order: event.sortOrder === 1 ? 'asc' : 'desc'
-  };
-  
-  fetchUsers();
-};
+}
 
 const openCreateModal = () => {
-  selectedUser.value = null;
-  showCreateModal.value = true;
-};
+  selectedUser.value = null
+  showCreateModal.value = true
+}
 
 const openEditModal = (userToEdit) => {
-  selectedUser.value = {...userToEdit};
-  showEditModal.value = true;
-};
+  selectedUser.value = { ...userToEdit }
+  showEditModal.value = true
+}
 
 const onUserCreated = (createdUser) => {
-  fetchUsers();
+  const currentParams = {
+    page: dataTableRef.value?.currentPage || 1,
+    perPage: dataTableRef.value?.perPage || 10,
+    filters: dataTableRef.value?.currentFilters || {}
+  }
+  fetchUsers(currentParams)
   toast.add({
     severity: 'success',
     summary: 'Успешно',
     detail: `Пользователь "${createdUser.name}" создан.`,
     life: 3000
-  });
-};
+  })
+}
 
 const onUserUpdated = (updatedUser) => {
-  selectedUser.value = null;
-  fetchUsers();
+  selectedUser.value = null
+  const currentParams = {
+    page: dataTableRef.value?.currentPage || 1,
+    perPage: dataTableRef.value?.perPage || 10,
+    filters: dataTableRef.value?.currentFilters || {}
+  }
+  fetchUsers(currentParams)
   toast.add({
     severity: 'success',
     summary: 'Успешно',
     detail: `Пользователь "${updatedUser.name}" обновлен.`,
     life: 3000
-  });
-};
+  })
+}
 
 const confirmDelete = (userToDelete) => {
   confirm.require({
@@ -266,74 +279,63 @@ const confirmDelete = (userToDelete) => {
     acceptLabel: 'Удалить',
     rejectLabel: 'Отмена',
     acceptClass: 'p-button-danger',
-    accept: () => deleteUser(userToDelete.id),
-  });
-};
+    accept: () => deleteUser(userToDelete.id)
+  })
+}
 
 const deleteUser = async (userId) => {
   try {
-    await $api(`/users/${userId}`, {method: 'DELETE'});
-    toast.add({severity: 'success', summary: 'Успешно', detail: 'Пользователь удален.', life: 3000});
-    if (usersList.value.length === 1 && currentPage.value > 1) {
-      currentPage.value--;
+    await $api(`/users/${userId}`, { method: 'DELETE' })
+    toast.add({
+      severity: 'success',
+      summary: 'Успешно',
+      detail: 'Пользователь удален.',
+      life: 3000
+    })
+    
+    // Проверяем, нужно ли перейти на предыдущую страницу
+    if (usersList.value.length === 1 && dataTableRef.value?.currentPage > 1) {
+      dataTableRef.value.resetPagination()
     }
-    fetchUsers();
+    
+    const currentParams = {
+      page: dataTableRef.value?.currentPage || 1,
+      perPage: dataTableRef.value?.perPage || 10,
+      filters: dataTableRef.value?.currentFilters || {}
+    }
+    fetchUsers(currentParams)
   } catch (error) {
-    console.error('Delete user error:', error);
+    console.error('Delete user error:', error)
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: error.data?.message || 'Не удалось удалить пользователя.',
       life: 3000
-    });
+    })
   }
-};
+}
 
 const resetFilters = () => {
   if (filtersRef.value) {
-    filtersRef.value.resetFilters();
+    filtersRef.value.resetFilters()
   }
-  currentFilters.value = {};
-  currentPage.value = 1;
-  currentSortField.value = 'created_at';
-  currentSortOrder.value = -1;
-  fetchUsers();
-};
+  if (dataTableRef.value) {
+    dataTableRef.value.resetFilters()
+  }
+  fetchUsers()
+}
 
+// Lifecycle
 onMounted(() => {
-  fetchUsers();
-});
+  fetchUsers()
+})
 </script>
 
 <style scoped>
-/* Специфические стили для таблицы пользователей */
+/* Кастомные стили для таблицы пользователей */
 @media (max-width: 768px) {
-  /* Переопределяем общие стили для более красивого макета */
-  :deep(.users-table .p-datatable-tbody > tr > td) {
-    display: flex !important;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding: 12px 0 !important;
-    border-bottom: 1px solid var(--border-color);
-    margin: 0 !important;
-  }
-  
-  :deep(.users-table .p-datatable-tbody > tr > td:before) {
-    position: static !important;
-    width: auto !important;
-    flex-shrink: 0;
-    margin-right: 12px;
-    font-weight: 600;
-    color: var(--text-primary);
-  }
-  
-  :deep(.users-table .p-datatable-tbody > tr > td > *) {
-    flex: 1;
-    text-align: right;
-  }
-  
-  /* Аватар - первая колонка */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(1)) {
+  /* Специфические стили для аватаров в мобильной версии */
+  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:first-child) {
     justify-content: center !important;
     text-align: center !important;
     padding-bottom: 16px !important;
@@ -341,93 +343,29 @@ onMounted(() => {
     margin-bottom: 12px !important;
   }
   
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(1):before) {
+  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:first-child:before) {
     display: none;
   }
   
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(1) > *) {
-    text-align: center;
-  }
-  
-  /* Имя - вторая колонка */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(2):before) {
-    content: "Имя:";
-  }
-  
-  /* Email - третья колонка */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(3):before) {
-    content: "Email:";
-  }
-  
-  /* Создан - четвертая колонка */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(4):before) {
-    content: "Создан:";
-  }
-  
-  /* Обновлен - пятая колонка */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(5):before) {
-    content: "Обновлен:";
-  }
-  
-  /* Действия - последняя колонка */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6)) {
-    flex-direction: column !important;
-    padding-top: 16px !important;
-    border-top: 2px solid var(--border-color) !important;
-    border-bottom: none !important;
-    margin-top: 12px !important;
-    gap: 8px;
-  }
-  
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6):before) {
-    display: none;
-  }
-  
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6) > div) {
-    display: flex !important;
-    gap: 8px;
-    width: 100%;
-  }
-  
-  /* Стили для аватаров в мобильной версии */
-  :deep(.users-table .p-avatar) {
+  :deep(.universal-responsive-table .p-avatar) {
     width: 64px !important;
     height: 64px !important;
   }
   
-  /* Стили для кнопок действий в мобильной версии */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6) .p-button) {
+  /* Стили для колонки действий */
+  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:last-child) {
+    flex-direction: column !important;
+    padding-top: 16px !important;
+    border-top: 2px solid var(--border-color) !important;
+    margin-top: 12px !important;
+    gap: 8px;
+  }
+  
+  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:last-child .p-button) {
     flex: 1 !important;
     min-height: 44px !important;
     margin: 0 !important;
     justify-content: center !important;
-  }
-  
-  /* Обеспечиваем правильное выравнивание для сложного контента (имя + фамилия) */
-  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(2) > div) {
-    text-align: right;
-  }
-}
-
-/* Улучшенная адаптивность для заголовка */
-@media (max-width: 640px) {
-  .flex.justify-between.items-center {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-  }
-  
-  h1 {
-    text-align: center;
-    font-size: 1.875rem;
-  }
-}
-
-/* Дополнительные стили для планшетов */
-@media (min-width: 769px) and (max-width: 1024px) {
-  :deep(.users-table .p-datatable-tbody > tr > td) {
-    padding: 0.5rem;
-    font-size: 0.875rem;
   }
 }
 </style>

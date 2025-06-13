@@ -39,16 +39,6 @@ body {
   color: var(--text-primary) !important;
 }
 
-.p-card:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-  transition: all 0.3s ease !important;
-}
-
-[data-theme="dark"] .p-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3) !important;
-}
-
 /* Поля ввода */
 .p-inputtext {
   background-color: var(--tertiary-bg) !important;

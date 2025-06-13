@@ -1,275 +1,285 @@
 <template>
-  <div class="mx-auto px-4 py-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-900">Типы данных</h1>
-      <Button
-        class="p-button-success"
-        icon="pi pi-plus"
-        label="Добавить тип"
-        @click="openCreateModal"
+  <div class="min-h-screen" style="background-color: var(--primary-bg)">
+    <div class="container mx-auto px-4 py-8">
+      <UniversalDataTable
+        ref="dataTableRef"
+        :actions="actions"
+        :columns="columns"
+        :data="typesList"
+        :loading="isLoading"
+        :totalRecords="totalRecords"
+        addButtonLabel="Добавить тип"
+        emptyFilteredMessage="Типы не найдены. Попробуйте изменить параметры поиска."
+        emptyMessage="Типы не найдены."
+        title="Типы данных"
+        @add-clicked="openCreateModal"
+        @action-clicked="handleActionClick"
+        @page-changed="handlePageChange"
+        @sort-changed="handleSortChange"
+        @filters-changed="handleFiltersChange"
+      >
+        <!-- Слот для фильтров -->
+        <template #filters="{ loading, totalCount, onFiltersChanged }">
+          <TypesDataFilters
+            ref="filtersRef"
+            :currentUserId="currentUser?.id"
+            :dataGridOptions="dataGridOptions"
+            :loading="loading"
+            :totalCount="totalCount"
+            @filtersChanged="onFiltersChanged"
+          />
+        </template>
+        
+        <!-- Слот для колонки названия -->
+        <template #column-name="{ data }">
+          <span class="font-semibold">{{ data.name }}</span>
+        </template>
+        
+        <!-- Слот для колонки создателя -->
+        <template #column-creator_name="{ data }">
+          <div v-if="data.creator_name">
+            {{ data.creator_name }}
+          </div>
+          <span v-else class="text-gray-400">Не указан</span>
+        </template>
+        
+        <!-- Слот для кастомных действий с условной логикой -->
+        <template #actions="{ data }">
+          <div class="flex gap-2 justify-center">
+            <Button
+              v-tooltip.top="'Редактировать'"
+              class="p-button-rounded p-button-text p-button-sm"
+              icon="pi pi-pencil"
+              @click="handleActionClick({ action: 'edit', data })"
+            />
+            <Button
+              v-tooltip.top="data.records_count > 0 ? 'Нельзя удалить - есть связанные записи' : 'Удалить'"
+              :disabled="data.records_count > 0"
+              class="p-button-rounded p-button-text p-button-sm p-button-danger"
+              icon="pi pi-trash"
+              @click="handleActionClick({ action: 'delete', data })"
+            />
+          </div>
+        </template>
+      </UniversalDataTable>
+      
+      <!-- Модальные окна -->
+      <TypesCreateTypeModal
+        v-model:visible="showCreateModal"
+        :data-grid-options="dataGridOptions"
+        @type-created="onTypeCreated"
       />
+      
+      <TypesEditTypeModal
+        v-model:visible="showEditModal"
+        :data-grid-options="dataGridOptions"
+        :type="selectedType"
+        @type-updated="onTypeUpdated"
+      />
+      
+      <ConfirmDialog group="typeDeletionConfirmation"></ConfirmDialog>
     </div>
-    
-    <!-- Компонент фильтров -->
-    <TypesDataFilters
-      ref="filtersRef"
-      :currentUserId="currentUser?.id"
-      :dataGridOptions="dataGridOptions"
-      :loading="isLoading"
-      :totalCount="totalRecords"
-      @filtersChanged="onFiltersChanged"
-    />
-    
-    <Card>
-      <template #content>
-        <DataTable
-          :loading="isLoading"
-          :rows="perPage"
-          :rowsPerPageOptions="[10, 25, 50, 100]"
-          :sortField="currentSortField"
-          :sortOrder="currentSortOrder"
-          :totalRecords="totalRecords"
-          :value="typesList"
-          class="p-datatable-sm"
-          lazy
-          paginator
-          responsiveLayout="scroll"
-          stripedRows
-          @page="onPageEvent"
-          @sort="onSortEvent"
-        >
-          <Column class="min-w-[10rem]" field="name" header="Название" sortable>
-            <template #body="slotProps">
-              <span class="font-semibold">{{ slotProps.data.name }}</span>
-            </template>
-          </Column>
-          
-          <Column class="min-w-[12rem]" field="data_grid_name" header="Таблица" sortable/>
-          
-          <Column class="min-w-[10rem]" field="creator_name" header="Создатель" sortable>
-            <template #body="slotProps">
-              <div v-if="slotProps.data.creator_name">
-                {{ slotProps.data.creator_name }}
-              </div>
-              <span v-else class="text-gray-400">Не указан</span>
-            </template>
-          </Column>
-          
-          <Column class="min-w-[9rem]" field="created_at" header="Создан" sortable>
-            <template #body="slotProps">
-              {{ formatDate(slotProps.data.created_at) }}
-            </template>
-          </Column>
-          
-          <Column class="w-32 text-center" header="Действия">
-            <template #body="slotProps">
-              <div class="flex gap-2 justify-center">
-                <Button
-                  v-tooltip.top="'Редактировать'"
-                  class="p-button-rounded p-button-text p-button-sm"
-                  icon="pi pi-pencil"
-                  @click="openEditModal(slotProps.data)"
-                />
-                <Button
-                  v-tooltip.top="'Удалить'"
-                  :disabled="slotProps.data.records_count > 0"
-                  class="p-button-rounded p-button-text p-button-sm p-button-danger"
-                  icon="pi pi-trash"
-                  @click="confirmDelete(slotProps.data)"
-                />
-              </div>
-            </template>
-          </Column>
-          <template #empty>
-            <div class="text-center p-4">
-              {{ hasActiveFilters ? 'Типы не найдены. Попробуйте изменить параметры поиска.' : 'Типы не найдены.' }}
-            </div>
-          </template>
-        </DataTable>
-      </template>
-    </Card>
-    
-    <TypesCreateTypeModal
-      v-model:visible="showCreateModal"
-      :data-grid-options="dataGridOptions"
-      @type-created="onTypeCreated"
-    />
-    
-    <TypesEditTypeModal
-      v-model:visible="showEditModal"
-      :data-grid-options="dataGridOptions"
-      :type="selectedType"
-      @type-updated="onTypeUpdated"
-    />
-    
-    <ConfirmDialog group="typeDeletionConfirmation"></ConfirmDialog>
   </div>
 </template>
 
 <script setup>
+import {onMounted, ref} from 'vue'
+import UniversalDataTable from '~/components/UniversalDataTable.vue'
+
 definePageMeta({
   title: 'Управление типами данных',
   middleware: 'admin'
-});
+})
 
-const {$api} = useNuxtApp();
-const confirm = useConfirm();
-const toast = useToast();
+const {$api} = useNuxtApp()
+const confirm = useConfirm()
+const toast = useToast()
 
-const typesList = ref([]);
-const dataGridOptions = ref([]);
-const isLoading = ref(false);
-const selectedType = ref(null);
-const currentUser = ref(null);
+// Reactive data
+const typesList = ref([])
+const dataGridOptions = ref([])
+const isLoading = ref(false)
+const selectedType = ref(null)
+const currentUser = ref(null)
+const totalRecords = ref(0)
+const showCreateModal = ref(false)
+const showEditModal = ref(false)
+const dataTableRef = ref(null)
+const filtersRef = ref(null)
 
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
+// Конфигурация колонок
+const columns = ref([
+  {
+    field: 'name',
+    header: 'Название',
+    class: 'min-w-[10rem]',
+    sortable: true
+  },
+  {
+    field: 'data_grid_name',
+    header: 'Таблица',
+    class: 'min-w-[12rem]',
+    sortable: true
+  },
+  {
+    field: 'creator_name',
+    header: 'Создатель',
+    class: 'min-w-[10rem]',
+    sortable: true
+  },
+  {
+    field: 'created_at',
+    header: 'Создан',
+    class: 'min-w-[9rem]',
+    sortable: true,
+    type: 'date'
+  }
+])
 
-// Pagination state for DataTable lazy loading
-const currentPage = ref(1);
-const perPage = ref(10);
-const totalRecords = ref(0);
-const currentSortField = ref('created_at');
-const currentSortOrder = ref(-1);
+// Конфигурация действий с условиями
+const actions = ref([
+  {
+    key: 'edit',
+    icon: 'pi pi-pencil',
+    tooltip: 'Редактировать',
+    class: 'p-button-rounded p-button-text p-button-sm'
+  },
+  {
+    key: 'delete',
+    icon: 'pi pi-trash',
+    tooltip: 'Удалить',
+    class: 'p-button-rounded p-button-text p-button-sm p-button-danger',
+    condition: (data) => data.records_count === 0,
+    disabled: (data) => data.records_count > 0
+  }
+])
 
-// Filters state
-const currentFilters = ref({});
-const filtersRef = ref(null);
-
-// Computed
-const hasActiveFilters = computed(() => {
-  return Object.values(currentFilters.value).some(value => value !== null && value !== '' && value !== false)
-});
-
-const fetchTypes = async () => {
-  isLoading.value = true;
+// Methods
+const fetchTypes = async (params = {}) => {
+  isLoading.value = true
   try {
-    const params = {
-      page: currentPage.value,
-      per_page: perPage.value,
-      ...currentFilters.value
-    };
+    const requestParams = {
+      page: params.page || 1,
+      per_page: params.perPage || 10,
+      ...params.filters
+    }
     
     // Убираем null/false значения для чистоты запроса
-    Object.keys(params).forEach(key => {
-      if (params[key] === null || params[key] === false || params[key] === '') {
-        delete params[key];
+    Object.keys(requestParams).forEach(key => {
+      if (requestParams[key] === null || requestParams[key] === false || requestParams[key] === '') {
+        delete requestParams[key]
       }
-    });
+    })
     
-    const response = await $api('/data-grid-types', {params});
-    typesList.value = response.data || [];
-    totalRecords.value = response.meta?.total || response.total || 0;
+    const response = await $api('/data-grid-types', {params: requestParams})
+    typesList.value = response.data || []
+    totalRecords.value = response.meta?.total || response.total || 0
   } catch (error) {
-    console.error('Error fetching types:', error);
-    toast.add({severity: 'error', summary: 'Ошибка', detail: 'Не удалось загрузить типы.', life: 3000});
-    typesList.value = [];
-    totalRecords.value = 0;
+    console.error('Error fetching types:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: 'Не удалось загрузить типы.',
+      life: 3000
+    })
+    typesList.value = []
+    totalRecords.value = 0
   } finally {
-    isLoading.value = false;
+    isLoading.value = false
   }
-};
+}
 
 const fetchDataGrids = async () => {
   try {
-    const response = await $api('/data-grid', {
-      method: 'GET',
-    })
-    dataGridOptions.value = response.data || [];
+    const response = await $api('/data-grid', {method: 'GET'})
+    dataGridOptions.value = response.data || []
   } catch (error) {
-    console.error('Error fetching data grids:', error);
-    toast.add({severity: 'error', summary: 'Ошибка', detail: 'Не удалось загрузить список таблиц.', life: 3000});
-    dataGridOptions.value = [];
+    console.error('Error fetching data grids:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка',
+      detail: 'Не удалось загрузить список таблиц.',
+      life: 3000
+    })
+    dataGridOptions.value = []
   }
-};
+}
 
 const fetchCurrentUser = async () => {
   try {
-    const response = await $api('/user/profile', {
-      method: 'GET',
-    })
-    currentUser.value = response.data || null;
+    const response = await $api('/user/profile', {method: 'GET'})
+    currentUser.value = response.data || null
   } catch (error) {
-    console.error('Error fetching current user:', error);
-    currentUser.value = null;
+    console.error('Error fetching current user:', error)
+    currentUser.value = null
   }
-};
+}
 
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
-  try {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      day: '2-digit', month: '2-digit', year: 'numeric'
-    });
-  } catch (e) {
-    return dateString;
+const handlePageChange = (event) => {
+  fetchTypes(event)
+}
+
+const handleSortChange = (event) => {
+  fetchTypes(event)
+}
+
+const handleFiltersChange = (event) => {
+  fetchTypes(event)
+}
+
+const handleActionClick = ({action, data}) => {
+  switch (action) {
+    case 'edit':
+      openEditModal(data)
+      break
+    case 'delete':
+      confirmDelete(data)
+      break
+    default:
+      console.log('Unknown action:', action, data)
   }
-};
-
-const onFiltersChanged = (filters) => {
-  currentFilters.value = filters;
-  currentPage.value = 1;
-  
-  // Обновляем сортировку из фильтров
-  if (filters.sort_by && filters.sort_order) {
-    currentSortField.value = filters.sort_by;
-    currentSortOrder.value = filters.sort_order === 'asc' ? 1 : -1;
-  }
-  
-  fetchTypes();
-};
-
-const onPageEvent = (event) => {
-  currentPage.value = event.page + 1;
-  perPage.value = event.rows;
-  fetchTypes();
-};
-
-const onSortEvent = (event) => {
-  currentSortField.value = event.sortField;
-  currentSortOrder.value = event.sortOrder;
-  currentPage.value = 1;
-  
-  // Обновляем фильтры с новой сортировкой
-  currentFilters.value = {
-    ...currentFilters.value,
-    sort_by: event.sortField,
-    sort_order: event.sortOrder === 1 ? 'asc' : 'desc'
-  };
-  
-  fetchTypes();
-};
+}
 
 const openCreateModal = () => {
-  selectedType.value = null;
-  showCreateModal.value = true;
-};
+  selectedType.value = null
+  showCreateModal.value = true
+}
 
 const openEditModal = (typeToEdit) => {
-  selectedType.value = {...typeToEdit};
-  showEditModal.value = true;
-};
+  selectedType.value = {...typeToEdit}
+  showEditModal.value = true
+}
 
 const onTypeCreated = (createdType) => {
-  fetchTypes();
+  const currentParams = {
+    page: dataTableRef.value?.currentPage || 1,
+    perPage: dataTableRef.value?.perPage || 10,
+    filters: dataTableRef.value?.currentFilters || {}
+  }
+  fetchTypes(currentParams)
   toast.add({
     severity: 'success',
     summary: 'Успешно',
     detail: `Тип "${createdType.name}" создан.`,
     life: 3000
-  });
-};
+  })
+}
 
 const onTypeUpdated = (updatedType) => {
-  selectedType.value = null;
-  fetchTypes();
+  selectedType.value = null
+  const currentParams = {
+    page: dataTableRef.value?.currentPage || 1,
+    perPage: dataTableRef.value?.perPage || 10,
+    filters: dataTableRef.value?.currentFilters || {}
+  }
+  fetchTypes(currentParams)
   toast.add({
     severity: 'success',
     summary: 'Успешно',
     detail: `Тип "${updatedType.name}" обновлен.`,
     life: 3000
-  });
-};
+  })
+}
 
 const confirmDelete = (typeToDelete) => {
   if (typeToDelete.records_count > 0) {
@@ -278,8 +288,8 @@ const confirmDelete = (typeToDelete) => {
       summary: 'Внимание',
       detail: 'Тип нельзя удалить, так как он используется в записях.',
       life: 3000
-    });
-    return;
+    })
+    return
   }
   
   confirm.require({
@@ -290,45 +300,81 @@ const confirmDelete = (typeToDelete) => {
     acceptLabel: 'Удалить',
     rejectLabel: 'Отмена',
     acceptClass: 'p-button-danger',
-    accept: () => deleteType(typeToDelete.id),
-  });
-};
+    accept: () => deleteType(typeToDelete.id)
+  })
+}
 
 const deleteType = async (typeId) => {
   try {
-    await $api(`/data-grid-types/${typeId}`, {method: 'DELETE'});
-    toast.add({severity: 'success', summary: 'Успешно', detail: 'Тип удален.', life: 3000});
-    if (typesList.value.length === 1 && currentPage.value > 1) {
-      currentPage.value--;
+    await $api(`/data-grid-types/${typeId}`, {method: 'DELETE'})
+    toast.add({
+      severity: 'success',
+      summary: 'Успешно',
+      detail: 'Тип удален.',
+      life: 3000
+    })
+    
+    // Проверяем, нужно ли перейти на предыдущую страницу
+    if (typesList.value.length === 1 && dataTableRef.value?.currentPage > 1) {
+      dataTableRef.value.resetPagination()
     }
-    fetchTypes();
+    
+    const currentParams = {
+      page: dataTableRef.value?.currentPage || 1,
+      perPage: dataTableRef.value?.perPage || 10,
+      filters: dataTableRef.value?.currentFilters || {}
+    }
+    fetchTypes(currentParams)
   } catch (error) {
-    console.error('Delete type error:', error);
+    console.error('Delete type error:', error)
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: error.data?.message || 'Не удалось удалить тип.',
       life: 3000
-    });
+    })
   }
-};
+}
 
 const resetFilters = () => {
   if (filtersRef.value) {
-    filtersRef.value.resetFilters();
+    filtersRef.value.resetFilters()
   }
-  currentFilters.value = {};
-  currentPage.value = 1;
-  currentSortField.value = 'created_at';
-  currentSortOrder.value = -1;
-  fetchTypes();
-};
+  if (dataTableRef.value) {
+    dataTableRef.value.resetFilters()
+  }
+  fetchTypes()
+}
 
+// Lifecycle
 onMounted(async () => {
   await Promise.all([
     fetchCurrentUser(),
     fetchDataGrids()
-  ]);
-  await fetchTypes();
-});
+  ])
+  await fetchTypes()
+})
 </script>
+
+<style scoped>
+/* Кастомные стили для таблицы типов */
+@media (max-width: 768px) {
+  /* Дополнительные стили для мобильной адаптации типов */
+  :deep(.universal-responsive-table .p-datatable-tbody > tr > td > div[data-label]) {
+    border-bottom: 1px solid var(--border-color);
+  }
+  
+  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:last-child > div[data-label]) {
+    border-top: 2px solid var(--border-color);
+    padding-top: 16px;
+    margin-top: 12px;
+    border-bottom: none;
+  }
+  
+  /* Подсветка недоступных кнопок */
+  :deep(.p-button:disabled) {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+</style>
