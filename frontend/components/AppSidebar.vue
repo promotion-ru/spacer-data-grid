@@ -34,11 +34,18 @@
                 <NuxtLink
                   v-ripple
                   :to="item.route"
-                  class="flex items-center cursor-pointer p-3 rounded-lg p-ripple relative"
-                  style="color: var(--text-primary)"
+                  class="flex items-center cursor-pointer p-3 rounded-lg p-ripple relative transition-all duration-200"
+                  :class="{
+                    'bg-primary/10 border-l-4 border-primary': isActiveRoute(item.route),
+                    'hover:bg-surface-hover': !isActiveRoute(item.route)
+                  }"
+                  :style="isActiveRoute(item.route) ? 'color: var(--primary-color)' : 'color: var(--text-primary)'"
                   @click="closeMobileSidebar(item.route)"
                 >
-                  <i :class="item.icon + ' mr-3'" style="color: var(--text-secondary)"></i>
+                  <i 
+                    :class="item.icon + ' mr-3'" 
+                    :style="isActiveRoute(item.route) ? 'color: var(--primary-color)' : 'color: var(--text-secondary)'"
+                  ></i>
                   <span class="font-medium">{{ item.label }}</span>
                   <span
                     v-if="item.badge"
@@ -57,8 +64,12 @@
           <NuxtLink
             v-ripple
             to="/profile"
-            class="m-4 flex items-center cursor-pointer p-3 gap-3 rounded-lg p-ripple"
-            style="color: var(--text-primary)"
+            class="m-4 flex items-center cursor-pointer p-3 gap-3 rounded-lg p-ripple transition-all duration-200"
+            :class="{
+              'bg-primary/10 border-l-4 border-primary': isActiveRoute('/profile'),
+              'hover:bg-surface-hover': !isActiveRoute('/profile')
+            }"
+            :style="isActiveRoute('/profile') ? 'color: var(--primary-color)' : 'color: var(--text-primary)'"
             @click="closeMobileSidebar"
           >
             <template v-if="user?.avatar_url">
@@ -93,6 +104,7 @@
 const {user, logout} = useAuth()
 const {isAdmin} = usePermissions()
 const { isMobile } = useDevice()
+const route = useRoute()
 
 const props = defineProps({
   visible: {
@@ -172,5 +184,13 @@ const showUserRoles = computed(() => {
   
   return roles.join(', ')
 })
+
+// Функция для определения активного маршрута
+const isActiveRoute = (routePath) => {
+  if (routePath === '/') {
+    return route.path === '/'
+  }
+  return route.path.startsWith(routePath)
+}
 </script>
 
