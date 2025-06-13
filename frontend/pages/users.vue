@@ -1,7 +1,8 @@
 <template>
-  <div class="mx-auto px-4 py-6">
+  <div class="min-h-screen" style="background-color: var(--primary-bg)">
+    <div class="container mx-auto px-4 py-8">
     <div class="flex justify-between items-center mb-6">
-      <h1 class="text-3xl font-bold text-gray-900">Пользователи</h1>
+      <h1 class="text-3xl font-bold" style="color: var(--text-primary)">Пользователи</h1>
       <Button
         class="p-button-success"
         icon="pi pi-plus"
@@ -28,7 +29,7 @@
           :sortOrder="currentSortOrder"
           :totalRecords="totalRecords"
           :value="usersList"
-          class="p-datatable-sm"
+          class="p-datatable-sm users-table mobile-responsive-table"
           lazy
           paginator
           responsiveLayout="scroll"
@@ -52,7 +53,7 @@
             <template #body="slotProps">
               <div>
                 <div class="font-semibold">{{ slotProps.data.name }}</div>
-                <div v-if="slotProps.data.surname" class="text-sm text-gray-600">
+                <div v-if="slotProps.data.surname" class="text-sm" style="color: var(--text-secondary)">
                   {{ slotProps.data.surname }}
                 </div>
               </div>
@@ -92,7 +93,7 @@
             </template>
           </Column>
           <template #empty>
-            <div class="text-center p-4">
+            <div class="text-center p-4" style="color: var(--text-secondary)">
               {{
                 hasActiveFilters ? 'Пользователи не найдены. Попробуйте изменить параметры поиска.' : 'Пользователи не найдены.'
               }}
@@ -114,6 +115,7 @@
     />
     
     <ConfirmDialog group="userDeletionConfirmation"></ConfirmDialog>
+    </div>
   </div>
 </template>
 
@@ -302,3 +304,130 @@ onMounted(() => {
   fetchUsers();
 });
 </script>
+
+<style scoped>
+/* Специфические стили для таблицы пользователей */
+@media (max-width: 768px) {
+  /* Переопределяем общие стили для более красивого макета */
+  :deep(.users-table .p-datatable-tbody > tr > td) {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0 !important;
+    border-bottom: 1px solid var(--border-color);
+    margin: 0 !important;
+  }
+  
+  :deep(.users-table .p-datatable-tbody > tr > td:before) {
+    position: static !important;
+    width: auto !important;
+    flex-shrink: 0;
+    margin-right: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  
+  :deep(.users-table .p-datatable-tbody > tr > td > *) {
+    flex: 1;
+    text-align: right;
+  }
+  
+  /* Аватар - первая колонка */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(1)) {
+    justify-content: center !important;
+    text-align: center !important;
+    padding-bottom: 16px !important;
+    border-bottom: 2px solid var(--border-color) !important;
+    margin-bottom: 12px !important;
+  }
+  
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(1):before) {
+    display: none;
+  }
+  
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(1) > *) {
+    text-align: center;
+  }
+  
+  /* Имя - вторая колонка */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(2):before) {
+    content: "Имя:";
+  }
+  
+  /* Email - третья колонка */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(3):before) {
+    content: "Email:";
+  }
+  
+  /* Создан - четвертая колонка */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(4):before) {
+    content: "Создан:";
+  }
+  
+  /* Обновлен - пятая колонка */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(5):before) {
+    content: "Обновлен:";
+  }
+  
+  /* Действия - последняя колонка */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6)) {
+    flex-direction: column !important;
+    padding-top: 16px !important;
+    border-top: 2px solid var(--border-color) !important;
+    border-bottom: none !important;
+    margin-top: 12px !important;
+    gap: 8px;
+  }
+  
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6):before) {
+    display: none;
+  }
+  
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6) > div) {
+    display: flex !important;
+    gap: 8px;
+    width: 100%;
+  }
+  
+  /* Стили для аватаров в мобильной версии */
+  :deep(.users-table .p-avatar) {
+    width: 64px !important;
+    height: 64px !important;
+  }
+  
+  /* Стили для кнопок действий в мобильной версии */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(6) .p-button) {
+    flex: 1 !important;
+    min-height: 44px !important;
+    margin: 0 !important;
+    justify-content: center !important;
+  }
+  
+  /* Обеспечиваем правильное выравнивание для сложного контента (имя + фамилия) */
+  :deep(.users-table .p-datatable-tbody > tr > td:nth-child(2) > div) {
+    text-align: right;
+  }
+}
+
+/* Улучшенная адаптивность для заголовка */
+@media (max-width: 640px) {
+  .flex.justify-between.items-center {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+  }
+  
+  h1 {
+    text-align: center;
+    font-size: 1.875rem;
+  }
+}
+
+/* Дополнительные стили для планшетов */
+@media (min-width: 769px) and (max-width: 1024px) {
+  :deep(.users-table .p-datatable-tbody > tr > td) {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+  }
+}
+</style>

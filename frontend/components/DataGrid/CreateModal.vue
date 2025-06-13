@@ -12,7 +12,7 @@
     <form @submit.prevent="handleSubmit" class="space-y-6">
       <!-- Название таблицы -->
       <div>
-        <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="name" class="block text-sm font-medium mb-2" style="color: var(--text-primary)">
           Название таблицы *
         </label>
         <InputText
@@ -27,7 +27,7 @@
       
       <!-- Описание -->
       <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+        <label for="description" class="block text-sm font-medium mb-2" style="color: var(--text-primary)">
           Описание
         </label>
         <Textarea

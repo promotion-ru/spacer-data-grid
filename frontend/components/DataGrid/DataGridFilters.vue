@@ -12,7 +12,7 @@
               class="w-full pl-10 input-search"
               placeholder="Поиск по названию, описанию, владельцу..."
             />
-            <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+            <i class="pi pi-search absolute left-3 top-1/2 transform -translate-y-1/2" style="color: var(--text-secondary)"></i>
           </div>
         </div>
         <Button
@@ -32,8 +32,8 @@
       
       <!-- Расширенные фильтры -->
       <div v-show="showFilters" class="filters-container">
-        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-          <div class="text-sm font-medium text-gray-700 mb-3 flex items-center">
+        <div class="border rounded-lg p-4 space-y-3" style="background-color: var(--tertiary-bg); border-color: var(--border-color)">
+          <div class="text-sm font-medium mb-3 flex items-center" style="color: var(--text-primary)">
             <i class="pi pi-sliders-h mr-2"></i>
             Дополнительные фильтры
           </div>
@@ -41,7 +41,7 @@
           <!-- Основные фильтры -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Статус активности</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Статус активности</label>
               <Select
                 v-model="selectedActivityFilter"
                 :options="activityOptions"
@@ -54,7 +54,7 @@
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Период создания</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Период создания</label>
               <DatePicker
                 v-model="createdDateRange"
                 :manualInput="false"
@@ -68,7 +68,7 @@
             </div>
             
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Сортировка</label>
+              <label class="block text-xs font-medium mb-1" style="color: var(--text-secondary)">Сортировка</label>
               <Select
                 v-model="selectedSortFilter"
                 :options="sortOptions"
@@ -82,8 +82,8 @@
           </div>
           
           <!-- Быстрые фильтры -->
-          <div class="border-t pt-4">
-            <div class="text-xs font-medium text-gray-600 mb-2">Быстрые фильтры:</div>
+          <div class="border-t pt-4" style="border-color: var(--border-color)">
+            <div class="text-xs font-medium mb-2" style="color: var(--text-secondary)">Быстрые фильтры:</div>
             <div class="flex flex-wrap gap-2">
               <Button
                 :outlined="!isOwnerFilter"
@@ -134,7 +134,7 @@
       
       <!-- Активные фильтры -->
       <div v-if="activeFilterTags.length" class="flex flex-wrap gap-2 items-center">
-        <span class="text-xs font-medium text-gray-600">Активные фильтры:</span>
+        <span class="text-xs font-medium" style="color: var(--text-secondary)">Активные фильтры:</span>
         <Tag
           v-for="tag in activeFilterTags"
           :key="tag.key"
@@ -153,10 +153,10 @@
       </div>
       
       <!-- Статистика -->
-      <div v-if="totalCount !== null" class="text-sm text-gray-600 flex items-center justify-between">
+      <div v-if="totalCount !== null" class="text-sm flex items-center justify-between" style="color: var(--text-secondary)">
         <span>
           Найдено {{ totalCount }} {{ getTableWord(totalCount) }}
-          <span v-if="hasActiveFilters" class="ml-2 text-blue-600">
+          <span v-if="hasActiveFilters" class="ml-2" style="color: var(--text-primary)">
             (применены фильтры)
           </span>
         </span>

@@ -2,9 +2,8 @@
   <Dialog
     v-model:visible="isVisible"
     :dismissableMask="true"
-    :style="{ width: '500px' }"
     :closeOnEscape="true"
-    class="p-fluid"
+    class="p-fluid w-[95vw] sm:w-[90vw] md:w-[70vw] lg:w-[50vw] xl:max-w-2xl mx-4 sm:mx-0"
     header="Создать пользователя"
     modal
     @hide="onDialogHide"
@@ -130,3 +129,42 @@ watch(() => props.visible, (newValue) => {
   }
 });
 </script>
+
+<style scoped>
+/* Адаптивные стили для модального окна */
+@media (max-width: 640px) {
+  :deep(.p-dialog .p-dialog-header) {
+    padding: 1rem 1.5rem;
+    text-align: center;
+  }
+  
+  :deep(.p-dialog .p-dialog-content) {
+    padding: 0 1.5rem 1rem 1.5rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer) {
+    padding: 1rem 1.5rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer .p-button) {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  :deep(.p-dialog .p-dialog-header) {
+    padding: 1.25rem 2rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-content) {
+    padding: 0 2rem 1.25rem 2rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer) {
+    padding: 1.25rem 2rem;
+  }
+}
+</style>

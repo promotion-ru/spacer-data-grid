@@ -3,7 +3,7 @@
     v-model:visible="isVisible"
     :closeOnEscape="true"
     :dismissableMask="true"
-    class="p-fluid"
+    class="p-fluid w-[95vw] sm:w-[90vw] md:w-[70vw] lg:w-[50vw] xl:max-w-2xl mx-4 sm:mx-0"
     header="Редактировать пользователя"
     modal
     @hide="onDialogHide"
@@ -11,15 +11,15 @@
     <!-- Состояние загрузки -->
     <div v-if="isLoadingUser" class="flex justify-center items-center py-8">
       <ProgressSpinner size="50" strokeWidth="4"/>
-      <span class="ml-3">Загрузка данных пользователя...</span>
+      <span class="ml-3" style="color: var(--text-primary)">Загрузка данных пользователя...</span>
     </div>
     
     <!-- Ошибка загрузки -->
     <div v-else-if="loadError" class="text-center py-8">
-      <div class="text-red-600 mb-4">
+      <div class="mb-4" style="color: #ef4444">
         <i class="pi pi-exclamation-triangle text-2xl"></i>
-        <p class="mt-2">Ошибка загрузки данных пользователя</p>
-        <p class="text-sm">{{ loadError }}</p>
+        <p class="mt-2" style="color: var(--text-primary)">Ошибка загрузки данных пользователя</p>
+        <p class="text-sm" style="color: var(--text-secondary)">{{ loadError }}</p>
       </div>
       <Button
         class="p-button-outlined"
@@ -199,3 +199,51 @@ watch(() => props.visible, (newValue) => {
   }
 });
 </script>
+
+<style scoped>
+/* Адаптивные стили для модального окна */
+@media (max-width: 640px) {
+  :deep(.p-dialog .p-dialog-header) {
+    padding: 1rem 1.5rem;
+    text-align: center;
+  }
+  
+  :deep(.p-dialog .p-dialog-content) {
+    padding: 0 1.5rem 1rem 1.5rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer) {
+    padding: 1rem 1.5rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer .p-button) {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* Состояния загрузки и ошибок */
+  .flex.justify-center.items-center {
+    padding: 2rem 1rem;
+  }
+  
+  .text-center {
+    padding: 1.5rem 1rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  :deep(.p-dialog .p-dialog-header) {
+    padding: 1.25rem 2rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-content) {
+    padding: 0 2rem 1.25rem 2rem;
+  }
+  
+  :deep(.p-dialog .p-dialog-footer) {
+    padding: 1.25rem 2rem;
+  }
+}
+</style>

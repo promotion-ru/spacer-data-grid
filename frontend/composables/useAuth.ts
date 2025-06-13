@@ -180,6 +180,8 @@ export const useAuth = () => {
             return user
         } catch (error) {
             console.error('Fetch user error:', error)
+            authStore.clearAuth()
+            authStore.setInitialized(true)
             // Проверяем тип ошибки
             if (error.response) {
                 // Сервер ответил с ошибкой (401, 403, 500 и т.д.)

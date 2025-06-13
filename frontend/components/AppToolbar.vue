@@ -1,5 +1,5 @@
 <template>
-  <div class="sticky top-0 z-50 bg-surface-0 dark:bg-surface-900 border-b border-surface-200 dark:border-surface-700">
+  <div class="sticky top-0 z-50 border-b" style="background-color: var(--secondary-bg); border-color: var(--border-color)">
     <Toolbar
       class="border-0 rounded-none px-6 py-3"
       style="background: transparent"
@@ -20,7 +20,7 @@
           <!-- Логотип и навигация -->
           <div class="flex items-center gap-4">
             <NuxtLink class="flex items-center gap-3 no-underline" to="/">
-              <span class="font-bold text-xl text-surface-900 dark:text-surface-0 hidden sm:block">
+              <span class="font-bold text-xl hidden sm:block" style="color: var(--text-primary)">
                 Data grid
               </span>
             </NuxtLink>
@@ -33,7 +33,7 @@
           <Button
             :aria-label="isDark ? 'Переключить на светлую тему' : 'Переключить на темную тему'"
             :icon="isDark ? 'pi pi-sun' : 'pi pi-moon'"
-            class="w-10 h-10 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            class="w-10 h-10"
             rounded
             severity="secondary"
             text

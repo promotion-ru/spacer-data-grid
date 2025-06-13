@@ -1,7 +1,7 @@
 <template>
   <form class="space-y-4" @submit.prevent="onFormSubmitInternal">
     <div class="field">
-      <label :for="`${mode}-name`" class="font-medium">Имя *</label>
+      <label :for="`${mode}-name`" class="font-medium" style="color: var(--text-primary)">Имя *</label>
       <InputText
         :id="`${mode}-name`"
         v-model="formData.name"
@@ -15,7 +15,7 @@
     </div>
     
     <div class="field">
-      <label :for="`${mode}-surname`" class="font-medium">Фамилия</label>
+      <label :for="`${mode}-surname`" class="font-medium" style="color: var(--text-primary)">Фамилия</label>
       <InputText
         :id="`${mode}-surname`"
         v-model="formData.surname"
@@ -29,7 +29,7 @@
     </div>
     
     <div class="field">
-      <label :for="`${mode}-email`" class="font-medium">Email *</label>
+      <label :for="`${mode}-email`" class="font-medium" style="color: var(--text-primary)">Email *</label>
       <InputText
         :id="`${mode}-email`"
         v-model="formData.email"
@@ -44,7 +44,7 @@
     </div>
     
     <div class="field">
-      <label :for="`${mode}-password`" class="font-medium">
+      <label :for="`${mode}-password`" class="font-medium" style="color: var(--text-primary)">
         {{ isEditing ? 'Новый пароль' : 'Пароль' }} {{ !isEditing ? '*' : '' }}
       </label>
       <Password
@@ -60,12 +60,12 @@
       />
       <small v-if="formErrorsComputed.password" :id="`password-error-message`"
              class="p-error">{{ formErrorsComputed.password }}</small>
-      <small v-if="isEditing && !formErrorsComputed.password && !formData.password" class="text-gray-600">Оставьте
+      <small v-if="isEditing && !formErrorsComputed.password && !formData.password" style="color: var(--text-secondary)">Оставьте
         пустым, если не хотите менять пароль</small>
     </div>
     
     <div class="field">
-      <label :for="`${mode}-password-confirmation`" class="font-medium">
+      <label :for="`${mode}-password-confirmation`" class="font-medium" style="color: var(--text-primary)">
         {{ isEditing ? 'Подтверждение нового пароля' : 'Подтверждение пароля' }}
         {{ (!isEditing || formData.password) ? '*' : '' }}
       </label>
@@ -91,10 +91,10 @@
           :binary="true"
           :class="{ 'p-invalid': formErrorsComputed.active }"
         />
-        <label :for="`${mode}-active`" class="ml-2 font-medium">Активный пользователь</label>
+        <label :for="`${mode}-active`" class="ml-2 font-medium" style="color: var(--text-primary)">Активный пользователь</label>
       </div>
       <small v-if="formErrorsComputed.active" class="p-error">{{ formErrorsComputed.active }}</small>
-      <small class="text-gray-600">Неактивные пользователи не могут входить в систему</small>
+      <small style="color: var(--text-secondary)">Неактивные пользователи не могут входить в систему</small>
     </div>
     
     <div class="field">
@@ -120,7 +120,7 @@
       </div>
       
       <div v-if="formData.delete_avatar && !formData.avatar" class="mb-3">
-        <div class="text-orange-500 text-sm flex items-center gap-2">
+        <div class="text-sm flex items-center gap-2" style="color: #f59e0b">
           <i class="pi pi-exclamation-triangle"></i>
           Текущий аватар будет удален при сохранении.
           <Button
@@ -338,5 +338,57 @@ defineExpose({
 
 :deep(.p-password-panel) {
   min-width: calc(100% - 2px);
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 640px) {
+  .field {
+    margin-bottom: 1rem;
+  }
+  
+  .field label {
+    font-size: 0.875rem;
+    margin-bottom: 0.375rem;
+  }
+  
+  :deep(.p-inputtext),
+  :deep(.p-password input) {
+    font-size: 16px; /* Предотвращает зум на iOS */
+    padding: 0.75rem;
+  }
+  
+  /* Аватар в мобильной версии */
+  :deep(.p-avatar) {
+    width: 80px !important;
+    height: 80px !important;
+  }
+  
+  /* Кнопки в мобильной версии */
+  :deep(.p-button) {
+    padding: 0.75rem 1rem;
+    min-height: 44px; /* Минимальная высота для тач-интерфейса */
+  }
+  
+  /* Чекбокс */
+  .flex.items-center {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  :deep(.p-checkbox) {
+    margin-top: 0.125rem;
+  }
+}
+
+/* Стили для планшетов */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .field {
+    margin-bottom: 1.125rem;
+  }
+  
+  :deep(.p-inputtext),
+  :deep(.p-password input) {
+    padding: 0.625rem 0.75rem;
+  }
 }
 </style>

@@ -1,12 +1,12 @@
 <!-- components/InvitationNotifications.vue -->
 <template>
   <div v-if="invitations?.length" class="mb-6">
-    <Card class="border-l-4 border-l-blue-500 bg-blue-50">
+    <Card class="border-l-4 border-l-blue-500" style="background-color: var(--tertiary-bg)">
       <template #content>
         <div class="space-y-4">
           <div class="flex items-center space-x-2">
             <i class="pi pi-envelope text-blue-600 text-xl"></i>
-            <h3 class="text-lg font-semibold text-blue-900">
+            <h3 class="text-lg font-semibold" style="color: var(--text-primary)">
               Приглашения в таблицы ({{ invitations.length }})
             </h3>
           </div>
@@ -15,15 +15,16 @@
             <div
               v-for="invitation in invitations"
               :key="invitation.id"
-              class="bg-white rounded-lg p-4 border border-gray-200"
+              class="rounded-lg p-4 border"
+              style="background-color: var(--secondary-bg); border-color: var(--border-color)"
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1">
-                  <h4 class="font-medium text-gray-900">{{ invitation.data_grid.name }}</h4>
-                  <p class="text-sm text-gray-600 mt-1">
+                  <h4 class="font-medium" style="color: var(--text-primary)">{{ invitation.data_grid.name }}</h4>
+                  <p class="text-sm mt-1" style="color: var(--text-secondary)">
                     {{ invitation.invited_by.name }} пригласил вас в таблицу
                   </p>
-                  <p v-if="invitation.data_grid.description" class="text-sm text-gray-500 mt-1">
+                  <p v-if="invitation.data_grid.description" class="text-sm mt-1" style="color: var(--text-secondary)">
                     {{ invitation.data_grid.description }}
                   </p>
                   

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen" style="background-color: var(--primary-bg)">
     <div class="container mx-auto px-4 py-8">
       <!-- Приглашения -->
       <InvitationNotifications
@@ -10,8 +10,8 @@
       <!-- Заголовок и кнопка создания -->
       <div class="flex justify-between items-center mb-8">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">Мои таблицы данных</h1>
-          <p class="text-gray-600 mt-2">Управляйте своими данными в удобном формате</p>
+          <h1 class="text-3xl font-bold" style="color: var(--text-primary)">Мои таблицы данных</h1>
+          <p class="mt-2" style="color: var(--text-secondary)">Управляйте своими данными в удобном формате</p>
         </div>
         <Button
           class="p-button-lg"
@@ -39,7 +39,7 @@
         <Card
           v-for="grid in filteredGrids"
           :key="grid.id"
-          class="hover:shadow-lg transition-shadow duration-300 cursor-pointer"
+          class="cursor-pointer"
           @click="navigateToGrid(grid)"
         >
           <template #header>
@@ -64,8 +64,8 @@
           <template #title>
             <div class="flex justify-between items-start">
               <div class="flex-1">
-                <h3 class="text-lg font-semibold text-gray-900 truncate">{{ grid.name }}</h3>
-                <p v-if="!grid.is_owner && grid.owner_name" class="text-sm text-gray-500">
+                <h3 class="text-lg font-semibold truncate" style="color: var(--text-primary)">{{ grid.name }}</h3>
+                <p v-if="!grid.is_owner && grid.owner_name" class="text-sm" style="color: var(--text-secondary)">
                   Владелец: {{ grid.owner_name }}
                 </p>
               </div>
@@ -79,11 +79,11 @@
           
           <template #content>
             <div class="space-y-3">
-              <p v-if="grid.description" class="text-gray-600 text-sm line-clamp-2">
+              <p v-if="grid.description" class="text-sm line-clamp-2" style="color: var(--text-secondary)">
                 {{ grid.description }}
               </p>
               
-              <div class="flex items-center justify-between text-sm text-gray-500">
+              <div class="flex items-center justify-between text-sm" style="color: var(--text-secondary)">
                 <span class="flex items-center">
                   <i class="pi pi-list mr-1"></i>
                   {{ grid.records_count }} записей
@@ -92,7 +92,7 @@
               </div>
               
               <!-- Показатель последнего обновления -->
-              <div v-if="grid.updated_at && grid.updated_at !== grid.created_at" class="text-xs text-gray-400">
+              <div v-if="grid.updated_at && grid.updated_at !== grid.created_at" class="text-xs" style="color: var(--text-secondary)">
                 <i class="pi pi-clock mr-1"></i>
                 Обновлено: {{ grid.updated_at }}
               </div>
@@ -114,11 +114,11 @@
       
       <!-- Пустое состояние -->
       <div v-else class="text-center py-12">
-        <i class="pi pi-table text-6xl text-gray-300 mb-4"></i>
-        <h3 class="text-xl font-semibold text-gray-700 mb-2">
+        <i class="pi pi-table text-6xl mb-4" style="color: var(--text-secondary)"></i>
+        <h3 class="text-xl font-semibold mb-2" style="color: var(--text-primary)">
           {{ hasActiveFilters ? 'Таблицы не найдены' : 'У вас пока нет таблиц данных' }}
         </h3>
-        <p class="text-gray-500 mb-6">
+        <p class="mb-6" style="color: var(--text-secondary)">
           {{
             hasActiveFilters
               ? 'Попробуйте изменить параметры поиска или сбросить фильтры'

@@ -12,7 +12,7 @@
     <form class="space-y-6" @submit.prevent="handleSubmit">
       <!-- Email пользователя -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2" for="email">
+        <label class="block text-sm font-medium mb-2" for="email" style="color: var(--text-primary)">
           Email пользователя *
         </label>
         <InputText
@@ -27,7 +27,7 @@
       
       <!-- Права доступа -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-3">
+        <label class="block text-sm font-medium mb-3" style="color: var(--text-primary)">
           Права доступа *
         </label>
         <div class="space-y-3">
@@ -39,9 +39,9 @@
               class="mr-2"
               value="view"
             />
-            <label class="text-sm text-gray-700" for="view">
+            <label class="text-sm" for="view" style="color: var(--text-primary)">
               <span class="font-medium">Просмотр</span>
-              <span class="text-gray-500 block text-xs">Просмотр таблицы и записей</span>
+              <span class="block text-xs" style="color: var(--text-secondary)">Просмотр таблицы и записей</span>
             </label>
           </div>
           
@@ -52,9 +52,9 @@
               class="mr-2"
               value="create"
             />
-            <label class="text-sm text-gray-700" for="create">
+            <label class="text-sm" for="create" style="color: var(--text-primary)">
               <span class="font-medium">Создание записей</span>
-              <span class="text-gray-500 block text-xs">Добавление новых записей</span>
+              <span class="block text-xs" style="color: var(--text-secondary)">Добавление новых записей</span>
             </label>
           </div>
           
@@ -65,9 +65,9 @@
               class="mr-2"
               value="update"
             />
-            <label class="text-sm text-gray-700" for="update">
+            <label class="text-sm" for="update" style="color: var(--text-primary)">
               <span class="font-medium">Редактирование</span>
-              <span class="text-gray-500 block text-xs">Изменение существующих записей</span>
+              <span class="block text-xs" style="color: var(--text-secondary)">Изменение существующих записей</span>
             </label>
           </div>
           
@@ -78,9 +78,9 @@
               class="mr-2"
               value="delete"
             />
-            <label class="text-sm text-gray-700" for="delete">
+            <label class="text-sm" for="delete" style="color: var(--text-primary)">
               <span class="font-medium">Удаление</span>
-              <span class="text-gray-500 block text-xs">Удаление записей</span>
+              <span class="block text-xs" style="color: var(--text-secondary)">Удаление записей</span>
             </label>
           </div>
         </div>

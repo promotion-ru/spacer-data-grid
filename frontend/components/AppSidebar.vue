@@ -7,11 +7,12 @@
     @hide="$emit('hide')"
   >
     <template #container="{ closeCallback }">
-      <div class="flex flex-col h-full bg-surface-0 dark:bg-surface-900">
+      <div class="flex flex-col h-full" style="background-color: var(--secondary-bg)">
         <div
-          class="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 border-b border-surface-200 dark:border-surface-700">
+          class="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 border-b"
+          style="border-color: var(--border-color)">
           <span class="inline-flex items-center gap-2">
-            <span class="font-semibold text-2xl text-primary">Data grid</span>
+            <span class="font-semibold text-2xl" style="color: var(--text-primary)">Data grid</span>
           </span>
           <Button
             class="ml-2"
@@ -33,10 +34,11 @@
                 <NuxtLink
                   v-ripple
                   :to="item.route"
-                  class="flex items-center cursor-pointer p-3 rounded-lg text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors p-ripple relative"
+                  class="flex items-center cursor-pointer p-3 rounded-lg p-ripple relative"
+                  style="color: var(--text-primary)"
                   @click="closeMobileSidebar(item.route)"
                 >
-                  <i :class="item.icon + ' mr-3 text-surface-500'"></i>
+                  <i :class="item.icon + ' mr-3'" style="color: var(--text-secondary)"></i>
                   <span class="font-medium">{{ item.label }}</span>
                   <span
                     v-if="item.badge"
@@ -51,11 +53,12 @@
         </div>
         
         <!-- Профиль пользователя -->
-        <div class="mt-auto border-t border-surface-200 dark:border-surface-700">
+        <div class="mt-auto border-t" style="border-color: var(--border-color)">
           <NuxtLink
             v-ripple
             to="/profile"
-            class="m-4 flex items-center cursor-pointer p-3 gap-3 rounded-lg text-surface-700 hover:bg-surface-100 dark:text-surface-0 dark:hover:bg-surface-800 duration-150 transition-colors p-ripple"
+            class="m-4 flex items-center cursor-pointer p-3 gap-3 rounded-lg p-ripple"
+            style="color: var(--text-primary)"
             @click="closeMobileSidebar"
           >
             <template v-if="user?.avatar_url">
@@ -75,8 +78,8 @@
               />
             </template>
             <div class="flex flex-col">
-              <span class="font-bold text-sm">{{ user.name }} {{ user.surname }}</span>
-              <span class="text-xs text-surface-500 dark:text-surface-400">{{ showUserRoles }}</span>
+              <span class="font-bold text-sm" style="color: var(--text-primary)">{{ user.name }} {{ user.surname }}</span>
+              <span class="text-xs" style="color: var(--text-secondary)">{{ showUserRoles }}</span>
             </div>
           </NuxtLink>
         </div>

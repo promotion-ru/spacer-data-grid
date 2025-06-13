@@ -6,13 +6,23 @@ export const useTheme = () => {
         attribute: 'data-theme',
         valueDark: 'dark',
         valueLight: 'light',
-        initialValue: 'dark', // Темная тема по умолчанию
+        initialValue: 'light', // Светлая тема по умолчанию
+        storageKey: 'theme-preference',
+        storage: typeof window !== 'undefined' ? localStorage : undefined
     })
 
     const toggleDark = useToggle(isDark)
 
+    const currentTheme = computed(() => isDark.value ? 'dark' : 'light')
+    
+    const setTheme = (theme: 'light' | 'dark') => {
+        isDark.value = theme === 'dark'
+    }
+
     return {
         isDark: readonly(isDark),
-        toggleDark
+        currentTheme: readonly(currentTheme),
+        toggleDark,
+        setTheme
     }
 }
