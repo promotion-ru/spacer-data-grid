@@ -37,8 +37,8 @@ class UserResource extends JsonResource
             'role_names'      => $this->when($this->relationLoaded('roles'), function () {
                 return $this->getRoleNames();
             }),
-            'created_at'      => $this->created_at->format('d.m.Y H:i'),
-            'updated_at'      => $this->updated_at->format('d.m.Y H:i'),
+            'created_at'      => $this->created_at->format('Y-m-d H:i'),
+            'updated_at'      => $this->updated_at->format('Y-m-d H:i'),
         ];
     }
 }

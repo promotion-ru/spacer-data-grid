@@ -134,7 +134,6 @@
                     v-for="(record, index) in slotProps.items"
                     :key="record.id"
                     class="record-card cursor-pointer transition-all duration-200 hover:shadow-md"
-                    style="border-radius: 8px; padding: 16px;"
                     @click="viewRecordInModal(record)"
                   >
                     <div class="flex justify-between items-start gap-4">

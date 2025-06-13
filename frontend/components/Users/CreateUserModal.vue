@@ -8,6 +8,7 @@
     modal
     @hide="onDialogHide"
   >
+    <!-- Убедитесь что UsersAccountForm - это правильное имя вашего компонента -->
     <UsersAccountForm
       ref="userFormRef"
       :errors="formErrors"
@@ -96,25 +97,21 @@ const handleFormSubmit = async (formData) => {
   try {
     const response = await $api('/users', {
       method: 'POST',
-      body: JSON.stringify(userData),
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      body: userData,
     });
     
-    // Предполагаем, что успешный ответ имеет response.data с данными пользователя
     emit('user-created', response.data || response);
     toast.add({severity: 'success', summary: 'Успешно', detail: 'Пользователь успешно создан!', life: 3000});
     closeModal();
   } catch (error) {
     console.error('Create user error:', error);
-    if (error.data?.errors) {
-      formErrors.value = error.data.errors;
+    if (error.response?.data?.errors) {
+      formErrors.value = error.response.data.errors;
     } else {
       toast.add({
         severity: 'error',
         summary: 'Ошибка',
-        detail: error.data?.message || 'Не удалось создать пользователя.',
+        detail: error.response?.data?.message || 'Не удалось создать пользователя.',
         life: 3000
       });
     }
@@ -122,49 +119,8 @@ const handleFormSubmit = async (formData) => {
     isSubmitting.value = false;
   }
 };
-
-watch(() => props.visible, (newValue) => {
-  if (newValue) {
-    resetLocalState(); // Сброс при открытии
-  }
-});
 </script>
 
 <style scoped>
-/* Адаптивные стили для модального окна */
-@media (max-width: 640px) {
-  :deep(.p-dialog .p-dialog-header) {
-    padding: 1rem 1.5rem;
-    text-align: center;
-  }
-  
-  :deep(.p-dialog .p-dialog-content) {
-    padding: 0 1.5rem 1rem 1.5rem;
-  }
-  
-  :deep(.p-dialog .p-dialog-footer) {
-    padding: 1rem 1.5rem;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-  
-  :deep(.p-dialog .p-dialog-footer .p-button) {
-    width: 100%;
-    justify-content: center;
-  }
-}
 
-@media (min-width: 641px) and (max-width: 1024px) {
-  :deep(.p-dialog .p-dialog-header) {
-    padding: 1.25rem 2rem;
-  }
-  
-  :deep(.p-dialog .p-dialog-content) {
-    padding: 0 2rem 1.25rem 2rem;
-  }
-  
-  :deep(.p-dialog .p-dialog-footer) {
-    padding: 1.25rem 2rem;
-  }
-}
 </style>

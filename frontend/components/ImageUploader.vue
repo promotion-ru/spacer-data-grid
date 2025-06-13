@@ -5,7 +5,7 @@
     </label>
     
     <div
-      class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+      class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors pb-3">
       <div v-if="!imagePreview" class="space-y-2">
         <i class="pi pi-image text-3xl text-gray-400"></i>
         <div>
@@ -30,7 +30,7 @@
           :alt="altText"
           :src="imagePreview"
           :style="grayscale ? 'filter: grayscale(100%)' : ''"
-          class="shadow-md rounded-xl w-full sm:w-64 max-h-32 object-cover mx-auto"
+          class="shadow-md rounded-xl w-full sm:w-64 object-cover mx-auto"
           loading="lazy"
         />
         <Button

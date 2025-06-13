@@ -21,7 +21,7 @@
           <div class="flex items-center gap-4">
             <NuxtLink class="flex items-center gap-3 no-underline" to="/">
               <span class="font-bold text-xl hidden sm:block" style="color: var(--text-primary)">
-                Data grid
+                Мои таблицы
               </span>
             </NuxtLink>
           </div>

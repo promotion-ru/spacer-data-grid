@@ -45,17 +45,18 @@
         
         <!-- Слот для кастомных действий с условной логикой -->
         <template #actions="{ data }">
-          <div class="flex gap-2 justify-center">
+          <div class="flex gap-2 justify-center w-full justify-end">
             <Button
               v-tooltip.top="'Редактировать'"
-              class="p-button-rounded p-button-text p-button-sm"
+              class="p-button-rounded p-button-text p-button-sm grow-1 md:grow-0"
               icon="pi pi-pencil"
+              severity="secondary"
               @click="handleActionClick({ action: 'edit', data })"
             />
             <Button
               v-tooltip.top="data.records_count > 0 ? 'Нельзя удалить - есть связанные записи' : 'Удалить'"
               :disabled="data.records_count > 0"
-              class="p-button-rounded p-button-text p-button-sm p-button-danger"
+              class="p-button-rounded p-button-text p-button-sm p-button-danger grow-1 md:grow-0"
               icon="pi pi-trash"
               @click="handleActionClick({ action: 'delete', data })"
             />
@@ -357,24 +358,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Кастомные стили для таблицы типов */
-@media (max-width: 768px) {
-  /* Дополнительные стили для мобильной адаптации типов */
-  :deep(.universal-responsive-table .p-datatable-tbody > tr > td > div[data-label]) {
-    border-bottom: 1px solid var(--border-color);
-  }
-  
-  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:last-child > div[data-label]) {
-    border-top: 2px solid var(--border-color);
-    padding-top: 16px;
-    margin-top: 12px;
-    border-bottom: none;
-  }
-  
-  /* Подсветка недоступных кнопок */
-  :deep(.p-button:disabled) {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-}
+
 </style>

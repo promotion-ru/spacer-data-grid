@@ -45,6 +45,7 @@ body {
     border-color: var(--border-color) !important;
     color: var(--text-primary) !important;
     border-radius: 6px !important;
+    width: 100%;
 }
 
 .p-inputtext:focus {
@@ -311,7 +312,7 @@ body {
 
 /* Таблицы */
 .p-datatable {
-    background-color: var(--secondary-bg) !important;
+    /*background-color: var(--secondary-bg) !important;*/
 }
 
 .p-datatable .p-datatable-header {
@@ -471,17 +472,6 @@ body {
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
 }
 
-/* Основная кнопка */
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link) {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-    border-color: #3b82f6 !important;
-}
-
-.p-button:not(.p-button-outlined):not(.p-button-text):not(.p-button-link):hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%) !important;
-    border-color: #2563eb !important;
-}
-
 /* Вторичная кнопка */
 .p-button.p-button-secondary:not(.p-button-outlined) {
     background-color: var(--tertiary-bg) !important;
@@ -504,16 +494,6 @@ body {
 .p-button.p-button-outlined:hover {
     background-color: var(--tertiary-bg) !important;
     border-color: var(--text-secondary) !important;
-}
-
-.p-button.p-button-outlined.p-button-primary {
-    border-color: #3b82f6 !important;
-    color: #3b82f6 !important;
-}
-
-.p-button.p-button-outlined.p-button-primary:hover {
-    background-color: #3b82f6 !important;
-    color: white !important;
 }
 
 /* Text кнопки */

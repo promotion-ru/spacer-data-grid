@@ -12,7 +12,7 @@
           class="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 border-b"
           style="border-color: var(--border-color)">
           <span class="inline-flex items-center gap-2">
-            <span class="font-semibold text-2xl" style="color: var(--text-primary)">Data grid</span>
+            <span class="font-semibold text-2xl" style="color: var(--text-primary)">Мои таблицы</span>
           </span>
           <Button
             class="ml-2"

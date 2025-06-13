@@ -30,7 +30,7 @@
         
         <!-- Слот для колонки аватара -->
         <template #column-avatar_url="{ data, column }">
-          <div :data-label="column.header" class="flex justify-center">
+          <div :data-label="column.header">
             <Avatar
               :image="data.avatar_url || undefined"
               :label="!data.avatar_url && data.name ? data.name.charAt(0).toUpperCase() : undefined"
@@ -53,16 +53,17 @@
         
         <!-- Слот для кастомных действий -->
         <template #actions="{ data, defaultActions }">
-          <div data-label="Действия" class="flex gap-2 justify-center">
+          <div data-label="Действия" class="flex gap-2 justify-center w-full justify-end">
             <Button
               v-tooltip.top="'Редактировать'"
-              class="p-button-rounded p-button-text p-button-sm"
+              class="p-button-rounded p-button-text p-button-sm grow-1 md:grow-0"
               icon="pi pi-pencil"
+              severity="secondary"
               @click="defaultActions.edit"
             />
             <Button
               v-tooltip.top="'Удалить'"
-              class="p-button-rounded p-button-text p-button-sm p-button-danger"
+              class="p-button-rounded p-button-text p-button-sm p-button-danger grow-1 md:grow-0"
               icon="pi pi-trash"
               @click="defaultActions.delete"
             />
@@ -115,7 +116,7 @@ const columns = ref([
   {
     field: 'avatar_url',
     header: 'Аватар',
-    class: 'w-20 text-center',
+    class: 'min-w-[9rem]',
     sortable: false
   },
   {
@@ -332,40 +333,5 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Кастомные стили для таблицы пользователей */
-@media (max-width: 768px) {
-  /* Специфические стили для аватаров в мобильной версии */
-  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:first-child) {
-    justify-content: center !important;
-    text-align: center !important;
-    padding-bottom: 16px !important;
-    border-bottom: 2px solid var(--border-color) !important;
-    margin-bottom: 12px !important;
-  }
-  
-  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:first-child:before) {
-    display: none;
-  }
-  
-  :deep(.universal-responsive-table .p-avatar) {
-    width: 64px !important;
-    height: 64px !important;
-  }
-  
-  /* Стили для колонки действий */
-  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:last-child) {
-    flex-direction: column !important;
-    padding-top: 16px !important;
-    border-top: 2px solid var(--border-color) !important;
-    margin-top: 12px !important;
-    gap: 8px;
-  }
-  
-  :deep(.universal-responsive-table .p-datatable-tbody > tr > td:last-child .p-button) {
-    flex: 1 !important;
-    min-height: 44px !important;
-    margin: 0 !important;
-    justify-content: center !important;
-  }
-}
+
 </style>

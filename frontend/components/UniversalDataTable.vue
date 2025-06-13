@@ -47,8 +47,8 @@
           :field="column.field"
           :header="column.header"
           :pt="{
-                root: { 'data-label': column.header },
-              }"
+             root: { 'data-label': column.header },
+          }"
           :sortable="column.sortable"
           :style="column.style"
         >
@@ -63,8 +63,8 @@
               >
                 <!-- Дефолтное отображение -->
                 <span v-if="column.type === 'date'">
-                      {{ formatDate(slotProps.data[column.field]) }}
-                    </span>
+                  {{ formatDateForBackend(slotProps.data[column.field]) }}
+                </span>
                 <span v-else-if="column.type === 'boolean'">
                       <Tag
                         :severity="slotProps.data[column.field] ? 'success' : 'danger'"
@@ -89,14 +89,14 @@
       <!-- Колонка действий -->
       <Column v-if="actions.length > 0" :class="actionsColumnClass" header="Действия">
         <template #body="slotProps">
-          <div data-label="Действия">
+          <div data-label="Действия" class="w-full">
             <slot
               :data="slotProps.data"
               :defaultActions="getDefaultActions(slotProps.data)"
               :index="slotProps.index"
               name="actions"
             >
-              <div class="flex gap-2 justify-center">
+              <div class="flex gap-2 justify-center w-full justify-end">
                 <Button
                   v-for="action in getAvailableActions(slotProps.data)"
                   :key="action.key"
@@ -104,6 +104,7 @@
                   :class="action.class"
                   :disabled="action.disabled && action.disabled(slotProps.data)"
                   :icon="action.icon"
+                  :severity="action.severity ? action.severity: 'action.severity'"
                   @click="$emit('action-clicked', { action: action.key, data: slotProps.data })"
                 />
               </div>
@@ -209,7 +210,7 @@ const props = defineProps({
   },
   actionsColumnClass: {
     type: String,
-    default: 'w-32 text-center'
+    default: 'min-w-[9rem]'
   },
   
   // Внешние фильтры
@@ -228,6 +229,10 @@ const emit = defineEmits([
   'action-clicked'
 ])
 
+const {
+  formatDateForBackend,
+} = useDate()
+
 // Reactive data
 const currentPage = ref(1)
 const perPage = ref(props.defaultPerPage)
@@ -244,19 +249,6 @@ const hasActiveFilters = computed(() => {
 })
 
 // Methods
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A'
-  try {
-    return new Date(dateString).toLocaleDateString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  } catch (e) {
-    return dateString
-  }
-}
-
 const getBadgeValue = (value, badgeConfig) => {
   const config = badgeConfig.find(item => item.value === value)
   return config ? config.label : value
@@ -371,6 +363,15 @@ defineExpose({
   width: 100%;
 }
 
+:deep(.universal-responsive-table .p-datatable-table thead tr th:last-child .p-datatable-column-header-content) {
+  justify-content: flex-end;
+}
+
+:deep(.universal-responsive-table .p-datatable-table-container) {
+  border-radius: 5px;
+  margin-bottom: 5px;
+}
+
 /* Адаптивные стили для мобильных устройств */
 @media (max-width: 768px) {
   :deep(.universal-responsive-table .p-datatable-thead) {
@@ -379,11 +380,11 @@ defineExpose({
   
   :deep(.universal-responsive-table .p-datatable-tbody > tr) {
     display: block;
-    margin-bottom: 1rem;
     border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 1rem;
     background: var(--surface-card);
+    margin: 5px;
   }
   
   :deep(.universal-responsive-table .p-datatable-tbody > tr > td) {
