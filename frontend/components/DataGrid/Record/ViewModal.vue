@@ -20,20 +20,20 @@
               <!-- Заголовок -->
               <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                 <div class="flex-1">
-                  <h2 class="text-2xl lg:text-3xl font-bold mb-3" style="color: var(--text-primary)">{{ record?.name }}</h2>
+                  <h2 class="text-2xl lg:text-3xl font-bold mb-3 text-primary">{{ record?.name }}</h2>
                   
                   <!-- Метаданные -->
                   <div class="flex flex-wrap items-center gap-4">
                     <!-- Тип операции -->
                     <div class="flex items-center gap-2">
                       <i
+                        class="text-xl"
                         :class="{
                           'pi pi-arrow-up': record?.operation_type_id === 1,
-                          'pi pi-arrow-down': record?.operation_type_id === 2
-                        }"
-                        class="text-xl"
-                        :style="{
-                          color: record?.operation_type_id === 1 ? 'var(--green-600)' : record?.operation_type_id === 2 ? 'var(--red-600)' : 'var(--text-secondary)'
+                          'pi pi-arrow-down': record?.operation_type_id === 2,
+                          'record-amount-income': record?.operation_type_id === 1,
+                          'record-amount-expense': record?.operation_type_id === 2,
+                          'text-secondary': !record?.operation_type_id || (record.operation_type_id !== 1 && record.operation_type_id !== 2)
                         }"
                       ></i>
                       <Tag
@@ -44,7 +44,7 @@
                     </div>
                     
                     <!-- Дата -->
-                    <div class="flex items-center gap-2" style="color: var(--text-secondary)">
+                    <div class="flex items-center gap-2 text-secondary">
                       <i class="pi pi-calendar"></i>
                       <span class="font-medium">{{ record?.date }}</span>
                     </div>
@@ -52,12 +52,14 @@
                 </div>
                 
                 <!-- Сумма -->
-                <div class="text-center lg:text-right p-4 rounded-lg" style="background-color: var(--surface-card); border: 1px solid var(--border-color)">
-                  <div class="text-xs uppercase tracking-wide mb-1" style="color: var(--text-secondary)">Сумма</div>
+                <div class="text-center lg:text-right p-4 rounded-lg main-card">
+                  <div class="text-xs uppercase tracking-wide mb-1 text-secondary">Сумма</div>
                   <div
                     class="text-3xl lg:text-4xl font-bold"
-                    :style="{
-                      color: record?.operation_type_id === 1 ? 'var(--green-600)' : record?.operation_type_id === 2 ? 'var(--red-600)' : 'var(--text-primary)'
+                    :class="{
+                      'record-amount-income': record?.operation_type_id === 1,
+                      'record-amount-expense': record?.operation_type_id === 2,
+                      'text-primary': !record?.operation_type_id || (record.operation_type_id !== 1 && record.operation_type_id !== 2)
                     }"
                   >
                     {{ formatAmount(record?.amount, record?.operation_type_id) }}
@@ -67,8 +69,8 @@
               
               <!-- Описание -->
               <div v-if="record?.description" class="p-4 rounded-lg" style="background-color: var(--surface-100); border-left: 4px solid var(--primary-color)">
-                <div class="text-xs uppercase tracking-wide mb-2" style="color: var(--text-secondary)">Описание</div>
-                <p class="text-base leading-relaxed" style="color: var(--text-primary)">{{ record.description }}</p>
+                <div class="text-xs uppercase tracking-wide mb-2 modal-label">Описание</div>
+                <p class="text-base leading-relaxed modal-content">{{ record.description }}</p>
               </div>
             </div>
           </template>
@@ -78,8 +80,8 @@
         <Card v-if="existingAttachments.length > 0" class="shadow-lg">
           <template #content>
             <div class="flex items-center justify-between mb-6">
-              <h3 class="text-xl font-bold flex items-center gap-2" style="color: var(--text-primary)">
-                <i class="pi pi-paperclip" style="color: var(--primary-color)"></i>
+              <h3 class="text-xl font-bold flex items-center gap-2 modal-section-title">
+                <i class="pi pi-paperclip permissions-icon"></i>
                 Вложения
                 <Tag :value="existingAttachments.length" severity="info"/>
               </h3>
@@ -89,8 +91,7 @@
               <div
                 v-for="attachment in existingAttachments"
                 :key="attachment.id"
-                class="group border rounded-lg p-4 hover:shadow-lg transition-all duration-200"
-                style="background-color: var(--surface-card); border-color: var(--border-color)"
+                class="group border rounded-lg p-4 hover:shadow-lg transition-all duration-200 modal-attachment-item"
                 @mouseenter="$event.currentTarget.style.borderColor = 'var(--primary-300)'"
                 @mouseleave="$event.currentTarget.style.borderColor = 'var(--border-color)'"
               >
@@ -117,8 +118,7 @@
                   <div class="text-center">
                     <i
                       :class="getFileIcon(attachment.mime_type)"
-                      class="text-5xl mb-2"
-                      style="color: var(--primary-color)"
+                      class="text-5xl mb-2 permissions-icon"
                     ></i>
                     <div class="text-xs font-medium px-2 py-1 rounded" style="background-color: var(--primary-100); color: var(--primary-700)">
                       {{ getFileTypeLabel(attachment.mime_type) }}
@@ -130,13 +130,12 @@
                 <div class="space-y-2">
                   <h5
                     :title="attachment.name || attachment.file_name"
-                    class="text-sm font-medium truncate leading-tight"
-                    style="color: var(--text-primary)"
+                    class="text-sm font-medium truncate leading-tight text-primary"
                   >
                     {{ attachment.name || attachment.file_name }}
                   </h5>
                   
-                  <div class="flex justify-between items-center text-xs" style="color: var(--text-secondary)">
+                  <div class="flex justify-between items-center text-xs text-secondary">
                     <span class="font-medium">{{ attachment.human_readable_size || formatFileSize(attachment.size) }}</span>
                     <span class="px-2 py-1 rounded" style="background-color: var(--surface-100)">{{ getShortFileType(attachment.mime_type) }}</span>
                   </div>
@@ -161,9 +160,9 @@
         <Card v-else class="shadow-lg">
           <template #content>
             <div class="text-center py-12" style="background-color: var(--surface-50); border: 2px dashed var(--border-color); border-radius: 8px">
-              <i class="pi pi-file text-6xl mb-4" style="color: var(--text-secondary)"></i>
-              <h3 class="text-lg font-medium mb-2" style="color: var(--text-secondary)">Нет вложений</h3>
-              <p class="text-sm" style="color: var(--text-secondary)">К этой записи не прикреплено файлов</p>
+              <i class="pi pi-file text-6xl mb-4 text-secondary"></i>
+              <h3 class="text-lg font-medium mb-2 text-secondary">Нет вложений</h3>
+              <p class="text-sm text-secondary">К этой записи не прикреплено файлов</p>
             </div>
           </template>
         </Card>
@@ -174,8 +173,8 @@
         <!-- Метаданные записи -->
         <Card class="shadow-lg">
           <template #content>
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--text-primary)">
-              <i class="pi pi-info-circle" style="color: var(--primary-color)"></i>
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 modal-section-title">
+              <i class="pi pi-info-circle permissions-icon"></i>
               Информация
             </h3>
             
@@ -183,10 +182,10 @@
               <!-- Тип записи -->
               <div>
                 <div class="flex items-center gap-2 mb-2">
-                  <i class="pi pi-tag" style="color: var(--text-secondary)"></i>
-                  <span class="text-xs uppercase tracking-wide font-medium" style="color: var(--text-secondary)">Тип записи</span>
+                  <i class="pi pi-tag text-secondary"></i>
+                  <span class="text-xs uppercase tracking-wide font-medium modal-label">Тип записи</span>
                 </div>
-                <p class="text-sm font-medium pl-6" style="color: var(--text-primary)">
+                <p class="text-sm font-medium pl-6 modal-content">
                   {{ record?.type?.name || 'Не указан' }}
                   <Tag v-if="record?.type?.is_global" value="Глобальный" severity="info" size="small" class="ml-2"/>
                 </p>
@@ -195,10 +194,10 @@
               <!-- Автор -->
               <div>
                 <div class="flex items-center gap-2 mb-2">
-                  <i class="pi pi-user" style="color: var(--text-secondary)"></i>
-                  <span class="text-xs uppercase tracking-wide font-medium" style="color: var(--text-secondary)">Автор</span>
+                  <i class="pi pi-user text-secondary"></i>
+                  <span class="text-xs uppercase tracking-wide font-medium modal-label">Автор</span>
                 </div>
-                <p class="text-sm font-medium pl-6" style="color: var(--text-primary)">
+                <p class="text-sm font-medium pl-6 modal-content">
                   {{ record?.creator?.name || 'Неизвестно' }}
                 </p>
               </div>
@@ -206,10 +205,10 @@
               <!-- Дата создания -->
               <div>
                 <div class="flex items-center gap-2 mb-2">
-                  <i class="pi pi-clock" style="color: var(--text-secondary)"></i>
-                  <span class="text-xs uppercase tracking-wide font-medium" style="color: var(--text-secondary)">Создано</span>
+                  <i class="pi pi-clock text-secondary"></i>
+                  <span class="text-xs uppercase tracking-wide font-medium modal-label">Создано</span>
                 </div>
-                <p class="text-sm font-medium pl-6" style="color: var(--text-primary)">{{ record?.created_at }}</p>
+                <p class="text-sm font-medium pl-6 modal-content">{{ record?.created_at }}</p>
               </div>
             </div>
           </template>
@@ -218,28 +217,28 @@
         <!-- Статистика -->
         <Card v-if="record" class="shadow-lg">
           <template #content>
-            <h3 class="text-lg font-bold mb-4 flex items-center gap-2" style="color: var(--text-primary)">
-              <i class="pi pi-chart-line" style="color: var(--primary-color)"></i>
+            <h3 class="text-lg font-bold mb-4 flex items-center gap-2 modal-section-title">
+              <i class="pi pi-chart-line permissions-icon"></i>
               Статистика
             </h3>
             
             <div class="space-y-4">
               <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--primary-50); border: 1px solid var(--primary-200)">
                 <div class="flex items-center gap-3">
-                  <i class="pi pi-paperclip text-xl" style="color: var(--primary-color)"></i>
+                  <i class="pi pi-paperclip text-xl permissions-icon"></i>
                   <div>
                     <div class="text-xs" style="color: var(--primary-600)">Вложений</div>
-                    <div class="text-lg font-bold" style="color: var(--primary-color)">{{ existingAttachments.length }}</div>
+                    <div class="text-lg font-bold permissions-icon">{{ existingAttachments.length }}</div>
                   </div>
                 </div>
               </div>
               
               <div class="flex items-center justify-between p-3 rounded-lg" style="background-color: var(--surface-100); border: 1px solid var(--border-color)">
                 <div class="flex items-center gap-3">
-                  <i class="pi pi-calendar text-xl" style="color: var(--text-secondary)"></i>
+                  <i class="pi pi-calendar text-xl text-secondary"></i>
                   <div>
-                    <div class="text-xs" style="color: var(--text-secondary)">Дней назад</div>
-                    <div class="text-lg font-bold" style="color: var(--text-primary)">{{ formattedDate }}</div>
+                    <div class="text-xs text-secondary">Дней назад</div>
+                    <div class="text-lg font-bold text-primary">{{ formattedDate }}</div>
                   </div>
                 </div>
               </div>
@@ -249,15 +248,18 @@
                 border: record?.updated_at !== record?.created_at ? '1px solid var(--green-200)' : '1px solid var(--border-color)'
               }">
                 <div class="flex items-center gap-3">
-                  <i class="pi pi-pencil text-xl" :style="{
-                    color: record?.updated_at !== record?.created_at ? 'var(--green-600)' : 'var(--text-secondary)'
+                  <i class="pi pi-pencil text-xl" :class="{
+                    'record-amount-income': record?.updated_at !== record?.created_at,
+                    'text-secondary': record?.updated_at === record?.created_at
                   }"></i>
                   <div>
-                    <div class="text-xs" :style="{
-                      color: record?.updated_at !== record?.created_at ? 'var(--green-600)' : 'var(--text-secondary)'
+                    <div class="text-xs" :class="{
+                      'record-amount-income': record?.updated_at !== record?.created_at,
+                      'text-secondary': record?.updated_at === record?.created_at
                     }">Изменялась</div>
-                    <div class="text-lg font-bold" :style="{
-                      color: record?.updated_at !== record?.created_at ? 'var(--green-600)' : 'var(--text-secondary)'
+                    <div class="text-lg font-bold" :class="{
+                      'record-amount-income': record?.updated_at !== record?.created_at,
+                      'text-secondary': record?.updated_at === record?.created_at
                     }">{{ record?.updated_at !== record?.created_at ? 'Да' : 'Нет' }}</div>
                   </div>
                 </div>

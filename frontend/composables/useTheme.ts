@@ -6,7 +6,7 @@ export const useTheme = () => {
         attribute: 'data-theme',
         valueDark: 'dark',
         valueLight: 'light',
-        initialValue: 'light', // Светлая тема по умолчанию
+        initialValue: 'dark',
         storageKey: 'theme-preference',
         storage: typeof window !== 'undefined' ? localStorage : undefined
     })

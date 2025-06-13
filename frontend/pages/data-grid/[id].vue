@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen" style="background-color: var(--surface-ground)">
+  <div class="min-h-screen">
     <div class="container mx-auto px-4 py-8">
       <!-- Основной контент -->
       <div v-if="grid">
@@ -13,11 +13,11 @@
             />
             <div>
               <div class="flex items-center gap-2 flex-wrap">
-                <h1 class="text-2xl lg:text-3xl font-bold" style="color: var(--text-primary)">{{ grid.name }}</h1>
+                <h1 class="text-2xl lg:text-3xl font-bold text-primary">{{ grid.name }}</h1>
                 <Tag v-if="!grid.is_owner" severity="warn" value="Общая"/>
               </div>
-              <p v-if="grid.description" class="mt-1 text-sm lg:text-base" style="color: var(--text-secondary)">{{ grid.description }}</p>
-              <p v-if="!grid.is_owner && grid.owner_name" class="text-sm mt-1" style="color: var(--text-secondary)">
+              <p v-if="grid.description" class="mt-1 text-sm lg:text-base text-secondary">{{ grid.description }}</p>
+              <p v-if="!grid.is_owner && grid.owner_name" class="text-sm mt-1 text-secondary">
                 Владелец: {{ grid.owner_name }}
               </p>
             </div>
@@ -62,12 +62,12 @@
         
         <!-- Права доступа для участников -->
         <div v-if="!grid.is_owner && grid.permissions" class="mb-6">
-          <Card class="border-l-4" style="border-left-color: var(--primary-color); background-color: var(--primary-50)">
+          <Card class="border-l-4 permissions-card">
             <template #content>
               <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-                <i class="pi pi-shield text-xl" style="color: var(--primary-color)"></i>
+                <i class="pi pi-shield text-xl permissions-icon"></i>
                 <div class="flex-1">
-                  <h3 class="font-semibold mb-2" style="color: var(--text-primary)">Ваши права в этой таблице:</h3>
+                  <h3 class="font-semibold mb-2 text-primary">Ваши права в этой таблице:</h3>
                   <div class="flex flex-wrap gap-2">
                     <Tag
                       v-for="permission in grid.permissions"
@@ -95,31 +95,27 @@
           @refresh="loadRecords"
         />
         
-        <!-- Таблица записей -->
-        <Card style="background-color: var(--surface-card); border: 1px solid var(--border-color)">
+        <!-- DataView для записей -->
+        <Card class="main-card">
           <template #content>
-            <DataTable
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-lg font-semibold text-primary">Записи ({{ totalRecords }})</h3>
+            </div>
+            
+            <DataView
+              :value="records"
               :loading="recordsLoading"
               :paginator="true"
               :rows="20"
-              :value="records"
               :totalRecords="totalRecords"
               :lazy="true"
-              class="p-datatable-sm"
               dataKey="id"
               @page="onPage"
-              @sort="onSort"
             >
-              <template #header>
-                <div class="flex justify-between items-center">
-                  <h3 class="text-lg font-semibold" style="color: var(--text-primary)">Записи ({{ totalRecords }})</h3>
-                </div>
-              </template>
-              
               <template #empty>
-                <div class="text-center py-8">
-                  <i class="pi pi-inbox text-4xl mb-4" style="color: var(--text-secondary)"></i>
-                  <p class="mb-4" style="color: var(--text-secondary)">
+                <div class="text-center py-12">
+                  <i class="pi pi-inbox text-4xl mb-4 text-secondary"></i>
+                  <p class="mb-4 text-secondary">
                     {{ hasActiveFilters ? 'По заданным фильтрам записи не найдены' : 'В таблице пока нет записей' }}
                   </p>
                   <Button
@@ -132,133 +128,109 @@
                 </div>
               </template>
               
-              <Column field="name" header="Название" sortable>
-                <template #body="{ data }">
-                  <div class="font-medium" style="color: var(--text-primary)">{{ data.name }}</div>
-                  <div v-if="data.description" class="text-sm mt-1 line-clamp-2" style="color: var(--text-secondary)">
-                    {{ data.description }}
+              <template #list="slotProps">
+                <div class="grid grid-cols-1 gap-4">
+                  <div
+                    v-for="(record, index) in slotProps.items"
+                    :key="record.id"
+                    class="record-card cursor-pointer transition-all duration-200 hover:shadow-md"
+                    style="border-radius: 8px; padding: 16px;"
+                    @click="viewRecordInModal(record)"
+                  >
+                    <div class="flex justify-between items-start gap-4">
+                      <!-- Левая часть: Название, дата, тип -->
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-2">
+                          <h4 class="font-semibold text-base leading-tight record-title">
+                            {{ record.name }}
+                          </h4>
+                          <!-- Меню действий -->
+                          <div class="flex items-center gap-2 flex-shrink-0">
+                            <Button
+                              v-tooltip.top="'Действия'"
+                              text
+                              rounded
+                              size="small"
+                              icon="pi pi-ellipsis-v"
+                              @click.stop="toggleActionsMenu($event, record)"
+                              class="record-actions-btn"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div class="flex items-center gap-3 mb-2 text-sm record-meta">
+                          <div class="flex items-center gap-1 text-secondary">
+                            <i class="pi pi-calendar text-xs record-meta-icon"></i>
+                            <span>{{ record.date }}</span>
+                          </div>
+                          
+                          <Tag
+                            :value="record.operation_type_id === 1 ? 'Доход' : 'Расход'"
+                            :severity="record.operation_type_id === 1 ? 'success' : 'danger'"
+                            class="text-xs"
+                          />
+                          
+                          <Tag
+                            v-if="record.type"
+                            :value="record.type.name"
+                            class="text-xs"
+                            severity="info"
+                          />
+                        </div>
+                        
+                        <!-- Краткое описание -->
+                        <p
+                          v-if="record.description"
+                          class="text-sm line-clamp-2 mb-2 record-description"
+                        >
+                          {{ record.description }}
+                        </p>
+                        
+                        <!-- Дополнительная информация -->
+                        <div class="flex items-center gap-4 text-xs record-meta">
+                          <div class="flex items-center gap-1">
+                            <i class="pi pi-user record-meta-icon"></i>
+                            <span>{{ record.creator.name }}</span>
+                          </div>
+                          
+                          <div v-if="record.attachments?.length" class="flex items-center gap-1">
+                            <i class="pi pi-paperclip record-meta-icon"></i>
+                            <span>{{ record.attachments.length }} файл{{ record.attachments.length > 1 ? (record.attachments.length > 4 ? 'ов' : 'а') : '' }}</span>
+                          </div>
+                          
+                          <div class="flex items-center gap-1">
+                            <i class="pi pi-clock record-meta-icon"></i>
+                            <span>{{ record.created_at }}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <!-- Правая часть: Сумма -->
+                      <div class="flex-shrink-0 text-right">
+                        <div class="text-lg font-bold mb-1 text-primary">
+                          {{ formatAmount(record.amount) }}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </template>
-              </Column>
+                </div>
+              </template>
               
-              <Column field="date" header="Дата операции" sortable class="w-32">
-                <template #body="{ data }">
-                  <div class="text-sm" style="color: var(--text-primary)">{{ data.date }}</div>
-                </template>
-              </Column>
-              
-              <Column field="operation_type_id" header="Тип операции" sortable class="w-32">
-                <template #body="{ data }">
-                  <Tag
-                    :value="data.operation_type_id === 1 ? 'Доход' : 'Расход'"
-                    :severity="data.operation_type_id === 1 ? 'success' : 'danger'"
-                    class="text-xs"
-                  />
-                </template>
-              </Column>
-              
-              <Column field="amount" header="Сумма" sortable class="w-28">
-                <template #body="{ data }">
-                  <div class="text-sm font-medium" style="color: var(--text-primary)">{{ formatAmount(data.amount) }}</div>
-                </template>
-              </Column>
-              
-              <Column field="type.name" header="Тип записи" class="w-32">
-                <template #body="{ data }">
-                  <Tag
-                    v-if="data.type"
-                    :value="data.type.name"
-                    class="text-xs"
-                    severity="info"
-                  />
-                  <span v-else class="text-sm" style="color: var(--text-secondary)">—</span>
-                </template>
-              </Column>
-              
-              <Column class="w-32" header="Вложения">
-                <template #body="{ data }">
-                  <div v-if="data.attachments?.length" class="flex flex-wrap gap-1">
-                    <Tag
-                      v-for="attachment in data.attachments.slice(0, 2)"
-                      :key="attachment.id"
-                      :value="attachment.name"
-                      class="text-xs"
-                      severity="info"
-                    />
-                    <Tag
-                      v-if="data.attachments.length > 2"
-                      :value="`+${data.attachments.length - 2}`"
-                      class="text-xs"
-                      severity="secondary"
-                    />
-                  </div>
-                  <span v-else class="text-sm" style="color: var(--text-secondary)">—</span>
-                </template>
-              </Column>
-              
-              <Column class="w-36" field="creator.name" header="Автор" sortable>
-                <template #body="{ data }">
-                  <div class="text-sm" style="color: var(--text-primary)">{{ data.creator.name }}</div>
-                </template>
-              </Column>
-              
-              <Column class="w-32" field="created_at" header="Создано" sortable>
-                <template #body="{ data }">
-                  <div class="text-sm" style="color: var(--text-secondary)">{{ data.created_at }}</div>
-                </template>
-              </Column>
-              
-              <!-- Действия с учетом прав -->
-              <Column class="w-24" header="Действия">
-                <template #body="{ data }">
-                  <div class="flex gap-1 flex-wrap">
-                    <Button
-                      v-tooltip.top="'Просмотр'"
-                      outlined
-                      size="small"
-                      severity="info"
-                      icon="pi pi-eye"
-                      @click="viewRecord(data)"
-                    />
-                    <Button
-                      v-if="hasPermission('update')"
-                      v-tooltip.top="'Редактировать'"
-                      outlined
-                      size="small"
-                      icon="pi pi-pencil"
-                      @click="editRecord(data)"
-                    />
-                    <Button
-                      v-if="hasPermission('view')"
-                      v-tooltip.top="'История изменений'"
-                      outlined
-                      size="small"
-                      severity="secondary"
-                      icon="pi pi-history"
-                      @click="viewRecordLogs(data)"
-                    />
-                    <Button
-                      v-if="hasPermission('delete')"
-                      v-tooltip.top="'Удалить'"
-                      outlined
-                      size="small"
-                      severity="danger"
-                      icon="pi pi-trash"
-                      @click="confirmDeleteRecord(data)"
-                    />
-                  </div>
-                </template>
-              </Column>
-            </DataTable>
+              <template #footer>
+                <div class="text-center text-sm mt-4 text-secondary">
+                  Показано {{ records.length }} из {{ totalRecords }} записей
+                </div>
+              </template>
+            </DataView>
           </template>
         </Card>
       </div>
       
       <!-- Ошибка 404 -->
       <div v-else class="text-center py-12">
-        <i class="pi pi-exclamation-triangle text-6xl mb-4" style="color: var(--red-300)"></i>
-        <h3 class="text-xl font-semibold mb-2" style="color: var(--text-primary)">Таблица не найдена</h3>
-        <p class="mb-6" style="color: var(--text-secondary)">Возможно, таблица была удалена или у вас нет доступа к ней</p>
+        <i class="pi pi-exclamation-triangle text-6xl mb-4 error-icon"></i>
+        <h3 class="text-xl font-semibold mb-2 error-title">Таблица не найдена</h3>
+        <p class="mb-6 error-description">Возможно, таблица была удалена или у вас нет доступа к ней</p>
         <Button
           icon="pi pi-home"
           label="Вернуться на главную"
@@ -267,7 +239,128 @@
       </div>
     </div>
     
+    <!-- Меню действий -->
+    <Menu
+      ref="actionsMenu"
+      :model="actionMenuItems"
+      :popup="true"
+    />
+    
     <!-- Модальные окна -->
+    <!-- Модалка просмотра записи -->
+    <Dialog
+      v-model:visible="showDetailModal"
+      :header="selectedRecord?.name || 'Просмотр записи'"
+      :modal="true"
+      :closable="true"
+      :style="{ width: '50vw' }"
+      :breakpoints="{ '960px': '75vw', '641px': '95vw' }"
+    >
+      <div v-if="selectedRecord" class="record-detail-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Основная информация -->
+          <div class="space-y-4">
+            <div>
+              <h4 class="font-semibold mb-2 modal-label">Основная информация</h4>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium mb-1 modal-label">Название</label>
+                  <p class="text-sm modal-content">{{ selectedRecord.name }}</p>
+                </div>
+                
+                <div v-if="selectedRecord.description">
+                  <label class="block text-sm font-medium mb-1 modal-label">Описание</label>
+                  <p class="text-sm whitespace-pre-wrap modal-content">{{ selectedRecord.description }}</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-1 modal-label">Сумма</label>
+                  <p class="text-lg font-bold modal-content">{{ formatAmount(selectedRecord.amount) }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Дополнительная информация -->
+          <div class="space-y-4">
+            <div>
+              <h4 class="font-semibold mb-2 modal-label">Детали</h4>
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium mb-1 modal-label">Дата операции</label>
+                  <p class="text-sm modal-content">{{ selectedRecord.date }}</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-1 modal-label">Тип операции</label>
+                  <Tag
+                    :value="selectedRecord.operation_type_id === 1 ? 'Доход' : 'Расход'"
+                    :severity="selectedRecord.operation_type_id === 1 ? 'success' : 'danger'"
+                    class="text-sm"
+                  />
+                </div>
+                
+                <div v-if="selectedRecord.type">
+                  <label class="block text-sm font-medium mb-1 modal-label">Тип записи</label>
+                  <Tag
+                    :value="selectedRecord.type.name"
+                    class="text-sm"
+                    severity="info"
+                  />
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-1 modal-label">Автор</label>
+                  <p class="text-sm modal-content">{{ selectedRecord.creator.name }}</p>
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium mb-1 modal-label">Создано</label>
+                  <p class="text-sm modal-content">{{ selectedRecord.created_at }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Вложения -->
+        <div v-if="selectedRecord.attachments?.length" class="mt-6">
+          <h4 class="font-semibold mb-3 modal-label">Вложения ({{ selectedRecord.attachments.length }})</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div
+              v-for="attachment in selectedRecord.attachments"
+              :key="attachment.id"
+              class="flex items-center gap-2 p-3 rounded-lg modal-attachment-item"
+            >
+              <i class="pi pi-file text-lg permissions-icon"></i>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium truncate modal-content">{{ attachment.name }}</p>
+                <p class="text-xs text-secondary">{{ attachment.size ? formatFileSize(attachment.size) : '' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <template #footer>
+        <div class="flex justify-end gap-3">
+          <Button
+            v-if="hasPermission('update')"
+            outlined
+            icon="pi pi-pencil"
+            label="Редактировать"
+            @click="editRecordFromModal"
+          />
+          <Button
+            outlined
+            icon="pi pi-times"
+            label="Закрыть"
+            @click="showDetailModal = false"
+          />
+        </div>
+      </template>
+    </Dialog>
+    
     <DataGridRecordViewModal
       v-model:visible="showViewRecordModal"
       :record="selectedRecord"
@@ -336,6 +429,7 @@ const showEditRecordModal = ref(false)
 const showShareModal = ref(false)
 const showMembersModal = ref(false)
 const showRecordLogsModal = ref(false)
+const showDetailModal = ref(false)
 const selectedRecord = ref(null)
 
 // Данные для таблицы с пагинацией и фильтрацией
@@ -355,6 +449,10 @@ const currentUserId = computed(() => {
 // Флаги для управления инициализацией
 const isDataLoaded = ref(false)
 const filtersRef = ref(null)
+
+// Меню действий
+const actionsMenu = ref(null)
+const actionMenuItems = ref([])
 
 // Вычисляемое свойство для проверки активных фильтров
 const hasActiveFilters = computed(() => {
@@ -389,6 +487,62 @@ const getPermissionLabel = (permission) => {
     manage: 'Управление'
   }
   return labels[permission] || permission
+}
+
+// Методы для меню действий
+const toggleActionsMenu = (event, record) => {
+  selectedRecord.value = record
+  
+  actionMenuItems.value = [
+    {
+      label: 'Просмотр',
+      icon: 'pi pi-eye',
+      command: () => viewRecord(record)
+    }
+  ]
+  
+  if (hasPermission('update')) {
+    actionMenuItems.value.push({
+      label: 'Редактировать',
+      icon: 'pi pi-pencil',
+      command: () => editRecord(record)
+    })
+  }
+  
+  if (hasPermission('view')) {
+    actionMenuItems.value.push({
+      label: 'История изменений',
+      icon: 'pi pi-history',
+      command: () => viewRecordLogs(record)
+    })
+  }
+  
+  if (hasPermission('delete')) {
+    actionMenuItems.value.push({
+      separator: true
+    })
+    actionMenuItems.value.push({
+      label: 'Удалить',
+      icon: 'pi pi-trash',
+      class: 'text-red-500',
+      command: () => confirmDeleteRecord(record)
+    })
+  }
+  
+  actionsMenu.value.toggle(event)
+}
+
+// Методы для просмотра записи в модалке
+const viewRecordInModal = (record) => {
+  selectedRecord.value = record
+  showDetailModal.value = true
+}
+
+const editRecordFromModal = () => {
+  showDetailModal.value = false
+  nextTick(() => {
+    editRecord(selectedRecord.value)
+  })
 }
 
 // Загрузка записей с фильтрацией
@@ -650,6 +804,16 @@ const formatAmount = (amount) => {
   }).format(amount)
 }
 
+const formatFileSize = (bytes) => {
+  if (!bytes) return ''
+  
+  const sizes = ['Б', 'КБ', 'МБ', 'ГБ']
+  if (bytes === 0) return '0 Б'
+  
+  const i = Math.floor(Math.log(bytes) / Math.log(1024))
+  return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i]
+}
+
 // Единственный watcher для инициализации
 watch(() => grid.value, async (newGrid, oldGrid) => {
   if (newGrid?.id && newGrid.id !== oldGrid?.id) {
@@ -677,5 +841,28 @@ onMounted(async () => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.record-card {
+  transition: all 0.2s ease-in-out;
+}
+
+.record-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.record-actions-btn {
+  opacity: 0.7;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.record-card:hover .record-actions-btn {
+  opacity: 1;
+}
+
+.record-detail-content {
+  max-height: 70vh;
+  overflow-y: auto;
 }
 </style>

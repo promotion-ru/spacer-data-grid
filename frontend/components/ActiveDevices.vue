@@ -354,12 +354,6 @@ onMounted(() => {
   }
 }
 
-/* Improve card hover effects */
-:deep(.p-card:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
 /* Better spacing for device info items */
 :deep(.space-y-2 > div) {
   display: flex !important;

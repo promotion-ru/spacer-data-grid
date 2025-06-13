@@ -7,7 +7,7 @@
       severity="secondary"
       text
       rounded
-      @click="toggleDark"
+      @click="toggleDark()"
     />
   </div>
 </template>

@@ -159,7 +159,7 @@
                     v-model="form.password"
                     placeholder="Введите новый пароль"
                     :class="{ 'p-invalid': formErrors.password }"
-                    class="w-full"
+                    class="w-full password-input"
                     toggleMask
                     :feedback="false"
                     :disabled="formLoading"
@@ -180,7 +180,7 @@
                     v-model="form.password_confirmation"
                     placeholder="Подтвердите пароль"
                     :class="{ 'p-invalid': formErrors.password_confirmation }"
-                    class="w-full"
+                    class="w-full password-input"
                     :feedback="false"
                     :disabled="formLoading"
                   />
@@ -238,6 +238,9 @@ const {
   updateProfile,
   clearError
 } = useProfile()
+const {
+  formatFileSize,
+} = useFileUtils()
 
 // Реактивные данные формы
 const form = reactive({
@@ -294,20 +297,13 @@ const convertFileToBase64 = (file: File): Promise<string> => {
   })
 }
 
-// Форматирование размера файла
-const formatFileSize = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes'
-  const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
 // Обработка выбора файла через FileUpload
 const onFileSelect = (event: any): void => {
   const file = event.files[0]
   
-  if (!file) return
+  if (!file) {
+    return
+  }
   
   // Проверка типа файла
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
@@ -436,223 +432,9 @@ watch(profile, () => {
 </script>
 
 <style scoped>
-/* Responsive improvements for mobile devices */
-@media (max-width: 1024px) {
-  /* Stack layout vertically on tablets and mobile */
-  :deep(.grid.grid-cols-1.lg\\:grid-cols-3) {
-    grid-template-columns: 1fr !important;
-    gap: 24px !important;
-  }
-  
-  /* Remove sticky positioning on smaller screens */
-  :deep(.sticky.top-24) {
-    position: relative !important;
-    top: auto !important;
-  }
+
+:deep(.password-input input) {
+  width: 100% !important;
 }
 
-@media (max-width: 768px) {
-  /* Container adjustments for mobile */
-  .max-w-7xl.mx-auto.px-4.sm\\:px-6.lg\\:px-8.py-8 {
-    padding: 16px !important;
-  }
-  
-  /* Form layout adjustments */
-  :deep(.grid.grid-cols-1.md\\:grid-cols-2) {
-    grid-template-columns: 1fr !important;
-    gap: 20px !important;
-  }
-  
-  /* Avatar section improvements */
-  :deep(.w-40.h-40) {
-    width: 120px !important;
-    height: 120px !important;
-  }
-  
-  :deep(.text-3xl) {
-    font-size: 1.5rem !important;
-  }
-  
-  /* Card padding adjustments */
-  :deep(.p-6) {
-    padding: 20px !important;
-  }
-  
-  /* Button layout improvements */
-  :deep(.flex.justify-end.space-x-3) {
-    flex-direction: column !important;
-    gap: 12px !important;
-    align-items: stretch !important;
-  }
-  
-  :deep(.flex.justify-end.space-x-3 .p-button) {
-    width: 100% !important;
-    justify-content: center !important;
-    min-height: 48px !important;
-  }
-  
-  /* File upload improvements */
-  :deep(.p-fileupload-basic) {
-    width: 100% !important;
-  }
-  
-  :deep(.p-fileupload-basic .p-button) {
-    width: 100% !important;
-    justify-content: center !important;
-    min-height: 44px !important;
-  }
-  
-  /* Form field spacing */
-  :deep(.space-y-6) {
-    gap: 20px !important;
-  }
-  
-  :deep(.space-y-3) {
-    gap: 12px !important;
-  }
-  
-  :deep(.space-y-2) {
-    gap: 8px !important;
-  }
-  
-  /* Typography improvements */
-  h3 {
-    font-size: 1.125rem !important;
-    line-height: 1.75rem !important;
-  }
-  
-  /* Input field improvements */
-  :deep(.p-inputtext),
-  :deep(.p-password input) {
-    min-height: 44px !important;
-    font-size: 16px !important; /* Prevents zoom on iOS */
-  }
-  
-  /* Error message improvements */
-  :deep(.p-error) {
-    font-size: 14px !important;
-    line-height: 1.4 !important;
-  }
-  
-  /* Selected file info improvements */
-  :deep(.border.rounded-lg.p-3.mb-3) {
-    padding: 16px !important;
-    margin-bottom: 16px !important;
-  }
-}
-
-@media (max-width: 480px) {
-  /* Extra small screens */
-  .max-w-7xl.mx-auto.px-4.sm\\:px-6.lg\\:px-8.py-8 {
-    padding: 12px !important;
-  }
-  
-  :deep(.p-6) {
-    padding: 16px !important;
-  }
-  
-  /* Avatar size for very small screens */
-  :deep(.w-40.h-40) {
-    width: 100px !important;
-    height: 100px !important;
-  }
-  
-  :deep(.text-3xl) {
-    font-size: 1.25rem !important;
-  }
-  
-  /* Form spacing for small screens */
-  :deep(.space-y-6) {
-    gap: 16px !important;
-  }
-}
-
-/* Improve card shadows and transitions */
-:deep(.shadow) {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
-  transition: all 0.3s ease !important;
-}
-
-:deep(.shadow:hover) {
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
-  transform: translateY(-2px) !important;
-}
-
-/* Avatar styling improvements */
-:deep(.p-avatar) {
-  border: 3px solid var(--border-color) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-  transition: all 0.3s ease !important;
-}
-
-:deep(.p-avatar:hover) {
-  transform: scale(1.05) !important;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2) !important;
-}
-
-/* Success indicator styling */
-:deep(.absolute.-top-2.-right-2) {
-  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4) !important;
-  border: 2px solid white !important;
-}
-
-/* Button improvements */
-:deep(.p-button) {
-  transition: all 0.2s ease !important;
-  border-radius: 8px !important;
-}
-
-:deep(.p-button:hover) {
-  transform: translateY(-1px) !important;
-}
-
-/* Form field improvements */
-:deep(.p-inputtext),
-:deep(.p-password) {
-  transition: all 0.2s ease !important;
-}
-
-:deep(.p-inputtext:focus),
-:deep(.p-password:focus-within) {
-  transform: translateY(-1px) !important;
-}
-
-/* Dark theme specific adjustments */
-[data-theme="dark"] :deep(.border.rounded-lg.p-3.mb-3) {
-  background-color: rgba(59, 130, 246, 0.2) !important;
-  border-color: rgba(59, 130, 246, 0.4) !important;
-}
-
-[data-theme="dark"] :deep(.absolute.-top-2.-right-2) {
-  border-color: var(--secondary-bg) !important;
-}
-
-/* File upload component theming */
-:deep(.p-fileupload-basic .p-button.p-component.p-button-secondary) {
-  background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
-  border-color: #6b7280 !important;
-  color: white !important;
-}
-
-:deep(.p-fileupload-basic .p-button.p-component.p-button-secondary:hover) {
-  background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
-  border-color: #4b5563 !important;
-}
-
-/* Loading spinner improvements */
-:deep(.p-progress-spinner) {
-  width: 3rem !important;
-  height: 3rem !important;
-}
-
-/* Message component theming */
-:deep(.p-message) {
-  border-radius: 8px !important;
-  margin-bottom: 24px !important;
-}
-
-/* Smooth animations for all elements */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease !important;
-}
 </style>
