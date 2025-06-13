@@ -191,8 +191,6 @@
             :key="log.id"
             class="rounded-lg p-4 transition-colors"
             style="border: 1px solid var(--border-color); background-color: var(--secondary-bg)">
-          >
-            <!-- Заголовок лога -->
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center space-x-3">
                 <Badge

@@ -1,5 +1,31 @@
 import Aura from '@primeuix/themes/aura';
 import tailwindcss from "@tailwindcss/vite";
+import { definePreset } from '@primeuix/themes';
+
+const MyPreset = definePreset(Aura, {
+    semantic: {
+        colorScheme: {
+            /* ——— Светлая тема ——— */
+            light: {
+                surface: {
+                    // 500: '#0f172a',
+                    // 800: '#eeeeee',
+                    // 900: '#eeeeee',
+                    // 950: '#eeeeee'
+                },
+            },
+            /* ——— Тёмная тема ——— */
+            dark: {
+                surface: {
+                    // 400: '#fff',
+                    // 800: '#5a6b77',
+                    // 900: '#5a6b77',
+                    // 950: '#5a6b77'
+                }
+            }
+        }
+    }
+});
 
 export default defineNuxtConfig({
     devtools: {enabled: true},
@@ -15,7 +41,7 @@ export default defineNuxtConfig({
     primevue: {
         options: {
             theme: {
-                preset: Aura,
+                preset: MyPreset,
                 options: {
                     darkModeSelector: '[data-theme="dark"]',
                 }
