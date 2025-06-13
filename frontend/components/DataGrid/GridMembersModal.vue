@@ -18,7 +18,7 @@
     <div v-else class="space-y-4 sm:space-y-6">
       <!-- Участники -->
       <div>
-        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4" style="color: var(--text-primary)">
+        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4" >
           Участники ({{ members?.length || 0 }})
         </h3>
         
@@ -37,13 +37,13 @@
                 </span>
               </div>
               <div class="min-w-0 flex-1">
-                <p class="font-medium text-sm sm:text-base truncate" style="color: var(--text-primary)">{{ member.user.name }}</p>
-                <p class="text-xs sm:text-sm truncate" style="color: var(--text-secondary)">{{ member.user.email }}</p>
-                <p class="text-xs hidden sm:block" style="color: var(--text-secondary)">
+                <p class="font-medium text-sm sm:text-base truncate" >{{ member.user.name }}</p>
+                <p class="text-xs sm:text-sm truncate text-secondary" >{{ member.user.email }}</p>
+                <p class="text-xs hidden sm:block text-secondary" >
                   Присоединился {{ member.joined_at }} • Пригласил {{ member.invited_by.name }}
                 </p>
                 <!-- Мобильная версия информации -->
-                <p class="text-xs sm:hidden" style="color: var(--text-secondary)">
+                <p class="text-xs sm:hidden text-secondary" >
                   {{ member.joined_at }}
                 </p>
               </div>
@@ -88,13 +88,13 @@
         
         <div v-else class="text-center py-6 sm:py-8">
           <i class="pi pi-users text-3xl sm:text-4xl mb-2" style="color: var(--text-muted)"></i>
-          <p class="text-sm sm:text-base" style="color: var(--text-secondary)">Участников пока нет</p>
+          <p class="text-sm sm:text-base text-secondary" >Участников пока нет</p>
         </div>
       </div>
       
       <!-- Ожидающие приглашения -->
       <div v-if="pendingInvitations?.length">
-        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4" style="color: var(--text-primary)">
+        <h3 class="text-base sm:text-lg font-semibold mb-3 sm:mb-4" >
           Ожидающие приглашения ({{ pendingInvitations.length }})
         </h3>
         
@@ -107,8 +107,8 @@
           >
             <!-- Информация о приглашении -->
             <div class="min-w-0 flex-1">
-              <p class="font-medium text-sm sm:text-base truncate" style="color: var(--text-primary)">{{ invitation.email }}</p>
-              <p class="text-xs sm:text-sm truncate" style="color: var(--text-secondary)">
+              <p class="font-medium text-sm sm:text-base truncate" >{{ invitation.email }}</p>
+              <p class="text-xs sm:text-sm truncate text-secondary" >
                 Приглашен {{ invitation.invited_by }} • {{ invitation.created_at }}
               </p>
               <div class="flex flex-wrap gap-1 sm:gap-2 mt-2">
@@ -169,13 +169,13 @@
             {{ editingMember.user.name.charAt(0).toUpperCase() }}
           </span>
         </div>
-        <p class="font-medium text-sm sm:text-base" style="color: var(--text-primary)">{{ editingMember.user.name }}</p>
-        <p class="text-xs sm:text-sm break-all" style="color: var(--text-secondary)">{{ editingMember.user.email }}</p>
+        <p class="font-medium text-sm sm:text-base" >{{ editingMember.user.name }}</p>
+        <p class="text-xs sm:text-sm break-all text-secondary" >{{ editingMember.user.email }}</p>
       </div>
       
       <!-- Права доступа -->
       <div>
-        <label class="block text-sm sm:text-base font-medium mb-3 sm:mb-4" style="color: var(--text-primary)">
+        <label class="block text-sm sm:text-base font-medium mb-3 sm:mb-4" >
           Права доступа
         </label>
         <div class="space-y-3 sm:space-y-4">
@@ -187,7 +187,7 @@
               class="mr-3"
               value="view"
             />
-            <label class="text-sm sm:text-base cursor-pointer" for="edit-view" style="color: var(--text-primary)">
+            <label class="text-sm sm:text-base cursor-pointer" for="edit-view" >
               Просмотр
             </label>
           </div>
@@ -199,7 +199,7 @@
               class="mr-3"
               value="create"
             />
-            <label class="text-sm sm:text-base cursor-pointer" for="edit-create" style="color: var(--text-primary)">
+            <label class="text-sm sm:text-base cursor-pointer" for="edit-create" >
               Создание записей
             </label>
           </div>
@@ -211,7 +211,7 @@
               class="mr-3"
               value="update"
             />
-            <label class="text-sm sm:text-base cursor-pointer" for="edit-update" style="color: var(--text-primary)">
+            <label class="text-sm sm:text-base cursor-pointer" for="edit-update" >
               Редактирование
             </label>
           </div>
@@ -223,7 +223,7 @@
               class="mr-3"
               value="delete"
             />
-            <label class="text-sm sm:text-base cursor-pointer" for="edit-delete" style="color: var(--text-primary)">
+            <label class="text-sm sm:text-base cursor-pointer" for="edit-delete" >
               Удаление
             </label>
           </div>

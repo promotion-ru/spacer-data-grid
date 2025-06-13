@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen" style="background-color: var(--primary-bg)">
+  <div class="min-h-screen bg-surface-ground">
     <div class="container mx-auto px-4 py-8">
       <UniversalDataTable
         ref="dataTableRef"
@@ -45,7 +45,7 @@
         <template #column-name="{ data, column }">
           <div :data-label="column.header">
             <div class="font-semibold">{{ data.name }}</div>
-            <div v-if="data.surname" class="text-sm" style="color: var(--text-secondary)">
+            <div v-if="data.surname" class="text-sm text-surface-600 dark:text-surface-400">
               {{ data.surname }}
             </div>
           </div>

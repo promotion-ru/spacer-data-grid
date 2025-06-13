@@ -15,7 +15,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- Название записи -->
         <div>
-          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="name">
+          <label class="block text-sm font-medium mb-2 text-primary" for="name">
             Название записи *
           </label>
           <InputText
@@ -30,7 +30,7 @@
         
         <!-- Дата -->
         <div>
-          <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="date">
+          <label class="block text-sm font-medium mb-2 text-primary" for="date">
             Дата *
           </label>
           <DatePicker
@@ -50,7 +50,7 @@
       
       <!-- Тип операции (радиокнопки) -->
       <div>
-        <label class="block text-sm font-medium mb-3" style="color: var(--text-primary)">
+        <label class="block text-sm font-medium mb-3 text-primary">
           Тип операции *
         </label>
         <div class="flex space-x-6">
@@ -62,7 +62,7 @@
               :value="1"
               name="operation_type"
             />
-            <label class="ml-2 text-sm" style="color: var(--text-primary)" for="income">Доход</label>
+            <label class="ml-2 text-sm" for="income">Доход</label>
           </div>
           <div class="flex items-center">
             <RadioButton
@@ -72,7 +72,7 @@
               :value="2"
               name="operation_type"
             />
-            <label class="ml-2 text-sm" style="color: var(--text-primary)" for="expense">Расход</label>
+            <label class="ml-2 text-sm" for="expense">Расход</label>
           </div>
         </div>
         <small v-if="errors.operation_type_id" class="p-error">{{ errors.operation_type_id }}</small>
@@ -80,7 +80,7 @@
       
       <!-- Тип записи -->
       <div>
-        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)">
+        <label class="block text-sm font-medium mb-2" >
           Тип записи *
         </label>
         <DataGridTypeAutocomplete
@@ -96,7 +96,7 @@
       
       <!-- Сумма -->
       <div>
-        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="amount">
+        <label class="block text-sm font-medium mb-2"  for="amount">
           Сумма *
         </label>
         <InputNumber
@@ -118,7 +118,7 @@
       
       <!-- Описание -->
       <div>
-        <label class="block text-sm font-medium mb-2" style="color: var(--text-primary)" for="description">
+        <label class="block text-sm font-medium mb-2"  for="description">
           Описание
         </label>
         <Textarea
@@ -149,8 +149,8 @@
         <template #empty>
           <div class="flex flex-col items-center justify-center space-y-2 p-6">
             <i class="pi pi-cloud-upload text-4xl" style="color: var(--primary-400)"></i>
-            <span class="font-medium" style="color: var(--text-primary)">Добавьте файлы к записи</span>
-            <p class="text-xs text-center" style="color: var(--text-secondary)">
+            <span class="font-medium" >Добавьте файлы к записи</span>
+            <p class="text-xs text-center text-secondary" >
               Перетащите файлы сюда или нажмите для выбора<br>
               Максимум 10 файлов по 10MB каждый
             </p>
@@ -158,7 +158,7 @@
         </template>
         <template #content="{ files, removeFile, formatFileSize, getFileIcon }">
           <div v-if="files.length > 0">
-            <h5 class="text-sm font-medium mb-3" style="color: var(--text-primary)">Выбранные файлы ({{ files.length }})</h5>
+            <h5 class="text-sm font-medium mb-3" >Выбранные файлы ({{ files.length }})</h5>
             <div class="max-h-64 overflow-y-auto space-y-3">
               <div
                 v-for="(fileObj, index) of files"
@@ -187,8 +187,8 @@
                   </div>
                   
                   <div class="min-w-0 flex-1">
-                    <p class="text-sm font-medium truncate text-wrap" style="color: var(--text-primary)">{{ fileObj.name }}</p>
-                    <p class="text-xs" style="color: var(--text-secondary)">{{ formatFileSize(fileObj.size) }}</p>
+                    <p class="text-sm font-medium truncate text-wrap" >{{ fileObj.name }}</p>
+                    <p class="text-xs text-secondary" >{{ formatFileSize(fileObj.size) }}</p>
                     
                     <!-- Статус файла -->
                     <div class="flex items-center mt-1">

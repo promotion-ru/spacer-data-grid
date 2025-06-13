@@ -3,7 +3,7 @@
     <template #title>
       <div class="flex items-center gap-2">
         <i class="pi pi-mobile text-primary"></i>
-        <span style="color: var(--text-primary)">Активные устройства</span>
+        <span class="text-primary">Активные устройства</span>
       </div>
     </template>
     
@@ -18,15 +18,15 @@
       </div>
       
       <div v-else-if="tokens.length === 0" class="text-center py-8">
-        <i class="pi pi-info-circle text-4xl mb-3" style="color: var(--text-secondary)"></i>
-        <p class="text-lg" style="color: var(--text-secondary)">Нет активных токенов</p>
+        <i class="pi pi-info-circle text-4xl mb-3 text-secondary" ></i>
+        <p class="text-lg text-secondary" >Нет активных токенов</p>
       </div>
       
       <div v-else class="space-y-4">
         <Card
           v-for="token in tokens"
           :key="token.id"
-:class="[
+          :class="[
             'transition-all duration-200 hover:shadow-md',
             token.is_current ? 'border-2 border-green-200 bg-green-50/30' : 'border'
           ]"
@@ -41,7 +41,7 @@
                 <div class="flex items-center gap-3 mb-3">
                   <div class="flex items-center gap-2">
                     <i :class="getDeviceIcon(token.name)" class="text-lg text-primary"></i>
-                    <span class="font-semibold text-lg" style="color: var(--text-primary)">
+                    <span class="font-semibold text-lg" >
                       {{ token.name }}
                     </span>
                   </div>
@@ -61,19 +61,19 @@
                   />
                 </div>
                 
-                <div class="space-y-2 text-sm" style="color: var(--text-secondary)">
+                <div class="space-y-2 text-sm text-secondary" >
                   <div class="flex items-center gap-2">
-                    <i class="pi pi-calendar text-xs" style="color: var(--text-secondary)"></i>
+                    <i class="pi pi-calendar text-xs text-secondary" ></i>
                     <span>Создан: {{ formatDate(token.created_at) }}</span>
                   </div>
                   
                   <div class="flex items-center gap-2">
-                    <i class="pi pi-clock text-xs" style="color: var(--text-secondary)"></i>
+                    <i class="pi pi-clock text-xs text-secondary" ></i>
                     <span>Последнее использование: {{ formatDate(token.last_used_at) }}</span>
                   </div>
                   
                   <div v-if="token.expires_at" class="flex items-center gap-2">
-                    <i class="pi pi-hourglass text-xs" style="color: var(--text-secondary)"></i>
+                    <i class="pi pi-hourglass text-xs text-secondary" ></i>
                     <span>Истекает: {{ formatDate(token.expires_at) }}</span>
                   </div>
                 </div>

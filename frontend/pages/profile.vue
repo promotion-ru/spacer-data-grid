@@ -20,7 +20,7 @@
         <!-- Левая колонка - Аватар и основная информация -->
         <div class="lg:col-span-1">
           <div class="rounded-lg shadow p-6 sticky top-24" style="background-color: var(--secondary-bg)">
-            <h3 class="text-lg font-medium mb-6" style="color: var(--text-primary)">Фотография профиля</h3>
+            <h3 class="text-lg font-medium mb-6">Фотография профиля</h3>
             
             <!-- Аватар -->
             <div class="flex flex-col items-center space-y-6">
@@ -75,7 +75,7 @@
                   <p class="text-xs" style="color: #3b82f6">{{ formatFileSize(selectedFile.size) }}</p>
                 </div>
                 
-                <small class="block" style="color: var(--text-secondary)">
+                <small class="block text-secondary" >
                   Поддерживаемые форматы: JPEG, PNG, GIF, WebP<br>
                   Максимальный размер: 2MB
                 </small>
@@ -89,12 +89,12 @@
           <form @submit.prevent="handleSubmit" class="space-y-6">
             <!-- Основная информация -->
             <div class="rounded-lg shadow p-6" style="background-color: var(--secondary-bg)">
-              <h3 class="text-lg font-medium mb-6" style="color: var(--text-primary)">Основная информация</h3>
+              <h3 class="text-lg font-medium mb-6" >Основная информация</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Имя -->
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
+                  <label class="block text-sm font-medium" >
                     Имя <span style="color: #ef4444">*</span>
                   </label>
                   <InputText
@@ -111,7 +111,7 @@
                 
                 <!-- ФИО -->
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
+                  <label class="block text-sm font-medium" >
                     Фамилия
                   </label>
                   <InputText
@@ -129,7 +129,7 @@
               
               <!-- Email -->
               <div class="space-y-2 mt-6">
-                <label class="block text-sm font-medium" style="color: var(--text-primary)">
+                <label class="block text-sm font-medium" >
                   Email <span style="color: #ef4444">*</span>
                 </label>
                 <InputText
@@ -148,11 +148,11 @@
             
             <!-- Смена пароля -->
             <div class="rounded-lg shadow p-6" style="background-color: var(--secondary-bg)">
-              <h3 class="text-lg font-medium mb-6" style="color: var(--text-primary)">Смена пароля</h3>
+              <h3 class="text-lg font-medium mb-6" >Смена пароля</h3>
               
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
+                  <label class="block text-sm font-medium" >
                     Новый пароль
                   </label>
                   <Password
@@ -167,13 +167,13 @@
                   <small v-if="formErrors.password" class="p-error">
                     {{ formErrors.password[0] }}
                   </small>
-                  <small v-else style="color: var(--text-secondary)">
+                  <small class="text-secondary" v-else >
                     Оставьте пустым, если не хотите менять пароль
                   </small>
                 </div>
                 
                 <div class="space-y-2">
-                  <label class="block text-sm font-medium" style="color: var(--text-primary)">
+                  <label class="block text-sm font-medium" >
                     Подтверждение пароля
                   </label>
                   <Password

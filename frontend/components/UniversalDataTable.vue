@@ -2,7 +2,7 @@
   <div class="universal-datatable">
     <!-- Заголовок и кнопка добавления -->
     <div class="flex justify-between items-center mb-6">
-      <h1 v-if="title" :style="{ color: 'var(--text-primary)' }" class="text-3xl font-bold">
+      <h1 v-if="title" class="text-3xl font-bold text-primary">
         {{ title }}
       </h1>
       <slot name="header-actions">
@@ -115,7 +115,7 @@
       
       <!-- Слот для пустого состояния -->
       <template #empty>
-        <div :style="{ color: 'var(--text-secondary)' }" class="text-center p-4">
+        <div class="text-center p-4 text-secondary">
           <slot :hasActiveFilters="hasActiveFilters" name="empty">
             {{ hasActiveFilters ? emptyFilteredMessage : emptyMessage }}
           </slot>

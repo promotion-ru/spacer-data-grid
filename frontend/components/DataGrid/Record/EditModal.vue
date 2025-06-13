@@ -388,8 +388,8 @@
                     </div>
                     
                     <div class="min-w-0 flex-1">
-                      <p class="text-sm font-medium truncate text-wrap" style="color: var(--text-primary)">{{ fileObj.name }}</p>
-                      <p class="text-xs" style="color: var(--text-secondary)">{{ formatFileSize(fileObj.size) }}</p>
+                      <p class="text-sm font-medium truncate text-wrap" >{{ fileObj.name }}</p>
+                      <p class="text-xs text-secondary" >{{ formatFileSize(fileObj.size) }}</p>
                       
                       <!-- Статус файла -->
                       <div class="flex items-center mt-1">
@@ -436,8 +436,8 @@
     <template #footer>
       <div v-if="!loadingRecord" class="flex justify-between items-center">
         <!-- Информация об изменениях -->
-        <div v-if="hasChanges" class="text-sm mr-2" style="color: var(--text-secondary)">
-          <span v-if="newAttachmentFiles.length > 0" style="color: var(--primary-color)">
+        <div v-if="hasChanges" class="text-sm mr-2 text-secondary" >
+          <span v-if="newAttachmentFiles.length > 0" class="text-succuss">
             +{{ newAttachmentFiles.length }} новых
           </span>
           <span v-if="newAttachmentFiles.length > 0 && filesToRemove.length > 0"> | </span>

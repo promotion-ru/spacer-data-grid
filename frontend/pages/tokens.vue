@@ -7,10 +7,10 @@
         <div class="mb-8">
           <div class="flex items-center justify-between">
             <div>
-              <h1 class="text-3xl font-bold mb-2" style="color: var(--text-primary)">
+              <h1 class="text-3xl font-bold mb-2" >
                 Управление устройствами
               </h1>
-              <p style="color: var(--text-secondary)">
+              <p  class="text-secondary">
                 Просматривайте и управляйте активными сессиями ваших устройств
               </p>
             </div>
@@ -33,10 +33,10 @@
                 <div class="bg-blue-100 rounded-full p-3 mb-3">
                   <i class="pi pi-mobile text-2xl text-blue-600"></i>
                 </div>
-                <div class="text-2xl font-bold mb-1" style="color: var(--text-primary)">
+                <div class="text-2xl font-bold mb-1" >
                   {{ deviceStats.total }}
                 </div>
-                <div class="text-sm" style="color: var(--text-secondary)">
+                <div class="text-sm text-secondary" >
                   Всего устройств
                 </div>
               </div>
@@ -49,10 +49,10 @@
                 <div class="bg-green-100 rounded-full p-3 mb-3">
                   <i class="pi pi-check-circle text-2xl text-green-600"></i>
                 </div>
-                <div class="text-2xl font-bold mb-1" style="color: var(--text-primary)">
+                <div class="text-2xl font-bold mb-1" >
                   {{ deviceStats.active }}
                 </div>
-                <div class="text-sm" style="color: var(--text-secondary)">
+                <div class="text-sm text-secondary" >
                   Активных сейчас
                 </div>
               </div>
@@ -65,10 +65,10 @@
                 <div class="bg-orange-100 rounded-full p-3 mb-3">
                   <i class="pi pi-clock text-2xl text-orange-600"></i>
                 </div>
-                <div class="text-2xl font-bold mb-1" style="color: var(--text-primary)">
+                <div class="text-2xl font-bold mb-1" >
                   {{ deviceStats.expired }}
                 </div>
-                <div class="text-sm" style="color: var(--text-secondary)">
+                <div class="text-sm text-secondary" >
                   Истекших токенов
                 </div>
               </div>
@@ -84,7 +84,7 @@
           <template #title>
             <div class="flex items-center gap-2">
               <i class="pi pi-info-circle text-primary"></i>
-              <span style="color: var(--text-primary)">Информация о безопасности</span>
+              <span >Информация о безопасности</span>
             </div>
           </template>
           
@@ -93,24 +93,24 @@
               <div class="flex items-start gap-3">
                 <i class="pi pi-shield text-blue-500 mt-0.5"></i>
                 <div>
-                  <p class="font-medium mb-1" style="color: var(--text-primary)">Автоматический выход</p>
-                  <p style="color: var(--text-secondary)">Неактивные сессии автоматически завершаются через 30 дней бездействия.</p>
+                  <p class="font-medium mb-1" >Автоматический выход</p>
+                  <p class="text-secondary" >Неактивные сессии автоматически завершаются через 30 дней бездействия.</p>
                 </div>
               </div>
               
               <div class="flex items-start gap-3">
                 <i class="pi pi-eye text-green-500 mt-0.5"></i>
                 <div>
-                  <p class="font-medium mb-1" style="color: var(--text-primary)">Мониторинг активности</p>
-                  <p style="color: var(--text-secondary)">Мы отслеживаем последнюю активность каждого устройства для вашей безопасности.</p>
+                  <p class="font-medium mb-1" >Мониторинг активности</p>
+                  <p class="text-secondary" >Мы отслеживаем последнюю активность каждого устройства для вашей безопасности.</p>
                 </div>
               </div>
               
               <div class="flex items-start gap-3">
                 <i class="pi pi-exclamation-triangle text-orange-500 mt-0.5"></i>
                 <div>
-                  <p class="font-medium mb-1" style="color: var(--text-primary)">Подозрительная активность</p>
-                  <p style="color: var(--text-secondary)">Если вы видите неизвестные устройства, немедленно отзовите их токены и смените пароль.</p>
+                  <p class="font-medium mb-1" >Подозрительная активность</p>
+                  <p class="text-secondary" >Если вы видите неизвестные устройства, немедленно отзовите их токены и смените пароль.</p>
                 </div>
               </div>
             </div>

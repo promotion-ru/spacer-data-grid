@@ -1,5 +1,5 @@
 <template>
-  <div class="sticky top-0 z-50 border-b" style="background-color: var(--secondary-bg); border-color: var(--border-color)">
+  <div class="sticky top-0 z-50 border-b " style="background-color: var(--secondary-bg); border-color: var(--border-color)">
     <Toolbar
       class="border-0 rounded-none px-6 py-3"
       style="background: transparent"
@@ -20,7 +20,7 @@
           <!-- Логотип и навигация -->
           <div class="flex items-center gap-4">
             <NuxtLink class="flex items-center gap-3 no-underline" to="/">
-              <span class="font-bold text-xl hidden sm:block" style="color: var(--text-primary)">
+              <span class="font-bold text-xl hidden sm:block" >
                 Мои таблицы
               </span>
             </NuxtLink>

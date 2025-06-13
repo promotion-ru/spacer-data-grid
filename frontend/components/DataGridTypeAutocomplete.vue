@@ -44,7 +44,7 @@
                @mouseleave="$event.currentTarget.style.backgroundColor = 'transparent'">
             <div class="flex items-center gap-2 flex-1">
               <i class="pi pi-tag" style="color: var(--primary-color)"></i>
-              <span class="font-medium" style="color: var(--text-primary)">{{ option.name }}</span>
+              <span class="font-medium" >{{ option.name }}</span>
             </div>
             <div class="flex items-center gap-2">
               <Tag
@@ -54,15 +54,15 @@
                 size="small"
                 class="text-xs"
               />
-              <i class="pi pi-arrow-right text-xs" style="color: var(--text-secondary)"></i>
+              <i class="pi pi-arrow-right text-xs text-secondary" ></i>
             </div>
           </div>
         </template>
       
         <template #empty>
           <div class="p-6 text-center" style="background-color: var(--surface-50); border-radius: 8px; margin: 8px">
-            <i class="pi pi-search text-3xl mb-3" style="color: var(--text-secondary)"></i>
-            <p class="mb-3 font-medium" style="color: var(--text-secondary)">Тип не найден</p>
+            <i class="pi pi-search text-3xl mb-3 text-secondary" ></i>
+            <p class="mb-3 font-medium text-secondary" >Тип не найден</p>
             <Button
               v-if="canCreateNew"
               :loading="creating"
@@ -73,7 +73,7 @@
               class="w-full"
               @click="createNewType"
             />
-            <p v-else class="text-xs mt-2" style="color: var(--text-secondary)">Введите минимум 2 символа для создания</p>
+            <p v-else class="text-xs mt-2 text-secondary" >Введите минимум 2 символа для создания</p>
           </div>
         </template>
       

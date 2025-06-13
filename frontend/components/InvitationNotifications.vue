@@ -6,7 +6,7 @@
         <div class="space-y-4">
           <div class="flex items-center space-x-2">
             <i class="pi pi-envelope text-blue-600 text-xl"></i>
-            <h3 class="text-lg font-semibold" style="color: var(--text-primary)">
+            <h3 class="text-lg font-semibold" >
               Приглашения в таблицы ({{ invitations.length }})
             </h3>
           </div>
@@ -20,11 +20,11 @@
             >
               <div class="flex items-start justify-between">
                 <div class="flex-1">
-                  <h4 class="font-medium" style="color: var(--text-primary)">{{ invitation.data_grid.name }}</h4>
-                  <p class="text-sm mt-1" style="color: var(--text-secondary)">
+                  <h4 class="font-medium" >{{ invitation.data_grid.name }}</h4>
+                  <p class="text-sm mt-1 text-secondary" >
                     {{ invitation.invited_by.name }} пригласил вас в таблицу
                   </p>
-                  <p v-if="invitation.data_grid.description" class="text-sm mt-1" style="color: var(--text-secondary)">
+                  <p v-if="invitation.data_grid.description" class="text-sm mt-1 text-secondary" >
                     {{ invitation.data_grid.description }}
                   </p>
                   

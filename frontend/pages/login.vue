@@ -13,10 +13,10 @@
               class="mx-auto h-16 w-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
               <i class="pi pi-lock text-white" style="font-size: 2rem"></i>
             </div>
-            <h2 class="text-3xl font-bold mb-2" style="color: var(--text-primary)">
+            <h2 class="text-3xl font-bold mb-2" >
               Добро пожаловать
             </h2>
-            <p class="text-sm" style="color: var(--text-secondary)">
+            <p class="text-sm text-secondary" >
               Войдите в свой аккаунт для продолжения
             </p>
           </div>
@@ -24,7 +24,7 @@
         <template #content>
           <form class="space-y-6" @submit.prevent="handleLogin">
             <div class="space-y-2">
-              <label class="block text-sm font-medium" style="color: var(--text-primary)" for="email">Email</label>
+              <label class="block text-sm font-medium"  for="email">Email</label>
               <IconField iconPosition="left">
                 <InputIcon class="pi pi-envelope"></InputIcon>
                 <InputText
@@ -39,7 +39,7 @@
             </div>
             
             <div class="space-y-2 mt-8">
-              <label class="block text-sm font-medium" style="color: var(--text-primary)" for="password">Пароль</label>
+              <label class="block text-sm font-medium"  for="password">Пароль</label>
               <IconField iconPosition="left">
                 <InputIcon class="pi pi-lock"></InputIcon>
                 <Password

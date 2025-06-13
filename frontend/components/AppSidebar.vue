@@ -12,7 +12,7 @@
           class="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 border-b"
           style="border-color: var(--border-color)">
           <span class="inline-flex items-center gap-2">
-            <span class="font-semibold text-2xl" style="color: var(--text-primary)">Мои таблицы</span>
+            <span class="font-semibold text-2xl">Мои таблицы</span>
           </span>
           <Button
             class="ml-2"
@@ -89,8 +89,8 @@
               />
             </template>
             <div class="flex flex-col">
-              <span class="font-bold text-sm" style="color: var(--text-primary)">{{ user.name }} {{ user.surname }}</span>
-              <span class="text-xs" style="color: var(--text-secondary)">{{ showUserRoles }}</span>
+              <span class="font-bold text-sm" >{{ user.name }} {{ user.surname }}</span>
+              <span class="text-xs text-secondary" >{{ showUserRoles }}</span>
             </div>
           </NuxtLink>
         </div>

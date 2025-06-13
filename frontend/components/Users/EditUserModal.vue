@@ -11,15 +11,15 @@
     <!-- Состояние загрузки -->
     <div v-if="isLoadingUser" class="flex justify-center items-center py-8">
       <ProgressSpinner size="50" strokeWidth="4"/>
-      <span class="ml-3" style="color: var(--text-primary)">Загрузка данных пользователя...</span>
+      <span class="ml-3" >Загрузка данных пользователя...</span>
     </div>
     
     <!-- Ошибка загрузки -->
     <div v-else-if="loadError" class="text-center py-8">
       <div class="mb-4" style="color: #ef4444">
         <i class="pi pi-exclamation-triangle text-2xl"></i>
-        <p class="mt-2" style="color: var(--text-primary)">Ошибка загрузки данных пользователя</p>
-        <p class="text-sm" style="color: var(--text-secondary)">{{ loadError }}</p>
+        <p class="mt-2" >Ошибка загрузки данных пользователя</p>
+        <p class="text-sm text-secondary" >{{ loadError }}</p>
       </div>
       <Button
         class="p-button-outlined"

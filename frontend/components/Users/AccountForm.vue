@@ -5,7 +5,7 @@
     <div class="field">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label :for="`${mode}-name`" class="font-medium" style="color: var(--text-primary)">Имя *</label>
+          <label :for="`${mode}-name`" class="font-medium" >Имя *</label>
           <InputText
             :id="`${mode}-name`"
             ref="firstInput"
@@ -16,7 +16,7 @@
           <small v-if="formErrorsComputed.name" class="p-error">{{ formErrorsComputed.name }}</small>
         </div>
         <div>
-          <label :for="`${mode}-surname`" class="font-medium" style="color: var(--text-primary)">Фамилия</label>
+          <label :for="`${mode}-surname`" class="font-medium" >Фамилия</label>
           <InputText
             :id="`${mode}-surname`"
             v-model="formData.surname"
@@ -30,7 +30,7 @@
     
     <!-- Поле: Email -->
     <div class="field">
-      <label :for="`${mode}-email`" class="font-medium" style="color: var(--text-primary)">Email *</label>
+      <label :for="`${mode}-email`" class="font-medium" >Email *</label>
       <InputText
         :id="`${mode}-email`"
         v-model="formData.email"
@@ -45,7 +45,7 @@
     <div class="field">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label :for="`${mode}-password`" class="font-medium" style="color: var(--text-primary)">
+          <label :for="`${mode}-password`" class="font-medium" >
             {{ isEditing ? 'Новый пароль' : 'Пароль' }} {{ !isEditing ? '*' : '' }}
           </label>
           <div class="p-inputgroup">
@@ -62,11 +62,11 @@
             <Button v-if="!isEditing" icon="pi pi-shield" class="p-button-rounded" @click="generateAndSetPassword" v-tooltip.top="'Сгенерировать пароль'"/>
           </div>
           <small v-if="formErrorsComputed.password" class="p-error">{{ formErrorsComputed.password }}</small>
-          <small v-else-if="isEditing && !formData.password" style="color: var(--text-secondary)">Оставьте пустым, если не хотите менять пароль.</small>
-          <small v-else style="color: var(--text-secondary)">Минимум 8 символов.</small>
+          <small v-else-if="isEditing && !formData.password" class="text-secondary" >Оставьте пустым, если не хотите менять пароль.</small>
+          <small v-else  class="text-secondary">Минимум 8 символов.</small>
         </div>
         <div>
-          <label :for="`${mode}-password-confirmation`" class="font-medium" style="color: var(--text-primary)">
+          <label :for="`${mode}-password-confirmation`" class="font-medium" >
             Подтверждение {{ (!isEditing || formData.password) ? '*' : '' }}
           </label>
           <Password
@@ -85,7 +85,7 @@
     
     <!-- Группа: Аватар -->
     <div class="field">
-      <label class="font-medium" style="color: var(--text-primary)">Аватар</label>
+      <label class="font-medium" >Аватар</label>
       <div class="flex items-center gap-4">
         <Avatar
           v-if="!formData.avatar && currentAvatarUrl"
@@ -137,7 +137,7 @@
         />
         <label :for="`${mode}-active`" class="ml-2 font-medium" style="color: var(--text-primary); cursor: pointer;">Активный пользователь</label>
       </div>
-      <small style="color: var(--text-secondary)">Неактивные пользователи не могут входить в систему.</small>
+      <small  class="text-secondary">Неактивные пользователи не могут входить в систему.</small>
     </div>
     
     <button class="hidden" type="submit"></button>
