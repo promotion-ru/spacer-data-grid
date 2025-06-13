@@ -7,8 +7,8 @@
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
           <div class="flex items-center gap-4">
             <Button
-              outlined
               icon="pi pi-arrow-left"
+              outlined
               @click="$router.push('/')"
             />
             <div>
@@ -16,7 +16,12 @@
                 <h1 class="text-2xl lg:text-3xl font-bold text-primary">{{ grid.name }}</h1>
                 <Tag v-if="!grid.is_owner" severity="warn" value="Общая"/>
               </div>
-              <p v-if="grid.description" class="mt-1 text-sm lg:text-base text-secondary">{{ grid.description }}</p>
+              <DataGridRecordDescriptionModal
+                :description="grid.description"
+                :max-length="100"
+                :modal-title="`Описание таблицы: ${grid.name}`"
+                :show-meta-info="true"
+              />
               <p v-if="!grid.is_owner && grid.owner_name" class="text-sm mt-1 text-secondary">
                 Владелец: {{ grid.owner_name }}
               </p>
@@ -27,23 +32,23 @@
             <!-- Кнопка добавления записи (только если есть права) -->
             <Button
               v-if="hasPermission('create')"
-              icon="pi pi-plus"
               :label="isMobile ? '' : 'Добавить запись'"
+              icon="pi pi-plus"
               @click="showCreateRecordModal = true"
             />
             
             <!-- Кнопки управления для владельца -->
             <template v-if="grid.is_owner">
               <Button
-                outlined
-                icon="pi pi-share-alt"
                 :label="isMobile ? '' : 'Поделиться'"
+                icon="pi pi-share-alt"
+                outlined
                 @click="showShareModal = true"
               />
               <Button
-                outlined
-                icon="pi pi-cog"
                 :label="isMobile ? '' : 'Настройка таблицы'"
+                icon="pi pi-cog"
+                outlined
                 @click="showMembersModal = true"
               />
             </template>
@@ -51,10 +56,10 @@
             <!-- Кнопка покинуть таблицу для участников -->
             <Button
               v-else
+              :label="isMobile ? '' : 'Покинуть таблицу'"
+              icon="pi pi-sign-out"
               outlined
               severity="danger"
-              icon="pi pi-sign-out"
-              :label="isMobile ? '' : 'Покинуть таблицу'"
               @click="confirmLeaveGrid"
             />
           </div>
@@ -86,13 +91,13 @@
         <!-- Фильтры -->
         <DataGridRecordFilters
           ref="filtersRef"
-          :loading="recordsLoading"
-          :total-records="totalRecords"
           :current-user-id="currentUserId"
-          :record-types="recordTypes"
           :grid-id="grid.id"
-          @filters-changed="onFiltersChanged"
+          :loading="recordsLoading"
+          :record-types="recordTypes"
+          :total-records="totalRecords"
           @refresh="loadRecords"
+          @filters-changed="onFiltersChanged"
         />
         
         <!-- DataView для записей -->
@@ -103,12 +108,12 @@
             </div>
             
             <DataView
-              :value="records"
+              :lazy="true"
               :loading="recordsLoading"
               :paginator="true"
               :rows="20"
               :totalRecords="totalRecords"
-              :lazy="true"
+              :value="records"
               dataKey="id"
               @page="onPage"
             >
@@ -120,9 +125,9 @@
                   </p>
                   <Button
                     v-if="hasPermission('create') && !hasActiveFilters"
-                    outlined
                     icon="pi pi-plus"
                     label="Добавить первую запись"
+                    outlined
                     @click="showCreateRecordModal = true"
                   />
                 </div>
@@ -147,12 +152,12 @@
                           <div class="flex items-center gap-2 flex-shrink-0">
                             <Button
                               v-tooltip.top="'Действия'"
-                              text
+                              class="record-actions-btn"
+                              icon="pi pi-ellipsis-v"
                               rounded
                               size="small"
-                              icon="pi pi-ellipsis-v"
+                              text
                               @click.stop="toggleActionsMenu($event, record)"
-                              class="record-actions-btn"
                             />
                           </div>
                         </div>
@@ -164,8 +169,8 @@
                           </div>
                           
                           <Tag
-                            :value="record.operation_type_id === 1 ? 'Доход' : 'Расход'"
                             :severity="record.operation_type_id === 1 ? 'success' : 'danger'"
+                            :value="record.operation_type_id === 1 ? 'Доход' : 'Расход'"
                             class="text-xs"
                           />
                           
@@ -194,7 +199,11 @@
                           
                           <div v-if="record.attachments?.length" class="flex items-center gap-1">
                             <i class="pi pi-paperclip record-meta-icon"></i>
-                            <span>{{ record.attachments.length }} файл{{ record.attachments.length > 1 ? (record.attachments.length > 4 ? 'ов' : 'а') : '' }}</span>
+                            <span>{{
+                                record.attachments.length
+                              }} файл{{
+                                record.attachments.length > 1 ? (record.attachments.length > 4 ? 'ов' : 'а') : ''
+                              }}</span>
                           </div>
                           
                           <div class="flex items-center gap-1">
@@ -249,11 +258,11 @@
     <!-- Модалка просмотра записи -->
     <Dialog
       v-model:visible="showDetailModal"
+      :breakpoints="{ '960px': '75vw', '641px': '95vw' }"
+      :closable="true"
       :header="selectedRecord?.name || 'Просмотр записи'"
       :modal="true"
-      :closable="true"
       :style="{ width: '50vw' }"
-      :breakpoints="{ '960px': '75vw', '641px': '95vw' }"
     >
       <div v-if="selectedRecord" class="record-detail-content">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -293,8 +302,8 @@
                 <div>
                   <label class="block text-sm font-medium mb-1 modal-label">Тип операции</label>
                   <Tag
-                    :value="selectedRecord.operation_type_id === 1 ? 'Доход' : 'Расход'"
                     :severity="selectedRecord.operation_type_id === 1 ? 'success' : 'danger'"
+                    :value="selectedRecord.operation_type_id === 1 ? 'Доход' : 'Расход'"
                     class="text-sm"
                   />
                 </div>
@@ -345,15 +354,15 @@
         <div class="flex justify-end gap-3">
           <Button
             v-if="hasPermission('update')"
-            outlined
             icon="pi pi-pencil"
             label="Редактировать"
+            outlined
             @click="editRecordFromModal"
           />
           <Button
-            outlined
             icon="pi pi-times"
             label="Закрыть"
+            outlined
             @click="showDetailModal = false"
           />
         </div>
@@ -391,8 +400,8 @@
     
     <DataGridRecordLogsModal
       v-model:visible="showRecordLogsModal"
-      :record="selectedRecord"
       :grid-id="grid?.id"
+      :record="selectedRecord"
     />
     
     <DataGridMembersModal
@@ -417,8 +426,8 @@ const route = useRoute()
 const {$api} = useNuxtApp()
 const confirm = useConfirm()
 const toast = useToast()
-const { user } = useAuth()
-const { isMobile } = useDevice()
+const {user} = useAuth()
+const {isMobile} = useDevice()
 
 // Реактивные данные
 const recordsLoading = ref(false)
@@ -437,7 +446,7 @@ const totalRecords = ref(0)
 const currentPage = ref(1)
 const recordsPerPage = ref(20)
 const currentFilters = ref({})
-const currentSort = ref({ field: 'created_at', order: 'desc' })
+const currentSort = ref({field: 'created_at', order: 'desc'})
 
 // Дополнительные данные
 const recordTypes = ref([])
@@ -466,7 +475,11 @@ const hasActiveFilters = computed(() => {
 })
 
 // Загрузка данных грида
-const {data: grid, pending: gridLoading, refresh: refreshGrid} = await useLazyAsyncData(`dataGrid-${route.params.id}`, () =>
+const {
+  data: grid,
+  pending: gridLoading,
+  refresh: refreshGrid
+} = await useLazyAsyncData(`dataGrid-${route.params.id}`, () =>
   $api(`/data-grid/${route.params.id}`, {
     method: 'GET'
   }).then(res => res.data)
@@ -627,7 +640,7 @@ const onSort = (event) => {
       order: event.sortOrder === 1 ? 'asc' : 'desc'
     }
   } else {
-    currentSort.value = { field: 'created_at', order: 'desc' }
+    currentSort.value = {field: 'created_at', order: 'desc'}
   }
   loadRecords()
 }
@@ -820,7 +833,7 @@ watch(() => grid.value, async (newGrid, oldGrid) => {
     await nextTick() // Ждем обновления DOM
     await initializeData()
   }
-}, { immediate: true })
+}, {immediate: true})
 
 // onMounted для дополнительной защиты
 onMounted(async () => {
