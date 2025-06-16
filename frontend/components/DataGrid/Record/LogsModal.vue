@@ -613,7 +613,6 @@ const toggleFilters = () => {
 }
 
 const applyQuickFilter = (filterType) => {
-  // Временно отключаем watchers
   watchersEnabled.value = false
   
   switch (filterType) {
